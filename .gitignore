@@ -1,0 +1,33 @@
+# Claude Code local state — keep out of git, it's machine-specific.
+.claude/
+
+# OS noise.
+.DS_Store
+Thumbs.db
+
+# Editor noise.
+.vscode/
+.idea/
+*.swp
+*~
+
+# PHP / OC.
+*.log
+appinfo/signature.json
+
+# Python.
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.python-version
+
+# Build / packaging.
+dist/
+build/
+*.egg-info/
+
+# Local secrets — never. Belt-and-suspenders, the app doesn't write any.
+.env
+.env.local

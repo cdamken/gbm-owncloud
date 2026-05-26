@@ -1,0 +1,97 @@
+<?php
+/**
+ * Renders the two HTML pages (portfolio + orders).
+ *
+ * No data is inlined — both pages fetch JSON via the api#data route, which
+ * is what isolates one user from another at request time.
+ */
+
+namespace OCA\Gbm\Controller;
+
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\ContentSecurityPolicy;
+use OCP\AppFramework\Http\TemplateResponse;
+use OCP\IRequest;
+use OCP\IURLGenerator;
+
+class PageController extends Controller {
+
+	private $urlGenerator;
+
+	public function __construct(string $appName, IRequest $request, IURLGenerator $urlGenerator) {
+		parent::__construct($appName, $request);
+		$this->urlGenerator = $urlGenerator;
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function index(): TemplateResponse {
+		return $this->renderTemplate('main');
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function orders(): TemplateResponse {
+		return $this->renderTemplate('orders');
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function ordersAll(): TemplateResponse {
+		return $this->renderTemplate('orders_all');
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function dividends(): TemplateResponse {
+		return $this->renderTemplate('dividends');
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function transactions(): TemplateResponse {
+		return $this->renderTemplate('transactions');
+	}
+
+	private function renderTemplate(string $template): TemplateResponse {
+		\OCP\Util::addStyle($this->appName, 'dashboard');
+		// One JS module per template. 'main' → dashboard.js; the others map 1:1.
+		$scriptMap = [
+			'main'         => 'dashboard',
+			'orders'       => 'orders',
+			'orders_all'   => 'orders_all',
+			'dividends'    => 'dividends',
+			'transactions' => 'transactions',
+		];
+		\OCP\Util::addScript($this->appName, $scriptMap[$template] ?? 'dashboard');
+
+		// Pass route URLs to the JS so it doesn't hardcode paths.
+		$params = [
+			'routes' => [
+				'index'        => $this->urlGenerator->linkToRoute('gbm.page.index'),
+				'orders'       => $this->urlGenerator->linkToRoute('gbm.page.orders'),
+				'orders_all'   => $this->urlGenerator->linkToRoute('gbm.page.ordersAll'),
+				'dividends'    => $this->urlGenerator->linkToRoute('gbm.page.dividends'),
+				'transactions' => $this->urlGenerator->linkToRoute('gbm.page.transactions'),
+				'data'         => $this->urlGenerator->linkToRoute('gbm.api.data',      ['type' => '__TYPE__']),
+				'config'       => $this->urlGenerator->linkToRoute('gbm.api.getConfig'),
+				'update'       => $this->urlGenerator->linkToRoute('gbm.api.update'),
+			],
+		];
+
+		$response = new TemplateResponse($this->appName, $template, $params);
+		$csp = new ContentSecurityPolicy();
+		$response->setContentSecurityPolicy($csp);
+		return $response;
+	}
+}

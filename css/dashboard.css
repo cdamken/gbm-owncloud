@@ -1,0 +1,393 @@
+/*
+ * GBM Portfolio — dashboard styles.
+ * Ported from gbm-dashboard/app/{index,orders}.html.
+ *
+ * Scoped under #gbm-app so it can't clash with ownCloud's chrome.
+ */
+
+/*
+ * ownCloud's user layout wraps our template in #content / #app-content
+ * (white bg) and leaves margins around it. To avoid the visible white
+ * bands at the top/sides of our dark dashboard, we extend the bg through
+ * those wrappers when our root is present. Only fires on pages where
+ * #gbm-app actually exists, so other apps stay untouched.
+ */
+body:has(#gbm-app),
+#content:has(#gbm-app),
+#app-content:has(#gbm-app),
+#content-wrapper:has(#gbm-app),
+body.gbm-app-active,
+body.gbm-app-active #content,
+body.gbm-app-active #app-content,
+body.gbm-app-active #content-wrapper {
+	background: #0f1419 !important;
+}
+
+#gbm-app {
+	--bg: #0f1419;
+	--card: #1a1f2e;
+	--border: #2a3142;
+	--text: #e8eef5;
+	--muted: #7a8599;
+	--green: #4ade80;
+	--red: #f87171;
+	--amber: #fbbf24;
+	--blue: #60a5fa;
+	--purple: #c084fc;
+
+	background: var(--bg);
+	color: var(--text);
+	padding: 24px;
+	line-height: 1.5;
+	min-height: 100vh;
+	box-sizing: border-box;
+	font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+}
+#gbm-app *, #gbm-app *::before, #gbm-app *::after { box-sizing: border-box; }
+
+#gbm-app h1 {
+	font-size: 28px; margin-bottom: 8px;
+	display: flex; align-items: center; gap: 12px; font-weight: 700;
+}
+#gbm-app .logo-box {
+	background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+	width: 44px; height: 44px; border-radius: 8px;
+	display: flex; align-items: center; justify-content: center;
+	font-size: 14px; font-weight: 800; color: white;
+}
+
+#gbm-app .subtitle { color: var(--muted); margin-bottom: 24px; font-size: 13px; }
+#gbm-app .subtitle .update-btn {
+	margin-left: 12px;
+	background: var(--card); border: 1px solid var(--border);
+	color: var(--blue); padding: 4px 12px; border-radius: 6px;
+	cursor: pointer; font-size: 12px;
+}
+#gbm-app .subtitle .update-btn:hover { background: rgba(96, 165, 250, 0.1); }
+#gbm-app .subtitle .update-btn:disabled { opacity: 0.5; cursor: wait; }
+#gbm-app .subtitle .settings-btn {
+	margin-left: 6px;
+	background: var(--card); border: 1px solid var(--border);
+	color: var(--muted); padding: 4px 10px; border-radius: 6px;
+	cursor: pointer; font-size: 12px;
+}
+#gbm-app .subtitle .settings-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+#gbm-app .nav { display: flex; gap: 8px; margin-bottom: 24px; }
+#gbm-app .nav a {
+	color: var(--muted); text-decoration: none; font-size: 14px;
+	padding: 8px 18px; border-radius: 8px; font-weight: 500;
+	border: 1px solid var(--border); transition: all 0.15s;
+}
+#gbm-app .nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+#gbm-app .nav a.active {
+	background: var(--blue); color: var(--bg); border-color: var(--blue); font-weight: 600;
+}
+
+#gbm-app .cards {
+	display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px; margin-bottom: 32px;
+}
+#gbm-app .card {
+	background: var(--card); border: 1px solid var(--border);
+	border-radius: 12px; padding: 20px;
+}
+#gbm-app .card .label {
+	color: var(--muted); font-size: 11px; text-transform: uppercase;
+	letter-spacing: 0.8px; margin-bottom: 8px;
+}
+#gbm-app .card .value { font-size: 26px; font-weight: 700; }
+#gbm-app .card .delta { font-size: 13px; margin-top: 6px; }
+
+#gbm-app .green { color: var(--green); }
+#gbm-app .red { color: var(--red); }
+#gbm-app .amber { color: var(--amber); }
+#gbm-app .blue { color: var(--blue); }
+#gbm-app .purple { color: var(--purple); }
+#gbm-app .muted { color: var(--muted); }
+#gbm-app .pos { color: var(--green); }
+#gbm-app .neg { color: var(--red); }
+
+#gbm-app .accounts-grid {
+	display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 12px; margin-bottom: 32px;
+}
+#gbm-app .account-chip {
+	background: var(--card); border: 1px solid var(--border);
+	border-radius: 10px; padding: 16px;
+	position: relative;
+}
+#gbm-app .account-chip .acc-type {
+	font-size: 10px; text-transform: uppercase;
+	letter-spacing: 0.7px; margin-bottom: 4px; font-weight: 600;
+}
+#gbm-app .account-chip .acc-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+#gbm-app .account-chip .acc-id {
+	font-size: 11px; color: var(--muted); font-family: monospace;
+	margin-bottom: 12px;
+}
+#gbm-app .account-chip .acc-value { font-size: 20px; font-weight: 700; }
+#gbm-app .account-chip .acc-pnl { font-size: 12px; margin-top: 4px; }
+#gbm-app .account-chip .acc-detail-flag {
+	position: absolute; top: 12px; right: 12px;
+	font-size: 9px; padding: 2px 6px; border-radius: 8px;
+	background: rgba(96, 165, 250, 0.15); color: var(--blue);
+	font-weight: 600; letter-spacing: 0.3px;
+}
+#gbm-app .account-chip .acc-detail-flag.no { background: rgba(122, 133, 153, 0.15); color: var(--muted); }
+
+#gbm-app .section {
+	margin: 40px 0 16px; font-size: 18px; font-weight: 700;
+	display: flex; align-items: center; gap: 10px;
+}
+#gbm-app .badge {
+	background: var(--border); color: var(--muted); font-size: 12px;
+	padding: 3px 10px; border-radius: 12px; font-weight: 500;
+}
+
+#gbm-app .movers-grid {
+	display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+@media (max-width: 720px) { #gbm-app .movers-grid { grid-template-columns: 1fr; } }
+
+#gbm-app .controls {
+	display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+/*
+ * ownCloud's core.css sets `input, select { height: 32px; margin: 3px ...;
+ * padding: 7px 6px 5px; ... }` globally. Our padding (10px 14px) + their
+ * 32px height cropped the text in half. We override height + margin and
+ * use !important on the few that ownCloud locks down, but only inside
+ * #gbm-app so we don't leak into the rest of the page.
+ */
+#gbm-app .controls input,
+#gbm-app .controls select {
+	background: var(--card) !important;
+	border: 1px solid var(--border) !important;
+	color: var(--text) !important;
+	padding: 10px 14px !important;
+	margin: 0 !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
+	line-height: 1.4 !important;
+	height: auto !important;
+	min-height: 0;
+	box-sizing: border-box;
+	font-family: inherit;
+	-webkit-appearance: none;
+	   -moz-appearance: none;
+	        appearance: none;
+}
+/* Native select arrow back, since `appearance: none` removed it. */
+#gbm-app .controls select {
+	background-image:
+		linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+		linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+	background-position:
+		calc(100% - 17px) 50%,
+		calc(100% - 12px) 50%;
+	background-size: 5px 5px, 5px 5px;
+	background-repeat: no-repeat;
+	padding-right: 30px !important;
+}
+#gbm-app .controls input { min-width: 250px; }
+#gbm-app .controls input::placeholder {
+	color: var(--muted);
+	opacity: 1;  /* Firefox dims placeholder by default to 0.54 */
+}
+
+#gbm-app table {
+	width: 100%; border-collapse: collapse; background: var(--card);
+	border-radius: 12px; overflow: hidden; margin-bottom: 12px; table-layout: auto;
+}
+#gbm-app th, #gbm-app td {
+	text-align: left; padding: 12px 14px; font-size: 13px;
+	border-bottom: 1px solid var(--border);
+}
+#gbm-app th {
+	background: rgba(255,255,255,0.03); color: var(--muted);
+	font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap;
+}
+#gbm-app th:hover { color: var(--text); }
+#gbm-app tr:hover { background: rgba(255,255,255,0.02); }
+#gbm-app .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#gbm-app .ticker { font-family: monospace; font-weight: 600; }
+#gbm-app .sob-id { font-family: monospace; color: var(--muted); font-size: 11px; }
+
+#gbm-app .market-pill, #gbm-app .side-pill, #gbm-app .status-pill {
+	display: inline-block; padding: 2px 8px; border-radius: 10px;
+	font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+	font-weight: 600;
+}
+#gbm-app .status-filled    { background: rgba(74, 222, 128, 0.15); color: var(--green); font-weight: 700; }
+#gbm-app .status-cancelled { background: rgba(248, 113, 113, 0.15); color: var(--red); font-weight: 700; }
+#gbm-app .status-other     { background: rgba(251, 191, 36, 0.15); color: var(--amber); font-weight: 700; }
+#gbm-app .market-bmv { background: rgba(96, 165, 250, 0.15); color: var(--blue); }
+#gbm-app .market-sic { background: rgba(192, 132, 252, 0.15); color: var(--purple); }
+#gbm-app .market-deuda { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+#gbm-app .market-comun { background: rgba(251, 191, 36, 0.10); color: var(--amber); }
+#gbm-app .market-extranjero { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+#gbm-app .market-efectivo { background: rgba(122, 133, 153, 0.15); color: var(--muted); }
+#gbm-app .side-buy { background: rgba(74, 222, 128, 0.15); color: var(--green); font-weight: 700; }
+#gbm-app .side-sell { background: rgba(248, 113, 113, 0.15); color: var(--red); font-weight: 700; }
+
+#gbm-app .warning {
+	background: rgba(251, 191, 36, 0.1); border-left: 4px solid var(--amber);
+	padding: 14px 18px; border-radius: 8px; margin: 16px 0; font-size: 13px;
+	color: var(--text);
+}
+#gbm-app .warning b { color: var(--amber); }
+#gbm-app .error {
+	background: rgba(248, 113, 113, 0.1); border-left: 4px solid var(--red);
+	padding: 16px 20px; border-radius: 8px; margin: 20px 0; font-size: 14px;
+}
+#gbm-app .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+#gbm-app .disclaimer {
+	margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border);
+	color: var(--muted); font-size: 11px; line-height: 1.6;
+}
+#gbm-app .disclaimer a { color: var(--blue); text-decoration: none; }
+#gbm-app .disclaimer a:hover { text-decoration: underline; }
+
+/* ----- progress overlay (shown during /update fetches) ----- */
+#gbm-app .progress-overlay {
+	position: fixed; inset: 0; background: rgba(15, 20, 25, 0.92);
+	display: none; align-items: center; justify-content: center;
+	z-index: 200; backdrop-filter: blur(8px);
+}
+#gbm-app .progress-overlay.show { display: flex; }
+#gbm-app .progress-box {
+	background: var(--card); border: 1px solid var(--border);
+	border-radius: 12px; padding: 32px; max-width: 540px; width: 92%;
+	box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+	text-align: center;
+}
+#gbm-app .progress-box h2 { font-size: 22px; margin-bottom: 12px; }
+#gbm-app .progress-box .progress-stage {
+	color: var(--text); font-size: 15px; margin-bottom: 8px; min-height: 22px;
+	transition: opacity 0.2s;
+}
+#gbm-app .progress-box .progress-hint {
+	color: var(--muted); font-size: 12px; line-height: 1.5;
+}
+#gbm-app .spinner {
+	width: 56px; height: 56px; margin: 8px auto 24px;
+	border: 4px solid var(--border); border-top-color: var(--blue);
+	border-radius: 50%; animation: gbm-spin 0.9s linear infinite;
+}
+@keyframes gbm-spin { to { transform: rotate(360deg); } }
+
+/* ----- modals ----- */
+#gbm-app .modal-backdrop {
+	position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+	display: none; align-items: center; justify-content: center;
+	z-index: 100; backdrop-filter: blur(4px);
+}
+#gbm-app .modal-backdrop.show { display: flex; }
+#gbm-app .modal {
+	background: var(--card); border: 1px solid var(--border);
+	border-radius: 12px; padding: 28px; max-width: 420px; width: 90%;
+	box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+#gbm-app .modal h2 { font-size: 18px; margin-bottom: 8px; }
+#gbm-app .modal p { color: var(--muted); font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+#gbm-app .modal input.totp {
+	width: 100% !important;
+	background: var(--bg) !important;
+	border: 2px solid var(--border) !important;
+	color: var(--text) !important;
+	padding: 14px !important;
+	margin: 0 0 16px 0 !important;
+	border-radius: 8px !important;
+	font-size: 24px !important;
+	font-family: monospace !important;
+	text-align: center;
+	letter-spacing: 8px;
+	height: auto !important;
+	line-height: 1.2 !important;
+	box-sizing: border-box;
+}
+#gbm-app .modal input.totp:focus { outline: none; border-color: var(--blue) !important; }
+#gbm-app .modal label {
+	display: block; font-size: 12px; text-transform: uppercase;
+	letter-spacing: 0.7px; color: var(--muted); margin-bottom: 6px;
+	margin-top: 14px; font-weight: 600;
+}
+#gbm-app .modal label:first-of-type { margin-top: 0; }
+#gbm-app .modal input.field {
+	width: 100% !important;
+	background: var(--bg) !important;
+	border: 1px solid var(--border) !important;
+	color: var(--text) !important;
+	padding: 12px 14px !important;
+	margin: 0 !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
+	font-family: -apple-system, sans-serif !important;
+	height: auto !important;
+	line-height: 1.4 !important;
+	box-sizing: border-box;
+}
+#gbm-app .modal input.field:focus { outline: none; border-color: var(--blue) !important; }
+#gbm-app .modal input.field::placeholder { color: var(--muted); opacity: 1; }
+#gbm-app .modal .modal-btns { display: flex; gap: 12px; justify-content: flex-end; }
+#gbm-app .modal button {
+	padding: 10px 20px; border-radius: 8px; border: none;
+	font-size: 14px; cursor: pointer; font-weight: 600;
+}
+#gbm-app .modal button.primary { background: var(--blue); color: var(--bg); }
+#gbm-app .modal button.primary:hover { background: #93c5fd; }
+#gbm-app .modal button.primary:disabled { opacity: 0.5; cursor: wait; }
+#gbm-app .modal button.secondary {
+	background: transparent; color: var(--muted); border: 1px solid var(--border);
+}
+#gbm-app .modal button.secondary:hover { color: var(--text); }
+#gbm-app .modal .modal-error {
+	background: rgba(248, 113, 113, 0.1); border-left: 3px solid var(--red);
+	padding: 10px 14px; border-radius: 6px; font-size: 13px;
+	margin-bottom: 16px; color: var(--red);
+}
+#gbm-app .modal .modal-error.hidden { display: none; }
+#gbm-app .modal .modal-hint {
+	font-size: 11px; color: var(--muted); margin-top: 12px; text-align: center;
+}
+
+/* -------------------------------------------------------------------
+ * Dividends / Transactions pages — pills & misc.
+ * Ported from gbm-dashboard v0.8.
+ * ------------------------------------------------------------------- */
+#gbm-app .tx-id { font-family: monospace; color: var(--muted); font-size: 11px; }
+#gbm-app .purple { color: var(--purple); }
+#gbm-app .empty {
+	text-align: center; padding: 40px; color: var(--muted); font-size: 14px;
+}
+
+/* Dividend page: payout / ISR / other */
+#gbm-app .kind-pill {
+	display: inline-block; padding: 2px 8px; border-radius: 10px;
+	font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+	font-weight: 700;
+}
+#gbm-app .kind-payout { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+#gbm-app .kind-tax    { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+#gbm-app .kind-other  { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+
+/* Transactions / Libro Diario: full ledger categories */
+#gbm-app .cat-pill {
+	display: inline-block; padding: 2px 8px; border-radius: 10px;
+	font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+	font-weight: 700; white-space: nowrap;
+}
+#gbm-app .cat-buy_stock       { background: rgba(96, 165, 250, 0.18); color: var(--blue); }
+#gbm-app .cat-sell_stock      { background: rgba(192, 132, 252, 0.18); color: var(--purple); }
+#gbm-app .cat-buy_fund        { background: rgba(96, 165, 250, 0.12); color: var(--blue); }
+#gbm-app .cat-sell_fund       { background: rgba(192, 132, 252, 0.12); color: var(--purple); }
+#gbm-app .cat-repo_buy        { background: rgba(251, 191, 36, 0.12); color: var(--amber); }
+#gbm-app .cat-repo_mature     { background: rgba(251, 191, 36, 0.18); color: var(--amber); }
+#gbm-app .cat-deposit         { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+#gbm-app .cat-withdrawal      { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+#gbm-app .cat-fx              { background: rgba(192, 132, 252, 0.10); color: var(--purple); }
+#gbm-app .cat-dividend        { background: rgba(74, 222, 128, 0.10); color: var(--green); }
+#gbm-app .cat-tax_withholding { background: rgba(248, 113, 113, 0.10); color: var(--red); }
+#gbm-app .cat-other           { background: var(--border); color: var(--muted); }

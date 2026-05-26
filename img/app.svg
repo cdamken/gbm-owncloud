@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect x="2" y="2" width="28" height="28" rx="6" fill="#1e3a8a"/>
+  <text x="16" y="20" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif"
+        font-size="11" font-weight="800" fill="#ffffff">GBM</text>
+  <path d="M6 24 L11 18 L15 21 L21 12 L26 17" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
