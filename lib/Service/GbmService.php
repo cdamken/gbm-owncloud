@@ -99,7 +99,12 @@ class GbmService {
 
 	public function dataPath(string $name): string {
 		// Whitelist to avoid path traversal via the api#data route.
-		$allowed = ['accounts.json', 'positions.json', 'orders.json', 'orders_all.json', 'last_update.date'];
+		$allowed = [
+			'accounts.json', 'positions.json',
+			'orders.json', 'orders_all.json',
+			'dividends.json', 'transactions.json',
+			'last_update.date',
+		];
 		if (!in_array($name, $allowed, true)) {
 			throw new \InvalidArgumentException("unknown data file: $name");
 		}
