@@ -20,6 +20,7 @@ $routes = $_['routes'];
 	<div class="subtitle">
 		<span id="contract-label">Contrato: cargando...</span> · Última actualización:
 		<span id="last-update">—</span>
+		<span id="last-update-age" class="staleness-chip"></span>
 		<button class="update-btn" id="update-btn">⟳ Actualizar</button>
 		<button class="settings-btn" id="settings-btn" title="Configurar credenciales">⚙ Cuenta</button>
 	</div>

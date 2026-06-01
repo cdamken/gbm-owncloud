@@ -391,3 +391,15 @@ body.gbm-app-active #content-wrapper {
 #gbm-app .cat-dividend        { background: rgba(74, 222, 128, 0.10); color: var(--green); }
 #gbm-app .cat-tax_withholding { background: rgba(248, 113, 113, 0.10); color: var(--red); }
 #gbm-app .cat-other           { background: var(--border); color: var(--muted); }
+
+/* Staleness chip next to "Última actualización" */
+#gbm-app .staleness-chip {
+	display: none; margin-left: 8px;
+	padding: 2px 8px; border-radius: 10px;
+	font-size: 11px; font-weight: 600;
+	vertical-align: middle;
+}
+#gbm-app .staleness-chip.show { display: inline-block; }
+#gbm-app .staleness-chip.fresh { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+#gbm-app .staleness-chip.warn  { background: rgba(251, 191, 36, 0.18); color: var(--amber); }
+#gbm-app .staleness-chip.stale { background: rgba(248, 113, 113, 0.22); color: var(--red); }

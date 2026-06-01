@@ -54,11 +54,31 @@
 			hour: '2-digit', minute: '2-digit',
 		}) + ' CDMX';
 	};
+	// Age + severity chip for the "Última actualización" timestamp.
+	const stalenessHint = (iso) => {
+		if (!iso) return null;
+		const hasTz = /Z|[+-]\d{2}:?\d{2}$/.test(iso.trim());
+		const parseable = hasTz ? iso.trim() : iso.trim().replace(' ', 'T') + 'Z';
+		const d = new Date(parseable);
+		if (isNaN(d.getTime())) return null;
+		const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+		let label;
+		if (mins < 1) label = 'ahora';
+		else if (mins < 60) label = 'hace ' + mins + ' min';
+		else {
+			const h = Math.floor(mins / 60);
+			const m = mins % 60;
+			label = m === 0 ? 'hace ' + h + ' h' : 'hace ' + h + ' h ' + m + ' min';
+		}
+		const severity = mins <= 15 ? 'fresh' : mins <= 60 ? 'warn' : 'stale';
+		return { label, severity, ageMinutes: mins };
+	};
 
 	const ACCOUNT_TYPES = {
-		trading:     { label: 'Trading MX',  color: 'blue' },
-		trading_usa: { label: 'Trading USA', color: 'purple' },
-		smart_cash:  { label: 'Smart Cash',  color: 'amber' },
+		trading:     { label: 'Trading MX',     color: 'blue' },
+		trading_usa: { label: 'Trading USA',    color: 'purple' },
+		smart_cash:  { label: 'Smart Cash',     color: 'amber' },
+		wealth:      { label: 'Smart Cash USD', color: 'amber' },
 	};
 	const MARKETS = {
 		mercados_globales_sic:      { label: 'SIC',        cls: 'market-sic' },
@@ -227,6 +247,17 @@
 		const contractCode = root ? root.slice(0, -2) : '?';
 		$('contract-label').textContent = 'Contrato: ' + contractCode;
 		$('last-update').textContent = formatTimestamp(state.lastUpdate);
+		const stale = stalenessHint(state.lastUpdate);
+		const chip = $('last-update-age');
+		if (stale && chip) {
+			chip.textContent = stale.label;
+			chip.className = 'staleness-chip show ' + stale.severity;
+			chip.title = stale.severity === 'stale'
+				? 'Tu snapshot es viejo. Dale Actualizar para refrescar.'
+				: stale.severity === 'warn'
+				? 'Tu snapshot tiene más de 15 min.'
+				: 'Datos frescos.';
+		}
 	}
 
 	function renderCards() {
