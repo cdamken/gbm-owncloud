@@ -126,7 +126,7 @@
 			const investmentsGroups = igRes.ok ? await igRes.json() : null;
 			const lastUpdate = lastUpdateRes.ok ? await lastUpdateRes.text() : '';
 
-			state.accounts = accounts;
+			state.accounts = sortAccounts(accounts);
 			state.positionsByAccount = positionsByAccount;
 			state.investmentsGroups = investmentsGroups;
 			state.lastUpdate = lastUpdate.trim();
@@ -160,6 +160,11 @@
 			}
 		}
 		return all;
+	}
+
+	// Display order: by GBM's `number` ASC (= EP47NC01 → EP47NC05).
+	function sortAccounts(accounts) {
+		return [...accounts].sort((a, b) => (a.number || 0) - (b.number || 0));
 	}
 
 	// Per-account value: prefer sum(market_value) of positions when available
