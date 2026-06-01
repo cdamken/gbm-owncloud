@@ -31,14 +31,19 @@
 		if (isNaN(d.getTime())) return iso;
 		return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: '2-digit' });
 	};
+	// Server is UTC; user may be in another TZ. Attach 'Z' if no TZ marker
+	// then display in Mexico City time (where the market trades).
 	const formatTimestamp = (iso) => {
 		if (!iso) return '—';
-		const d = new Date(iso);
+		const hasTz = /Z|[+-]\d{2}:?\d{2}$/.test(iso.trim());
+		const parseable = hasTz ? iso.trim() : iso.trim().replace(' ', 'T') + 'Z';
+		const d = new Date(parseable);
 		if (isNaN(d.getTime())) return iso;
 		return d.toLocaleString('es-MX', {
+			timeZone: 'America/Mexico_City',
 			year: 'numeric', month: 'short', day: 'numeric',
 			hour: '2-digit', minute: '2-digit',
-		});
+		}) + ' CDMX';
 	};
 	const MONTH_NAMES = [
 		'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
