@@ -156,7 +156,14 @@
 			}
 			if (total !== 0) return total;
 		}
-		return (account.position && account.position.amount) || 0;
+		const direct = Number(account.position && account.position.amount) || 0;
+		if (direct !== 0) return direct;
+		// Smart Cash gap: position.amount=0 but plus_minus is non-zero.
+		// Since plus_minus = pct * cost, current = cost + plus_minus = pm/pct + pm.
+		const pm = Number(account.plus_minus && account.plus_minus.amount) || 0;
+		const pct = Number(account.plus_minus_percentage) || 0;
+		if (pm !== 0 && pct !== 0) return pm / pct + pm;
+		return 0;
 	}
 
 	// Per-account P&L computed from positions (historical, not intraday).
