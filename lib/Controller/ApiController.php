@@ -32,13 +32,14 @@ class ApiController extends Controller {
 	 */
 	public function data(string $type): Http\Response {
 		$allowed = [
-			'accounts'     => ['file' => 'accounts.json',     'ct' => 'application/json'],
-			'positions'    => ['file' => 'positions.json',    'ct' => 'application/json'],
-			'orders'       => ['file' => 'orders.json',       'ct' => 'application/json'],
-			'orders_all'   => ['file' => 'orders_all.json',   'ct' => 'application/json'],
-			'dividends'    => ['file' => 'dividends.json',    'ct' => 'application/json'],
-			'transactions' => ['file' => 'transactions.json', 'ct' => 'application/json'],
-			'last_update'  => ['file' => 'last_update.date',  'ct' => 'text/plain'],
+			'accounts'            => ['file' => 'accounts.json',            'ct' => 'application/json'],
+			'positions'           => ['file' => 'positions.json',           'ct' => 'application/json'],
+			'orders'              => ['file' => 'orders.json',              'ct' => 'application/json'],
+			'orders_all'          => ['file' => 'orders_all.json',          'ct' => 'application/json'],
+			'dividends'           => ['file' => 'dividends.json',           'ct' => 'application/json'],
+			'transactions'        => ['file' => 'transactions.json',        'ct' => 'application/json'],
+			'investments_groups'  => ['file' => 'investments_groups.json',  'ct' => 'application/json'],
+			'last_update'         => ['file' => 'last_update.date',         'ct' => 'text/plain'],
 		];
 		if (!isset($allowed[$type])) {
 			return new JSONResponse(['error' => 'unknown type'], Http::STATUS_NOT_FOUND);

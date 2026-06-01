@@ -152,6 +152,23 @@ def main() -> None:
             accounts = client.accounts.list_with_dashboard(contract.contract_id)
             print(f"  accounts: {len(accounts)}")
 
+            # Mobile app's "TOTAL INVERTIDO" endpoint. Matches the mobile
+            # number to the cent (uses live FX, unlike GetPositionSummary).
+            email = os.environ.get("GBM_EMAIL", "")
+            if email:
+                try:
+                    ig = client.dashboard.investments_groups(contract.contract_id, email)
+                    write_json(
+                        data_dir / "investments_groups.json",
+                        ig.model_dump(by_alias=False),
+                    )
+                    print(
+                        f"  investments-groups: total=${float(ig.total_position.amount):,.2f} "
+                        f"({len(ig.groups)} groups)"
+                    )
+                except ApiError as e:
+                    print(f"  investments-groups: {e}")
+
             accounts_payload = [
                 {
                     "legacy_contract_id": a.legacy_contract_id,

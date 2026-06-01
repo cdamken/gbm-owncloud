@@ -115,17 +115,20 @@
 			const opts = { cache: 'no-store', headers: { Accept: 'application/json' } };
 			// last_update is text/plain, JSON files are JSON. Each fetch silently
 			// falls back to empty on 404 so a fresh install renders correctly.
-			const [accountsRes, positionsRes, lastUpdateRes] = await Promise.all([
+			const [accountsRes, positionsRes, igRes, lastUpdateRes] = await Promise.all([
 				fetch(dataUrl('accounts'), opts),
 				fetch(dataUrl('positions'), opts),
+				fetch(dataUrl('investments_groups'), opts),
 				fetch(dataUrl('last_update'), opts),
 			]);
 			const accounts = accountsRes.ok ? await accountsRes.json() : [];
 			const positionsByAccount = positionsRes.ok ? await positionsRes.json() : {};
+			const investmentsGroups = igRes.ok ? await igRes.json() : null;
 			const lastUpdate = lastUpdateRes.ok ? await lastUpdateRes.text() : '';
 
 			state.accounts = accounts;
 			state.positionsByAccount = positionsByAccount;
+			state.investmentsGroups = investmentsGroups;
 			state.lastUpdate = lastUpdate.trim();
 
 			state.positionsFlat = [];
@@ -204,9 +207,17 @@
 	}
 
 	function aggregates() {
+		// Prefer the v3 dashboard total when available — matches GBM mobile.
+		let totalValueFromIG = null;
+		const igTotal = state.investmentsGroups && state.investmentsGroups.total_position && state.investmentsGroups.total_position.amount;
+		if (igTotal != null && igTotal !== 0) {
+			totalValueFromIG = Number(igTotal);
+		}
 		// Total value: sum each account's value via accountValue() (uses
 		// sum(market_value) where available — matches GBM web).
-		const totalValue = state.accounts.reduce((s, a) => s + accountValue(a), 0);
+		const totalValue = totalValueFromIG != null
+			? totalValueFromIG
+			: state.accounts.reduce((s, a) => s + accountValue(a), 0);
 		// P&L: historical yield from positions (NOT accounts.plus_minus
 		// which is intraday-only and reports 0 when markets are closed).
 		const totalPnL = state.positionsFlat.reduce((s, p) => s + (Number(p.yield_value) || 0), 0);
