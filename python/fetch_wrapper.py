@@ -33,6 +33,7 @@ from pathlib import Path
 
 try:
     from gbm_mx_api import ApiError, AuthError, GbmClient, MfaRequired
+    from gbm_mx_api.errors import TransportError
 except ImportError:
     sys.stderr.write(
         "gbm-mx-api is not installed in this Python. "
@@ -166,8 +167,9 @@ def main() -> None:
                         f"  investments-groups: total=${float(ig.total_position.amount):,.2f} "
                         f"({len(ig.groups)} groups)"
                     )
-                except ApiError as e:
-                    print(f"  investments-groups: {e}")
+                except (ApiError, TransportError) as e:
+                    # Slow endpoint, may time out — non-fatal.
+                    print(f"  investments-groups: SKIPPED ({type(e).__name__}: {e})")
 
             accounts_payload = [
                 {
