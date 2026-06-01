@@ -59,18 +59,20 @@
 	};
 
 	const CATEGORY_LABELS = {
-		buy_stock:       'Compra Acción',
-		sell_stock:      'Venta Acción',
-		buy_fund:        'Compra Fondo',
-		sell_fund:       'Venta Fondo',
-		repo_buy:        'Repo (entra)',
-		repo_mature:     'Repo (sale)',
-		deposit:         'Depósito',
-		withdrawal:      'Retiro',
-		fx:              'Divisa',
-		dividend:        'Dividendo',
-		tax_withholding: 'ISR',
-		other:           'Otro',
+		buy_stock:           'Compra Acción',
+		sell_stock:          'Venta Acción',
+		buy_fund:            'Compra Fondo',
+		sell_fund:           'Venta Fondo',
+		repo_buy:            'Repo (entra)',
+		repo_mature:         'Repo (sale)',
+		deposit:             'Traspaso (entra)',
+		withdrawal:          'Traspaso (sale)',
+		external_deposit:    'Depósito externo',
+		external_withdrawal: 'Retiro externo',
+		fx:                  'Divisa',
+		dividend:            'Dividendo',
+		tax_withholding:     'ISR',
+		other:               'Otro',
 	};
 	const categoryLabel = (c) => CATEGORY_LABELS[c] || c || '—';
 	const categoryPill = (t) => {
