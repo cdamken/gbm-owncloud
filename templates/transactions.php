@@ -85,7 +85,13 @@ $routes = $_['routes'];
 		</select>
 		<select id="month-filter"><option value="">Todos los meses</option></select>
 		<select id="account-filter"><option value="">Todas las cuentas</option></select>
+		<label class="toggle">
+			<input type="checkbox" id="show-noise">
+			Mostrar ruido del sistema (sweep GBMF2, reportos, traspasos internos)
+		</label>
 	</div>
+
+	<div id="noise-banner" class="noise-banner"></div>
 
 	<table id="tx-table">
 		<thead>

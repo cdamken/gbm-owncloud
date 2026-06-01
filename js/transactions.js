@@ -80,6 +80,14 @@
 		return '<span class="cat-pill cat-' + c + '">' + categoryLabel(c) + '</span>';
 	};
 
+	// Noise = broker's automatic plumbing, not user decisions.
+	function isNoise(t) {
+		if (t.category === 'deposit' || t.category === 'withdrawal') return true;
+		if (t.category === 'repo_buy' || t.category === 'repo_mature') return true;
+		if (t.account_legacy_id === 'EP47NC05' && t.security_id === 'GBMF2 BF') return true;
+		return false;
+	}
+
 	const state = {
 		rows: [],
 		accounts: [],
@@ -174,8 +182,10 @@
 		const catFilter = $('category-filter').value;
 		const monthFilter = $('month-filter').value;
 		const accountFilter = $('account-filter').value;
+		const showNoise = $('show-noise').checked;
 
 		let rows = state.rows.filter(t => {
+			if (!showNoise && isNoise(t)) return false;
 			const blob = (t.security_id + ' ' + (t.description || '') + ' ' + (t.account_name || '')).toLowerCase();
 			if (search && !blob.includes(search)) return false;
 			if (catFilter && t.category !== catFilter) return false;
@@ -183,6 +193,20 @@
 			if (accountFilter && t.account_legacy_id !== accountFilter) return false;
 			return true;
 		});
+
+		const banner = $('noise-banner');
+		if (!showNoise) {
+			const hidden = state.rows.filter(isNoise).length;
+			banner.innerHTML = hidden > 0
+				? '<b>' + hidden + '</b> movimiento(s) ocultos: <b>sweep automático</b> de '
+				+ 'GBMF2 BF, <b>apertura/vencimiento de reportos</b> y <b>traspasos '
+				+ 'internos</b> entre tus cuentas (operaciones automáticas del broker). '
+				+ 'Marca "Mostrar ruido del sistema" para verlos.'
+				: '';
+			banner.style.display = hidden > 0 ? '' : 'none';
+		} else {
+			banner.style.display = 'none';
+		}
 
 		renderCards(rows);
 
@@ -230,6 +254,7 @@
 		$('category-filter').addEventListener('change', render);
 		$('month-filter').addEventListener('change', render);
 		$('account-filter').addEventListener('change', render);
+		$('show-noise').addEventListener('change', render);
 		document.querySelectorAll('#tx-table th[data-sort]').forEach(th => {
 			th.addEventListener('click', () => setSort(th.dataset.sort));
 		});
