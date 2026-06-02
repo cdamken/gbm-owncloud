@@ -41,6 +41,8 @@ $routes = $_['routes'];
 
 	<div id="error-box"></div>
 
+	<div id="concentration-warning"></div>
+
 	<div class="cards" id="cards">
 		<div class="card">
 			<div class="label">Valor total</div>
@@ -51,6 +53,11 @@ $routes = $_['routes'];
 			<div class="label">P&amp;L acumulado</div>
 			<div class="value" id="total-pnl">—</div>
 			<div class="delta" id="total-pnl-pct">—</div>
+		</div>
+		<div class="card" title="Retorno anualizado money-weighted (XIRR) usando depósitos/retiros externos como flujos y el valor actual como terminal. Solo ve los últimos 365 días de transacciones por API; flujos previos no se pueden reconciliar.">
+			<div class="label">XIRR (anualizado)</div>
+			<div class="value" id="xirr-value">—</div>
+			<div class="delta muted" id="xirr-detail">basado en flujos externos</div>
 		</div>
 		<div class="card">
 			<div class="label">Posiciones</div>

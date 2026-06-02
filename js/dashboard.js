@@ -115,20 +115,23 @@
 			const opts = { cache: 'no-store', headers: { Accept: 'application/json' } };
 			// last_update is text/plain, JSON files are JSON. Each fetch silently
 			// falls back to empty on 404 so a fresh install renders correctly.
-			const [accountsRes, positionsRes, igRes, lastUpdateRes] = await Promise.all([
+			const [accountsRes, positionsRes, igRes, txRes, lastUpdateRes] = await Promise.all([
 				fetch(dataUrl('accounts'), opts),
 				fetch(dataUrl('positions'), opts),
 				fetch(dataUrl('investments_groups'), opts),
+				fetch(dataUrl('transactions'), opts),
 				fetch(dataUrl('last_update'), opts),
 			]);
 			const accounts = accountsRes.ok ? await accountsRes.json() : [];
 			const positionsByAccount = positionsRes.ok ? await positionsRes.json() : {};
 			const investmentsGroups = igRes.ok ? await igRes.json() : null;
+			const transactions = txRes.ok ? await txRes.json() : null;
 			const lastUpdate = lastUpdateRes.ok ? await lastUpdateRes.text() : '';
 
 			state.accounts = sortAccounts(accounts);
 			state.positionsByAccount = positionsByAccount;
 			state.investmentsGroups = investmentsGroups;
+			state.transactions = transactions;
 			state.lastUpdate = lastUpdate.trim();
 
 			state.positionsFlat = [];
@@ -211,6 +214,126 @@
 		};
 	}
 
+	// ----------------------------------------------------------------------
+	// XIRR — annualized money-weighted return.
+	// Ported from gbm-dashboard@v0.13.0. Newton-Raphson + bisection fallback.
+	// Limitation: only sees the last GBM_TRANSACTIONS_DAYS of flows; deposits
+	// before that window can't be reconciled → result is biased.
+	// ----------------------------------------------------------------------
+	function _xirrNpv(rate, days, amounts) {
+		let s = 0;
+		for (let i = 0; i < amounts.length; i++) {
+			s += amounts[i] / Math.pow(1 + rate, days[i] / 365.0);
+		}
+		return s;
+	}
+	function xirr(cashFlows, tol = 1e-7) {
+		if (!cashFlows || cashFlows.length < 2) return null;
+		const sorted = cashFlows.slice().sort((a, b) => a.date - b.date);
+		const t0 = sorted[0].date;
+		const days = sorted.map(cf => Math.floor((cf.date - t0) / (1000 * 60 * 60 * 24)));
+		const amounts = sorted.map(cf => Number(cf.amount));
+		if (amounts.every(a => a >= 0) || amounts.every(a => a <= 0)) return null;
+		for (const guess of [0.10, 0.0, -0.10, 0.30, -0.30, 0.50]) {
+			let rate = guess;
+			let ok = true;
+			for (let it = 0; it < 80; it++) {
+				const npv = _xirrNpv(rate, days, amounts);
+				let dnpv = 0;
+				for (let i = 0; i < amounts.length; i++) {
+					const d = days[i];
+					dnpv += (-d / 365.0) * amounts[i] / Math.pow(1 + rate, d / 365.0 + 1);
+				}
+				if (!isFinite(npv) || !isFinite(dnpv) || Math.abs(dnpv) < 1e-12) { ok = false; break; }
+				let newRate = rate - npv / dnpv;
+				if (newRate <= -0.999) newRate = -0.99;
+				if (Math.abs(newRate - rate) < tol) return newRate;
+				rate = newRate;
+			}
+			if (ok) continue;
+		}
+		let lo = -0.95, hi = 10.0;
+		let fLo = _xirrNpv(lo, days, amounts);
+		let fHi = _xirrNpv(hi, days, amounts);
+		if (!isFinite(fLo) || !isFinite(fHi) || fLo * fHi > 0) return null;
+		for (let it = 0; it < 120; it++) {
+			const mid = (lo + hi) / 2;
+			const fMid = _xirrNpv(mid, days, amounts);
+			if (!isFinite(fMid)) return null;
+			if (Math.abs(fMid) < tol || Math.abs(hi - lo) < tol) return mid;
+			if (fLo * fMid < 0) { hi = mid; fHi = fMid; }
+			else                { lo = mid; fLo = fMid; }
+		}
+		return (lo + hi) / 2;
+	}
+	function buildXirrCashflows(totalValue) {
+		if (!state.transactions || !state.transactions.transactions) return null;
+		const txs = state.transactions.transactions;
+		const flows = [];
+		for (const t of txs) {
+			const cat = t.category;
+			if (cat !== 'external_deposit' && cat !== 'external_withdrawal') continue;
+			const d = new Date(t.process_date);
+			if (isNaN(d.getTime())) continue;
+			const amt = Math.abs(Number(t.amount) || 0);
+			if (amt === 0) continue;
+			const signed = cat === 'external_deposit' ? -amt : +amt;
+			flows.push({ date: d, amount: signed });
+		}
+		if (flows.length === 0) return null;
+		if (totalValue <= 0) return null;
+		flows.push({ date: new Date(), amount: totalValue });
+		return flows;
+	}
+
+	// ----------------------------------------------------------------------
+	// Concentration warning — single-name or top-5 risk.
+	// Heuristic: red if >50% / >85% top-5; amber if >30% / >70% top-5.
+	// Aggregates by ticker across accounts. Excludes cash buckets.
+	// ----------------------------------------------------------------------
+	function computeConcentration() {
+		const flat = state.positionsFlat.filter(
+			p => p._market_key !== 'efectivo' && p.issue_id !== 'Subtotal'
+		);
+		if (flat.length === 0) return null;
+		const byIssue = {};
+		for (const p of flat) {
+			const v = Number(p.market_value) || 0;
+			if (v <= 0) continue;
+			byIssue[p.issue_id] = (byIssue[p.issue_id] || 0) + v;
+		}
+		const entries = Object.entries(byIssue).sort((a, b) => b[1] - a[1]);
+		const total = entries.reduce((s, kv) => s + kv[1], 0);
+		if (total <= 0 || entries.length === 0) return null;
+		const topTicker = entries[0][0];
+		const topShare = entries[0][1] / total;
+		const top5Share = entries.slice(0, 5).reduce((s, kv) => s + kv[1], 0) / total;
+		let level = 'none';
+		if (topShare > 0.50 || top5Share > 0.85) level = 'severe';
+		else if (topShare > 0.30 || top5Share > 0.70) level = 'caution';
+		return { level, topTicker, topShare, top5Share };
+	}
+	function renderConcentrationWarning() {
+		const c = computeConcentration();
+		const box = $('concentration-warning');
+		if (!box) return;
+		if (!c || c.level === 'none') { box.innerHTML = ''; return; }
+		const pct = (n) => (n * 100).toFixed(1) + '%';
+		const cls = c.level === 'severe' ? 'warning severe' : 'warning';
+		let headline;
+		if (c.topShare > 0.30) {
+			headline = '<b>Concentración alta:</b> ' + c.topTicker + ' es ' + pct(c.topShare) + ' del portafolio';
+			if (c.top5Share > 0.70) headline += '. Top 5 emisoras = ' + pct(c.top5Share);
+			headline += '.';
+		} else {
+			headline = '<b>Top 5 emisoras concentran ' + pct(c.top5Share) + '</b> del portafolio.';
+		}
+		const detail = c.level === 'severe'
+			? 'Riesgo de exposición single-name elevado. Considera diversificar.'
+			: 'Considera revisar si la concentración es intencional.';
+		box.innerHTML = '<div class="' + cls + '">' + headline + '<div class="detail">' + detail + '</div></div>';
+	}
+
 	function aggregates() {
 		// Prefer the v3 dashboard total when available — matches GBM mobile.
 		let totalValueFromIG = null;
@@ -238,6 +361,7 @@
 	function renderAll() {
 		renderHeader();
 		renderCards();
+		renderConcentrationWarning();
 		renderAccounts();
 		populateAccountFilter();
 		renderTopMovers();
@@ -287,6 +411,37 @@
 		pctEl.className = 'delta ' + pnlClass(totalPnL);
 		$('num-positions').textContent = numPositions;
 		$('num-accounts').textContent = state.accounts.length;
+
+		// XIRR card. Annualized return computed from external_deposit /
+		// external_withdrawal flows + today's portfolio value. May read
+		// "—" if there are no flows in the window (e.g. all deposits
+		// happened before the GBM_TRANSACTIONS_DAYS window).
+		const xirrEl = $('xirr-value');
+		const xirrDetailEl = $('xirr-detail');
+		if (xirrEl) {
+			const flows = buildXirrCashflows(totalValue);
+			if (!flows || flows.length < 2) {
+				xirrEl.textContent = '—';
+				if (xirrDetailEl) {
+					const nFlows = flows ? flows.length - 1 : 0;
+					xirrDetailEl.textContent = nFlows === 0
+						? 'sin flujos externos en la ventana'
+						: 'historial insuficiente (' + nFlows + ' flujo' + (nFlows === 1 ? '' : 's') + ')';
+				}
+			} else {
+				const r = xirr(flows);
+				if (r == null || !isFinite(r)) {
+					xirrEl.textContent = '—';
+					if (xirrDetailEl) xirrDetailEl.textContent = 'no converge';
+				} else {
+					xirrEl.textContent = fmtPct(r);
+					xirrEl.className = 'value ' + pnlClass(r);
+					if (xirrDetailEl) {
+						xirrDetailEl.textContent = (flows.length - 1) + ' flujos externos en ' + (state.transactions && state.transactions.from_date ? 'la ventana' : 'historial');
+					}
+				}
+			}
+		}
 	}
 
 	function renderAccounts() {

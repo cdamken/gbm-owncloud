@@ -613,3 +613,27 @@ body.gbm-app-active #content-wrapper {
 	#gbm-app .settings-side a { border-left: none; border-bottom: 3px solid transparent; }
 	#gbm-app .settings-side a.active { border-left: none; border-bottom-color: var(--blue); }
 }
+
+/* -------------------------------------------------------------------
+ * Concentration warning banner (index page)
+ * ------------------------------------------------------------------- */
+#gbm-app #concentration-warning:empty { display: none; }
+#gbm-app .warning {
+	background: rgba(251, 191, 36, 0.10);
+	border-left: 4px solid var(--amber);
+	color: var(--amber);
+	padding: 14px 18px;
+	border-radius: 8px;
+	margin: 0 0 16px;
+	font-size: 14px;
+}
+#gbm-app .warning.severe {
+	background: rgba(248, 113, 113, 0.10);
+	border-left-color: var(--red);
+	color: var(--red);
+}
+#gbm-app .warning .detail {
+	color: var(--muted);
+	font-size: 12px;
+	margin-top: 6px;
+}
