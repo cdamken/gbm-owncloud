@@ -5,6 +5,61 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.9.0] — 2026-06-02
+
+Upstream catch-up: gbm-mx-api v0.2.6 → v0.3.1 + gbm-dashboard v0.11.1 → v0.13.0 (partial).
+
+### Added — three new pages and four new endpoints
+
+- **📖 Glosario** (`/glossary`): ~25 términos en 5 secciones (Mercados,
+  Cuentas, Fiscal, Métricas, Categorías) con búsqueda live (Esc limpia).
+- **⚙ Configuración** (`/settings`): sidebar con 4 secciones (Cuenta,
+  Rangos de datos, Sesión, Acerca de). Permite cambiar credenciales,
+  configurar `orders_days` / `dividends_days` / `transactions_days`
+  per-user, exportar CSV para SAT, y revocar la sesión (con Cognito
+  GlobalSignOut real).
+- **📈 Análisis** (`/analysis`): página stub. El contenido completo
+  (ring chart, dividendos mensuales, línea de capital, XIRR, benchmark
+  replay NAFTRAC + SPY) llega en una entrega posterior.
+- `GET /api/settings` + `POST /api/settings`: leer/guardar days config
+  per-user (validado 1..3650).
+- `POST /api/reset`: Cognito GlobalSignOut (best-effort) + wipe del
+  caché del usuario.
+- `GET /export/transactions.csv`: CSV con headers en español listo
+  para pasarlo al contador (Compra/Venta derivadas de is_buy/is_sell,
+  RFC 4180 quoting).
+- `GET /benchmark/{symbol}`: proxy a Yahoo Finance v8 chart endpoint
+  con cache de 24h por usuario (`benchmark_cache/`). Allowlist regex
+  estricta en el symbol.
+
+### Server-side
+
+- **gbm-mx-api upgraded a v0.3.1**: silent Cognito refresh
+  (`GbmClient.from_saved()` auto-renueva el access token usando el
+  refresh_token cada hora sin pedirte TOTP) + `global_signout()` helper
+  para revoke real.
+- `fetch_wrapper.py` aprende `--revoke` para invocar
+  `global_signout(session)` (best-effort GlobalSignOut).
+- `GbmService.php` ahora pasa `GBM_ORDERS_DAYS` + `GBM_DIVIDENDS_DAYS`
+  + `GBM_TRANSACTIONS_DAYS` (per-user) al wrapper.
+- `setCredentials()` detecta cambio de email y wipea la sesión y data
+  cacheada automáticamente.
+
+### UI
+
+- Brand-adjacent palette: `--blue` deeper (`#1e88e5`), nuevo
+  `--accent-teal` (`#00b8a9`), logo-box con gradiente navy → teal.
+- Nav ampliada a 8 pestañas en todas las páginas: Portafolio · Movimientos
+  · Histórico · Dividendos · Libro Diario · Análisis · Glosario ·
+  Configuración.
+
+### Deferred to next release
+
+- Análisis full content (Chart.js doughnut/bar/line + XIRR cálculo +
+  benchmark replay algorithm + range pills + forward dividend projection).
+- index.html updates: 5th KPI card (XIRR), concentration warnings
+  banner, clickable ticker → side panel con research links.
+
 ## [0.5.0] — 2026-05-26
 
 Upstream catch-up: `gbm-mx-api` v0.1.4 → v0.2.0 + `gbm-dashboard` v0.6.2 → v0.8.0.

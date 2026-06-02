@@ -63,6 +63,30 @@ class PageController extends Controller {
 		return $this->renderTemplate('transactions');
 	}
 
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function glossary(): TemplateResponse {
+		return $this->renderTemplate('glossary');
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function settings(): TemplateResponse {
+		return $this->renderTemplate('settings');
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function analysis(): TemplateResponse {
+		return $this->renderTemplate('analysis');
+	}
+
 	private function renderTemplate(string $template): TemplateResponse {
 		\OCP\Util::addStyle($this->appName, 'dashboard');
 		// One JS module per template. 'main' → dashboard.js; the others map 1:1.
@@ -72,20 +96,30 @@ class PageController extends Controller {
 			'orders_all'   => 'orders_all',
 			'dividends'    => 'dividends',
 			'transactions' => 'transactions',
+			'glossary'     => 'glossary',
+			'settings'     => 'settings',
+			'analysis'     => 'analysis',
 		];
 		\OCP\Util::addScript($this->appName, $scriptMap[$template] ?? 'dashboard');
 
 		// Pass route URLs to the JS so it doesn't hardcode paths.
 		$params = [
 			'routes' => [
-				'index'        => $this->urlGenerator->linkToRoute('gbm.page.index'),
-				'orders'       => $this->urlGenerator->linkToRoute('gbm.page.orders'),
-				'orders_all'   => $this->urlGenerator->linkToRoute('gbm.page.ordersAll'),
-				'dividends'    => $this->urlGenerator->linkToRoute('gbm.page.dividends'),
-				'transactions' => $this->urlGenerator->linkToRoute('gbm.page.transactions'),
-				'data'         => $this->urlGenerator->linkToRoute('gbm.api.data',      ['type' => '__TYPE__']),
-				'config'       => $this->urlGenerator->linkToRoute('gbm.api.getConfig'),
-				'update'       => $this->urlGenerator->linkToRoute('gbm.api.update'),
+				'index'         => $this->urlGenerator->linkToRoute('gbm.page.index'),
+				'orders'        => $this->urlGenerator->linkToRoute('gbm.page.orders'),
+				'orders_all'    => $this->urlGenerator->linkToRoute('gbm.page.ordersAll'),
+				'dividends'     => $this->urlGenerator->linkToRoute('gbm.page.dividends'),
+				'transactions'  => $this->urlGenerator->linkToRoute('gbm.page.transactions'),
+				'glossary'      => $this->urlGenerator->linkToRoute('gbm.page.glossary'),
+				'settings'      => $this->urlGenerator->linkToRoute('gbm.page.settings'),
+				'analysis'      => $this->urlGenerator->linkToRoute('gbm.page.analysis'),
+				'data'          => $this->urlGenerator->linkToRoute('gbm.api.data',      ['type' => '__TYPE__']),
+				'config'        => $this->urlGenerator->linkToRoute('gbm.api.getConfig'),
+				'update'        => $this->urlGenerator->linkToRoute('gbm.api.update'),
+				'settings_api'  => $this->urlGenerator->linkToRoute('gbm.api.settingsGet'),
+				'reset'         => $this->urlGenerator->linkToRoute('gbm.api.reset'),
+				'export_csv'    => $this->urlGenerator->linkToRoute('gbm.api.exportTransactionsCsv'),
+				'benchmark'     => $this->urlGenerator->linkToRoute('gbm.api.benchmark', ['symbol' => '__SYMBOL__']),
 			],
 		];
 

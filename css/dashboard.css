@@ -32,7 +32,8 @@ body.gbm-app-active #content-wrapper {
 	--green: #4ade80;
 	--red: #f87171;
 	--amber: #fbbf24;
-	--blue: #60a5fa;
+	--blue: #1e88e5;        /* brand-adjacent — deeper, closer to gbm.com */
+	--accent-teal: #00b8a9; /* GBM turquesa for secondary highlights */
 	--purple: #c084fc;
 
 	background: var(--bg);
@@ -50,7 +51,7 @@ body.gbm-app-active #content-wrapper {
 	display: flex; align-items: center; gap: 12px; font-weight: 700;
 }
 #gbm-app .logo-box {
-	background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+	background: linear-gradient(135deg, #003b71, #00b8a9); /* navy → teal */
 	width: 44px; height: 44px; border-radius: 8px;
 	display: flex; align-items: center; justify-content: center;
 	font-size: 14px; font-weight: 800; color: white;
@@ -436,4 +437,179 @@ body.gbm-app-active #content-wrapper {
 	min-width: 0 !important; min-height: 0 !important;
 	padding: 0 !important; margin: 0 !important;
 	background-image: none !important;
+}
+
+/* -------------------------------------------------------------------
+ * Glossary page (templates/glossary.php)
+ * ------------------------------------------------------------------- */
+#gbm-app .glossary-controls {
+	display: flex; gap: 8px; margin-bottom: 24px;
+}
+#gbm-app .glossary-controls input {
+	flex: 1; max-width: 360px;
+	/* Match the .controls input override (ownCloud's core.css fights us). */
+	background: var(--card) !important;
+	border: 1px solid var(--border) !important;
+	color: var(--text) !important;
+	padding: 10px 14px !important;
+	margin: 0 !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
+	height: auto !important;
+	min-height: 0;
+}
+#gbm-app .glossary-controls input:focus {
+	outline: none; border-color: var(--blue) !important;
+}
+#gbm-app .glossary-section {
+	margin-bottom: 32px;
+}
+#gbm-app .glossary-section h2 {
+	font-size: 16px; font-weight: 700; color: var(--blue);
+	margin-bottom: 14px; padding-bottom: 8px;
+	border-bottom: 1px solid var(--border);
+	text-transform: uppercase; letter-spacing: 0.8px;
+}
+#gbm-app .term {
+	background: var(--card); border: 1px solid var(--border);
+	border-radius: 10px; padding: 16px 20px;
+	margin-bottom: 12px;
+}
+#gbm-app .term dt {
+	font-weight: 700; font-size: 15px; color: var(--text);
+	display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px;
+	flex-wrap: wrap;
+}
+#gbm-app .term dt .label {
+	font-size: 11px; color: var(--muted);
+	text-transform: uppercase; letter-spacing: 0.6px;
+	background: var(--border); padding: 2px 8px; border-radius: 10px;
+	font-weight: 600;
+}
+#gbm-app .term dd { color: var(--muted); font-size: 14px; line-height: 1.55; }
+#gbm-app .term dd code {
+	background: var(--bg); padding: 1px 6px; border-radius: 4px;
+	color: var(--text); font-size: 13px;
+}
+#gbm-app .term.hidden { display: none; }
+#gbm-app .glossary-section.empty { display: none; }
+#gbm-app .no-results {
+	text-align: center; padding: 40px; color: var(--muted);
+	font-size: 14px; display: none;
+}
+#gbm-app .no-results.show { display: block; }
+
+/* -------------------------------------------------------------------
+ * Settings page (templates/settings.php)
+ * ------------------------------------------------------------------- */
+#gbm-app .settings-grid {
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	gap: 24px;
+	align-items: start;
+}
+#gbm-app .settings-side {
+	display: flex; flex-direction: column; gap: 4px;
+	position: sticky; top: 80px;
+}
+#gbm-app .settings-side a {
+	color: var(--muted); text-decoration: none;
+	padding: 10px 14px; border-radius: 8px;
+	font-size: 14px; font-weight: 500;
+	border-left: 3px solid transparent;
+	transition: all 0.15s;
+}
+#gbm-app .settings-side a:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+#gbm-app .settings-side a.active {
+	color: var(--blue);
+	background: rgba(30, 136, 229, 0.10);
+	border-left-color: var(--blue);
+}
+#gbm-app .settings-section {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 24px 28px;
+	margin-bottom: 20px;
+	scroll-margin-top: 72px;
+}
+#gbm-app .settings-section h2 {
+	font-size: 18px; margin-bottom: 4px; font-weight: 700;
+	display: flex; align-items: center; gap: 8px;
+}
+#gbm-app .settings-section .section-desc {
+	color: var(--muted); font-size: 13px; margin-bottom: 20px;
+}
+#gbm-app .settings-row { margin-bottom: 16px; }
+#gbm-app .settings-row label {
+	display: block; font-size: 12px; text-transform: uppercase;
+	letter-spacing: 0.7px; color: var(--muted);
+	font-weight: 600; margin-bottom: 6px;
+}
+#gbm-app .settings-row input {
+	width: 100%;
+	background: var(--bg) !important;
+	border: 1px solid var(--border) !important;
+	color: var(--text) !important;
+	padding: 10px 14px !important;
+	margin: 0 !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
+	font-family: inherit !important;
+	height: auto !important;
+	box-sizing: border-box;
+}
+#gbm-app .settings-row input:focus { outline: none; border-color: var(--blue) !important; }
+#gbm-app .settings-row input[type="number"] { max-width: 180px; }
+#gbm-app .settings-actions {
+	display: flex; gap: 10px; flex-wrap: wrap;
+	margin-top: 20px; padding-top: 16px;
+	border-top: 1px solid var(--border);
+}
+#gbm-app .settings-actions button {
+	padding: 9px 18px; border-radius: 8px; border: none;
+	font-size: 13px; font-weight: 600; cursor: pointer;
+}
+#gbm-app .settings-actions button.primary { background: var(--blue); color: var(--bg); }
+#gbm-app .settings-actions button.primary:hover { background: #4eb5f7; }
+#gbm-app .settings-actions button.primary:disabled { opacity: 0.5; cursor: wait; }
+#gbm-app .settings-actions button.ghost {
+	background: transparent; color: var(--muted); border: 1px solid var(--border);
+}
+#gbm-app .settings-actions button.ghost:hover { color: var(--text); border-color: var(--muted); }
+#gbm-app .settings-actions button.danger {
+	background: transparent; color: var(--red); border: 1px solid var(--red);
+}
+#gbm-app .settings-actions button.danger:hover { background: rgba(248, 113, 113, 0.10); }
+#gbm-app .settings-actions-link {
+	background: transparent; color: var(--muted); border: 1px solid var(--border);
+	padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+	text-decoration: none; cursor: pointer;
+}
+#gbm-app .settings-actions-link:hover { color: var(--text); border-color: var(--muted); }
+
+#gbm-app .flash {
+	margin-top: 12px; padding: 10px 14px; border-radius: 8px;
+	font-size: 13px; display: none;
+}
+#gbm-app .flash.show { display: block; }
+#gbm-app .flash.ok  { background: rgba(74, 222, 128, 0.10); color: var(--green); border-left: 3px solid var(--green); }
+#gbm-app .flash.err { background: rgba(248, 113, 113, 0.10); color: var(--red);   border-left: 3px solid var(--red); }
+
+#gbm-app .about-list { list-style: none; padding: 0; margin: 0; }
+#gbm-app .about-list li {
+	padding: 8px 0; border-bottom: 1px solid var(--border);
+	font-size: 13px; display: flex; justify-content: space-between; gap: 12px;
+}
+#gbm-app .about-list li:last-child { border-bottom: none; }
+#gbm-app .about-list li .label { color: var(--muted); }
+#gbm-app .about-list li .value { font-family: monospace; color: var(--text); }
+#gbm-app .about-list a { color: var(--blue); text-decoration: none; }
+#gbm-app .about-list a:hover { text-decoration: underline; }
+
+@media (max-width: 820px) {
+	#gbm-app .settings-grid { grid-template-columns: 1fr; }
+	#gbm-app .settings-side { position: static; flex-direction: row; flex-wrap: wrap; }
+	#gbm-app .settings-side a { border-left: none; border-bottom: 3px solid transparent; }
+	#gbm-app .settings-side a.active { border-left: none; border-bottom-color: var(--blue); }
 }

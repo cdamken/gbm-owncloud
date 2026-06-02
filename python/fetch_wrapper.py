@@ -129,11 +129,42 @@ def write_json(path: Path, data) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch GBM data into a per-user dir.")
     parser.add_argument("--session-path", required=True, help="Where to read/write session.json.")
-    parser.add_argument("--data-dir", required=True, help="Where to write *.json output files.")
+    parser.add_argument("--data-dir", help="Where to write *.json output files (required unless --revoke).")
     parser.add_argument("--totp", help="6-digit TOTP code; supplied by the browser modal.")
+    parser.add_argument("--revoke", action="store_true",
+                        help="Call Cognito GlobalSignOut on the saved session and exit. "
+                             "Best-effort: exits 0 if revoked, non-zero with stderr otherwise.")
     args = parser.parse_args()
 
     session_path = Path(args.session_path).expanduser().resolve()
+
+    # --revoke short-circuit: don't authenticate, don't write data — just
+    # invalidate the existing refresh_token server-side via Cognito.
+    if args.revoke:
+        try:
+            from gbm_mx_api.auth import global_signout
+            from gbm_mx_api.auth.session import Session
+        except ImportError as e:
+            sys.stderr.write(f"global_signout unavailable: {e}\n")
+            sys.exit(30)
+        if not session_path.is_file():
+            sys.stderr.write("no saved session to revoke\n")
+            sys.exit(0)  # nothing to do, treat as success
+        try:
+            sess = Session.try_load(session_path)
+            if sess is None:
+                sys.stderr.write("session file unreadable\n")
+                sys.exit(20)
+            global_signout(sess)
+            print("Cognito GlobalSignOut OK")
+            sys.exit(0)
+        except Exception as e:
+            sys.stderr.write(f"GlobalSignOut failed: {e}\n")
+            sys.exit(20)
+
+    if not args.data_dir:
+        sys.stderr.write("--data-dir is required (unless --revoke)\n")
+        sys.exit(30)
     data_dir = Path(args.data_dir).expanduser().resolve()
     data_dir.mkdir(parents=True, exist_ok=True)
     try:

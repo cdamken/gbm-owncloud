@@ -8,6 +8,9 @@ $routes = $_['routes'];
 	data-route-orders-all="<?php p($routes['orders_all']); ?>"
 	data-route-dividends="<?php p($routes['dividends']); ?>"
 	data-route-transactions="<?php p($routes['transactions']); ?>"
+	data-route-glossary="<?php p($routes['glossary']); ?>"
+	data-route-settings="<?php p($routes['settings']); ?>"
+	data-route-analysis="<?php p($routes['analysis']); ?>"
 	data-route-data="<?php p($routes['data']); ?>"
 	data-route-config="<?php p($routes['config']); ?>"
 	data-route-update="<?php p($routes['update']); ?>">
@@ -28,6 +31,9 @@ $routes = $_['routes'];
 		<a href="<?php p($routes['orders_all']); ?>" class="active">📜 Histórico</a>
 		<a href="<?php p($routes['dividends']); ?>">💰 Dividendos</a>
 		<a href="<?php p($routes['transactions']); ?>">📒 Libro Diario</a>
+		<a href="<?php p($routes['analysis']); ?>">📈 Análisis</a>
+		<a href="<?php p($routes['glossary']); ?>">📖 Glosario</a>
+		<a href="<?php p($routes['settings']); ?>">⚙ Configuración</a>
 	</div>
 
 	<div id="error-box"></div>
