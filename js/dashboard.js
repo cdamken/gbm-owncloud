@@ -918,5 +918,31 @@
 
 		maybeShowConfigOnFirstLoad();
 		load();
+
+		// Refresh the staleness chip every 60s so the "hace N min" label
+		// rolls forward without a reload (5 min → 6 min → ...). Re-fetches
+		// last_update so it ALSO catches updates from other tabs.
+		// Ported from gbm-dashboard@03bb089. BroadcastChannel cross-tab
+		// signaling skipped for now — the 60s poll covers the common case.
+		setInterval(async () => {
+			const chip = $('last-update-age');
+			if (!chip) return;
+			try {
+				const r = await fetch(dataUrl('last_update') + '?t=' + Date.now(), { cache: 'no-store' });
+				if (!r.ok) return;
+				const ts = (await r.text()).trim();
+				if (!ts) return;
+				state.lastUpdate = ts;
+				const stale = stalenessHint(ts);
+				if (!stale) return;
+				chip.textContent = stale.label;
+				chip.className = 'staleness-chip show ' + stale.severity;
+				chip.title = formatTimestamp(ts) + '\n' + (
+					stale.severity === 'stale' ? 'Tu snapshot es viejo — dale ⟳ Actualizar.'
+					: stale.severity === 'warn' ? 'Tu snapshot tiene más de 15 min.'
+					: 'Datos frescos.'
+				);
+			} catch (_) {}
+		}, 60_000);
 	});
 })();
