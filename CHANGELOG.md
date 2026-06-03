@@ -5,6 +5,24 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.13.5] — 2026-06-03
+
+UX fix attempt: progress overlay not visible during /update fetch.
+Carlos reports "no aparece la pantalla de descargando, solo lo hace".
+The JS path is correct (showProgressOverlay → .classList.add('show'))
+and the HTML/CSS look right, but ownCloud's chrome may be creating
+a stacking context that swallows our `z-index: 200`.
+
+### Fixed
+
+- `css/dashboard.css`: bump progress-overlay `z-index` 200 → 9999
+  and add `!important` on `position`, `z-index`, and the `.show`
+  display to defeat any owncloud rule trying to override.
+
+If the overlay still doesn't show after this, the issue is browser
+cache (the previous dashboard.js without `closeTotpModal()` is still
+loaded). Force "Empty Cache and Hard Reload" from Chrome.
+
 ## [0.13.4] — 2026-06-03
 
 UX fix: tighten the vertical space at the top of every page.

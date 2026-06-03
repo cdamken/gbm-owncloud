@@ -255,12 +255,14 @@ body.gbm-app-active #content-wrapper {
 #gbm-app .disclaimer a:hover { text-decoration: underline; }
 
 /* ----- progress overlay (shown during /update fetches) ----- */
+/* Defensive z-index: 9999 + !important — owncloud's own header/sidebar
+   can introduce stacking contexts that swallow z-index: 200. */
 #gbm-app .progress-overlay {
-	position: fixed; inset: 0; background: rgba(15, 20, 25, 0.92);
+	position: fixed !important; inset: 0; background: rgba(15, 20, 25, 0.92);
 	display: none; align-items: center; justify-content: center;
-	z-index: 200; backdrop-filter: blur(8px);
+	z-index: 9999 !important; backdrop-filter: blur(8px);
 }
-#gbm-app .progress-overlay.show { display: flex; }
+#gbm-app .progress-overlay.show { display: flex !important; }
 #gbm-app .progress-box {
 	background: var(--card); border: 1px solid var(--border);
 	border-radius: 12px; padding: 32px; max-width: 540px; width: 92%;
