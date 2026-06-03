@@ -5,6 +5,33 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.13.2] — 2026-06-03
+
+Fix data quality: the "Capital invertido en el tiempo" chart was
+swinging ±$200k MXN per day from overnight cash-sweep operations
+that aren't real capital deployment. Carlos noticed it on the local
+GBM dashboard after the 10-year defaults kicked in. The Libro Diario
+already had an `isNoise()` filter that hides these — the chart in
+the Análisis page never applied it. Also, the existing filter was
+narrow (only Personal `GBMF2 BF`). The Asesor account has the same
+peso fund AND a dollar money-market `GBMDINT BO`, both auto-rolling.
+
+### Fixed
+
+- `js/analysis.js::renderNetWorthChart`: filter sweep / repo /
+  internal-transfer transactions before accumulating the cost-basis
+  line. Without this, GBM's overnight cash sweeps (peso GBMF2 BF,
+  dollar GBMDINT BO) and repos showed as ±$200k buys/sells that
+  inflated the line beyond reality.
+- `js/transactions.js::isNoise`: broaden to cover GBMF2 BF + GBMDINT
+  BO across all sub-accounts (not just `EP47NC05`).
+
+### Result
+
+The "Capital invertido en el tiempo" chart now renders a smooth,
+monotonically-growing line that reflects real stock/fund purchases.
+NAFTRAC and SPY benchmark overlays align meaningfully again.
+
 ## [0.13.1] — 2026-06-03
 
 UX fix: close the TOTP modal when the progress overlay opens so the

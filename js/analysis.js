@@ -547,6 +547,16 @@
 		for (const t of sorted) {
 			const date = (t.process_date || '').slice(0, 10);
 			if (!date) continue;
+			// Filter system noise (same as Libro Diario "Mostrar ruido"
+			// toggle): internal transfers, repos, and Smart Cash GBMF2
+			// sweeps inflate is_buy/is_sell with movements that don't
+			// represent real capital deployment.
+			const cat = t.category;
+			if (cat === 'deposit' || cat === 'withdrawal') continue;
+			if (cat === 'repo_buy' || cat === 'repo_mature') continue;
+			// Money-market sweeps (peso GBMF2 BF, dollar GBMDINT BO).
+			// Auto-roll of idle cash, not capital deployment.
+			if (t.security_id === 'GBMF2 BF' || t.security_id === 'GBMDINT BO') continue;
 			const amt = Math.abs(Number(t.amount) || 0);
 			if (t.is_buy)       running += amt;
 			else if (t.is_sell) running -= amt;

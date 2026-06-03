@@ -84,7 +84,8 @@
 	function isNoise(t) {
 		if (t.category === 'deposit' || t.category === 'withdrawal') return true;
 		if (t.category === 'repo_buy' || t.category === 'repo_mature') return true;
-		if (t.account_legacy_id === 'EP47NC05' && t.security_id === 'GBMF2 BF') return true;
+		// Money-market sweep funds (peso + dollar). Multiple sub-accounts.
+		if (t.security_id === 'GBMF2 BF' || t.security_id === 'GBMDINT BO') return true;
 		return false;
 	}
 
