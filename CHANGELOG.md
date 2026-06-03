@@ -5,6 +5,55 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.13.0] — 2026-06-03
+
+Incremental fetch — el ⟳ Actualizar diario ya no re-descarga 10 años
+cada vez. Lee `last_update.date`, baja solo el delta y hace merge por
+id único en el JSON existente. La descarga completa sigue siendo
+accesible vía el checkbox "Recargar todo desde cero" en el modal TOTP.
+
+### Added
+
+- `python/fetch_wrapper.py`: nuevas funciones `read_last_update_date()`
+  + `merge_records()`; flag `--full`; lógica de modo incremental con
+  ventana de seguridad de 14 días para capturar liquidaciones tardías.
+- `lib/Controller/ApiController::update()`: nuevo parámetro `bool $full`.
+- `lib/Service/GbmService::runFetch()`: pasa `--full` al script Python
+  cuando el browser lo pide.
+- `templates/main.php`: checkbox **Recargar todo desde cero** en el
+  modal TOTP (mismo patrón que TR-owncloud's "↻ Full Reload").
+- `js/dashboard.js::triggerUpdate()`: acepta `opts.full`; `submitTotp()`
+  lo lee del checkbox y lo pasa al POST.
+
+### Behavior
+
+- **Sin `last_update.date`** (primer run, post-reset): full fetch
+  usando la ventana configurada (default 10 años).
+- **Con `last_update.date`** (subsecuentes): fetch desde
+  `last_update - 14 días` y merge en `orders.json`, `orders_all.json`,
+  `dividends.json`, `transactions.json` por sus IDs únicos. Mucho más
+  rápido (~10-30s vs ~3-5min en cuentas grandes).
+- **`full=true`** desde el checkbox: bypassea el incremental, baja la
+  ventana completa, sobrescribe. Útil después de cambiar de cuenta o
+  cuando los números se ven raros.
+
+### Merge keys
+
+| Archivo | Key | Comportamiento en colisión |
+|---|---|---|
+| `orders.json` | `sob_id` | new wins (pending → filled propagates) |
+| `orders_all.json` | `sob_id` | new wins |
+| `dividends.json` | `transaction_id` | new wins |
+| `transactions.json` | `transaction_id` | new wins |
+| `accounts.json`, `positions.json`, `investments_groups.json` | — | siempre overwrite (snapshots) |
+
+### Notes
+
+- El `from_date` del JSON se mantiene como el más antiguo (no se
+  encoge cuando el incremental fetcha solo 14 días).
+- Si pip cachea parcialmente `gbm-mx-api`, los IDs pueden volverse
+  inconsistentes — usar `Recargar todo desde cero` lo arregla.
+
 ## [0.12.0] — 2026-06-03
 
 Quita el límite artificial de 365 días en los rangos de orders /

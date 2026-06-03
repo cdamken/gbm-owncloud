@@ -92,7 +92,7 @@ class ApiController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 */
-	public function update(?string $totp_code = null): JSONResponse {
+	public function update(?string $totp_code = null, bool $full = false): JSONResponse {
 		if ($totp_code !== null) {
 			$totp_code = trim((string) $totp_code);
 			if (!ctype_digit($totp_code) || strlen($totp_code) !== 6) {
@@ -103,7 +103,10 @@ class ApiController extends Controller {
 			}
 		}
 
-		$result = $this->gbm->runFetch($totp_code === '' ? null : $totp_code);
+		// full=true bypasses the incremental merge and pulls the full
+		// configured window. Triggered by the "Recargar todo desde cero"
+		// checkbox in the TOTP modal.
+		$result = $this->gbm->runFetch($totp_code === '' ? null : $totp_code, $full);
 
 		// Same mapping as gbm-dashboard's server.py.
 		static $map = [

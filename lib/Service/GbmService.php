@@ -228,7 +228,7 @@ class GbmService {
 	 * (mfa_required) otherwise — that's the cue for the browser to open its
 	 * TOTP modal.
 	 */
-	public function runFetch(?string $totpCode): array {
+	public function runFetch(?string $totpCode, bool $full = false): array {
 		if (!$this->isConfigured()) {
 			return ['exitCode' => self::EXIT_CONFIG_ERROR, 'stdout' => '', 'stderr' => 'credentials not configured'];
 		}
@@ -248,6 +248,9 @@ class GbmService {
 		if ($totpCode !== null) {
 			$cmd[] = '--totp';
 			$cmd[] = $totpCode;
+		}
+		if ($full) {
+			$cmd[] = '--full';
 		}
 
 		$env = [

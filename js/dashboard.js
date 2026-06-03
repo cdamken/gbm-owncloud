@@ -658,7 +658,10 @@
 		});
 	}
 
-	async function triggerUpdate(totpCode) {
+	async function triggerUpdate(totpCode, opts) {
+		// opts.full: bypass incremental and force a full-window refetch.
+		// Used by "Recargar todo desde cero" in the TOTP modal.
+		const fullReload = opts && opts.full === true;
 		const btn = $('update-btn');
 		btn.disabled = true;
 		btn.textContent = totpCode ? '⟳ Verificando código...' : '⟳ Conectando...';
@@ -687,7 +690,10 @@
 
 		let res;
 		try {
-			res = await postJson(routes.update, totpCode ? { totp_code: totpCode } : {});
+			const reqBody = {};
+			if (totpCode) reqBody.totp_code = totpCode;
+			if (fullReload) reqBody.full = true;
+			res = await postJson(routes.update, reqBody);
 		} catch (err) {
 			stopOverlay();
 			btn.disabled = false;
@@ -858,9 +864,11 @@
 
 	function submitTotp() {
 		const code = $('totp-input').value.trim();
+		const fullEl = $('totp-full-reload');
+		const full = fullEl ? fullEl.checked === true : false;
 		if (!(code.length === 6 && /^\d+$/.test(code))) return;
 		$('totp-submit').disabled = true;
-		triggerUpdate(code);
+		triggerUpdate(code, { full });
 	}
 
 	// ----------------------------------------------------------------------

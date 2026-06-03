@@ -172,6 +172,10 @@ $routes = $_['routes'];
 			</p>
 			<div class="modal-error hidden" id="totp-error"></div>
 			<input type="text" class="totp" id="totp-input" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="000000">
+			<label class="modal-checkbox" style="display:flex; align-items:flex-start; gap:8px; font-size:12px; color: var(--muted); margin: -4px 0 16px; cursor: pointer; line-height: 1.4;">
+				<input type="checkbox" id="totp-full-reload" style="margin-top: 2px;">
+				<span>Recargar <b>todo desde cero</b> (descarga lenta — solo cuando cambiaste de cuenta o quieres limpiar datos viejos)</span>
+			</label>
 			<div class="modal-btns">
 				<button class="secondary" id="totp-cancel">Cancelar</button>
 				<button class="primary" id="totp-submit">Actualizar</button>
