@@ -2,7 +2,7 @@
 /** @var array $_ */
 $routes = $_['routes'];
 ?>
-<div id="gbm-app"
+<div id="gbm-app" data-tab="settings"
 	data-route-index="<?php p($routes['index']); ?>"
 	data-route-orders="<?php p($routes['orders']); ?>"
 	data-route-orders-all="<?php p($routes['orders_all']); ?>"
@@ -18,23 +18,8 @@ $routes = $_['routes'];
 	data-route-export-csv="<?php p($routes['export_csv']); ?>"
 	data-route-update="<?php p($routes['update']); ?>">
 
-	<h1>
-		<div class="logo-box">GBM</div>
-		Configuración
-	</h1>
 	<div class="subtitle">
 		Credenciales, rangos de descarga, e información de la sesión.
-	</div>
-
-	<div class="nav">
-		<a href="<?php p($routes['index']); ?>">📊 Portafolio</a>
-		<a href="<?php p($routes['orders']); ?>">📋 Movimientos</a>
-		<a href="<?php p($routes['orders_all']); ?>">📜 Histórico</a>
-		<a href="<?php p($routes['dividends']); ?>">💰 Dividendos</a>
-		<a href="<?php p($routes['transactions']); ?>">📒 Libro Diario</a>
-		<a href="<?php p($routes['analysis']); ?>">📈 Análisis</a>
-		<a href="<?php p($routes['glossary']); ?>">📖 Glosario</a>
-		<a href="<?php p($routes['settings']); ?>" class="active">⚙ Configuración</a>
 	</div>
 
 	<div class="settings-grid">

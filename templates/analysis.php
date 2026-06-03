@@ -13,7 +13,7 @@ $routes = $_['routes'];
  *      of `/DATA/positions.json`. Benchmarks via routes.benchmark.
  */
 ?>
-<div id="gbm-app" class="analysis-page"
+<div id="gbm-app" class="analysis-page" data-tab="analysis"
 	data-route-index="<?php p($routes['index']); ?>"
 	data-route-orders="<?php p($routes['orders']); ?>"
 	data-route-orders-all="<?php p($routes['orders_all']); ?>"
@@ -27,25 +27,10 @@ $routes = $_['routes'];
 	data-route-update="<?php p($routes['update']); ?>"
 	data-route-benchmark="<?php p($routes['benchmark']); ?>">
 
-	<h1>
-		<div class="logo-box">GBM</div>
-		Análisis
-	</h1>
 	<div class="subtitle">
 		Visualizaciones del portafolio · Última actualización:
 		<span id="last-update">—</span>
 		<span id="last-update-age" class="staleness-chip"></span>
-	</div>
-
-	<div class="nav">
-		<a href="<?php p($routes['index']); ?>">📊 Portafolio</a>
-		<a href="<?php p($routes['orders']); ?>">📋 Movimientos</a>
-		<a href="<?php p($routes['orders_all']); ?>">📜 Histórico</a>
-		<a href="<?php p($routes['dividends']); ?>">💰 Dividendos</a>
-		<a href="<?php p($routes['transactions']); ?>">📒 Libro Diario</a>
-		<a href="<?php p($routes['analysis']); ?>" class="active">📈 Análisis</a>
-		<a href="<?php p($routes['glossary']); ?>">📖 Glosario</a>
-		<a href="<?php p($routes['settings']); ?>">⚙ Configuración</a>
 	</div>
 
 	<div id="error-box"></div>

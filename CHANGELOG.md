@@ -5,6 +5,44 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.11.0] — 2026-06-03
+
+Port del chrome compartido del upstream `gbm-dashboard v0.13.0` —
+cierra el último gap visual identificado al comparar local vs cloud.
+
+### Changed — chrome unificado
+
+- **Top-bar sticky** (brand + 7 tabs centrados + Actualizar a la
+  derecha) inyectada por `js/_shared.js` en todas las páginas.
+  Reemplaza el viejo `<h1>` + pill-nav per-template.
+- **7 tabs** (antes 8): Portafolio · Análisis · Órdenes · Dividendos ·
+  Libro Diario · Glosario · Configuración. "Histórico" deja de estar
+  en el nav (sigue accesible vía Movimientos) — mismo conjunto que
+  gbm-dashboard v0.13.0.
+- Cada template declara su tab activa vía `data-tab` en `#gbm-app`;
+  `_shared.js` infiere por URL como fallback.
+
+### Added
+
+- `js/_shared.js` (NEW): orquestador del chrome compartido. TABS
+  como single source of truth; lee rutas de los `data-route-*` attrs
+  para no hardcodear paths.
+- CSS `#gbm-app .top-bar { ... }` scoped en `css/dashboard.css`:
+  sticky, brand-adjacent navy→teal gradient en el logo, blue brand
+  para Actualizar.
+- `PageController::renderTemplate` carga `_shared` **antes** del JS
+  per-page para que `#update-btn` exista cuando dashboard.js intenta
+  bindear su listener.
+
+### Notes
+
+- El botón `#update-btn` viejo (en la subtitle) se quita de cada
+  template; el nuevo (inyectado por `_shared.js`) hereda el mismo id
+  para que el handler existente en dashboard.js / per-page JS siga
+  funcionando sin cambios.
+- Los modales (TOTP, config, progress overlay) en main.php no se
+  tocan — su flujo en js/dashboard.js se mantiene.
+
 ## [0.10.0] — 2026-06-03
 
 Cierre del último gap de parity con gbm-dashboard: Análisis ahora

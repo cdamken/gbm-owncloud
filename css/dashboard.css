@@ -707,3 +707,55 @@ body.gbm-app-active #content-wrapper {
 	color: var(--blue); border-color: var(--blue);
 	background: rgba(96, 165, 250, 0.10);
 }
+
+/* ============================================================
+ * Top-bar (brand + tabs + Actualizar) — injected by js/_shared.js
+ * Ported from gbm-dashboard/app/_shared.js v0.13.0 SHARED_CHROME_CSS.
+ * Scoped under #gbm-app so it doesn't bleed into ownCloud chrome.
+ * ============================================================ */
+#gbm-app .top-bar {
+	position: sticky; top: 0; z-index: 60;
+	background: var(--bg);
+	border-bottom: 1px solid var(--border);
+	display: flex; align-items: center; gap: 16px; justify-content: space-between;
+	padding: 12px 24px;
+	margin: -24px -24px 24px;
+}
+#gbm-app .top-bar .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+#gbm-app .top-bar .brand-logo {
+	background: linear-gradient(135deg, #003b71, #00b8a9);
+	width: 28px; height: 28px; border-radius: 6px;
+	display: flex; align-items: center; justify-content: center;
+	font-size: 11px; font-weight: 800; color: white;
+	letter-spacing: 0.5px;
+}
+#gbm-app .top-bar .brand-title { font-size: 15px; font-weight: 700; color: var(--text); }
+#gbm-app .top-bar nav {
+	display: flex; gap: 4px; flex: 1; justify-content: center;
+	flex-wrap: wrap; min-width: 0;
+}
+#gbm-app .top-bar nav a {
+	color: var(--muted); text-decoration: none; font-size: 13px;
+	padding: 7px 14px; border-radius: 8px; font-weight: 500;
+	border: 1px solid transparent;
+	transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+#gbm-app .top-bar nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+#gbm-app .top-bar nav a.active {
+	color: var(--blue);
+	background: rgba(96, 165, 250, 0.10);
+	border-color: var(--blue);
+}
+#gbm-app .top-bar .actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+#gbm-app .top-bar .actions .update-btn {
+	background: var(--blue); color: var(--bg); border: none;
+	padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+	cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+}
+#gbm-app .top-bar .actions .update-btn:hover { background: #93c5fd; }
+#gbm-app .top-bar .actions .update-btn:disabled { opacity: 0.7; cursor: progress; }
+@media (max-width: 820px) {
+	#gbm-app .top-bar { flex-wrap: wrap; gap: 8px; padding: 10px 16px; margin: -24px -24px 16px; }
+	#gbm-app .top-bar nav { flex: 1 0 100%; justify-content: flex-start; order: 3; }
+	#gbm-app .top-bar .brand-title { display: none; }
+}

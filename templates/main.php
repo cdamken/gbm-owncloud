@@ -3,7 +3,7 @@
 /** @var \OCP\IL10N $l */
 $routes = $_['routes'];
 ?>
-<div id="gbm-app"
+<div id="gbm-app" data-tab="portfolio"
 	data-route-index="<?php p($routes['index']); ?>"
 	data-route-orders="<?php p($routes['orders']); ?>"
 	data-route-orders-all="<?php p($routes['orders_all']); ?>"
@@ -16,27 +16,10 @@ $routes = $_['routes'];
 	data-route-config="<?php p($routes['config']); ?>"
 	data-route-update="<?php p($routes['update']); ?>">
 
-	<h1>
-		<div class="logo-box">GBM</div>
-		Portfolio Dashboard
-	</h1>
 	<div class="subtitle">
 		<span id="contract-label">Contrato: cargando...</span> · Última actualización:
 		<span id="last-update">—</span>
 		<span id="last-update-age" class="staleness-chip"></span>
-		<button class="update-btn" id="update-btn">⟳ Actualizar</button>
-		<button class="settings-btn" id="settings-btn" title="Configurar credenciales">⚙ Cuenta</button>
-	</div>
-
-	<div class="nav">
-		<a href="<?php p($routes['index']); ?>" class="active">📊 Portafolio</a>
-		<a href="<?php p($routes['orders']); ?>">📋 Movimientos</a>
-		<a href="<?php p($routes['orders_all']); ?>">📜 Histórico</a>
-		<a href="<?php p($routes['dividends']); ?>">💰 Dividendos</a>
-		<a href="<?php p($routes['transactions']); ?>">📒 Libro Diario</a>
-		<a href="<?php p($routes['analysis']); ?>">📈 Análisis</a>
-		<a href="<?php p($routes['glossary']); ?>">📖 Glosario</a>
-		<a href="<?php p($routes['settings']); ?>">⚙ Configuración</a>
 	</div>
 
 	<div id="error-box"></div>

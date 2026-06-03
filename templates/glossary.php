@@ -13,22 +13,9 @@ $routes = $_['routes'];
 	data-route-config="<?php p($routes['config']); ?>"
 	data-route-update="<?php p($routes['update']); ?>">
 
-	<h1>
-		<div class="logo-box">GBM</div>
-		Glosario
-	</h1>
 	<div class="subtitle">
 		Términos de inversión en México (BMV, SAT, fondos, etc.) y conceptos
 		del dashboard. Búsqueda en vivo.
-	</div>
-
-	<div class="nav">
-		<a href="<?php p($routes['index']); ?>">📊 Portafolio</a>
-		<a href="<?php p($routes['orders']); ?>">📋 Movimientos</a>
-		<a href="<?php p($routes['orders_all']); ?>">📜 Histórico</a>
-		<a href="<?php p($routes['dividends']); ?>">💰 Dividendos</a>
-		<a href="<?php p($routes['transactions']); ?>">📒 Libro Diario</a>
-		<a href="<?php p($routes['glossary']); ?>" class="active">📖 Glosario</a>
 	</div>
 
 	<div class="glossary-controls">

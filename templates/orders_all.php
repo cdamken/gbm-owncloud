@@ -15,25 +15,10 @@ $routes = $_['routes'];
 	data-route-config="<?php p($routes['config']); ?>"
 	data-route-update="<?php p($routes['update']); ?>">
 
-	<h1>
-		<div class="logo-box">GBM</div>
-		Histórico completo
-	</h1>
 	<div class="subtitle">
-		<span id="range-label">Rango: cargando...</span> ·
+		Histórico completo · <span id="range-label">Rango: cargando...</span> ·
 		Cuentas: <span id="account-label">—</span> ·
 		Última actualización: <span id="last-update">—</span>
-	</div>
-
-	<div class="nav">
-		<a href="<?php p($routes['index']); ?>">📊 Portafolio</a>
-		<a href="<?php p($routes['orders']); ?>">📋 Movimientos</a>
-		<a href="<?php p($routes['orders_all']); ?>" class="active">📜 Histórico</a>
-		<a href="<?php p($routes['dividends']); ?>">💰 Dividendos</a>
-		<a href="<?php p($routes['transactions']); ?>">📒 Libro Diario</a>
-		<a href="<?php p($routes['analysis']); ?>">📈 Análisis</a>
-		<a href="<?php p($routes['glossary']); ?>">📖 Glosario</a>
-		<a href="<?php p($routes['settings']); ?>">⚙ Configuración</a>
 	</div>
 
 	<div id="error-box"></div>

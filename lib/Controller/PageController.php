@@ -100,6 +100,10 @@ class PageController extends Controller {
 			'settings'     => 'settings',
 			'analysis'     => 'analysis',
 		];
+		// _shared.js injects the sticky top-bar (brand + 7 tabs + Actualizar
+		// button). Must load BEFORE the per-page JS so #update-btn exists
+		// in the DOM when each page's DOMContentLoaded handler queries it.
+		\OCP\Util::addScript($this->appName, '_shared');
 		// Chart.js (vendored — CSP forbids CDN) is only needed by analysis.
 		// Load it BEFORE analysis.js so window.Chart is defined when the
 		// chart helpers fire on DOMContentLoaded.
