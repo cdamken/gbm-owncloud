@@ -38,7 +38,10 @@ body.gbm-app-active #content-wrapper {
 
 	background: var(--bg);
 	color: var(--text);
-	padding: 24px;
+	/* No top padding — the top-bar carries its own padding and the
+	   ownCloud chrome (red "damken cloud" navigation bar) already eats
+	   vertical space. Bottom/left/right stay at 24px. */
+	padding: 0 24px 24px;
 	line-height: 1.5;
 	min-height: 100vh;
 	box-sizing: border-box;
@@ -719,7 +722,7 @@ body.gbm-app-active #content-wrapper {
 	border-bottom: 1px solid var(--border);
 	display: flex; align-items: center; gap: 16px; justify-content: space-between;
 	padding: 12px 24px;
-	margin: -24px -24px 24px;
+	margin: 0 -24px 24px;
 }
 #gbm-app .top-bar .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 #gbm-app .top-bar .brand-logo {
@@ -755,7 +758,7 @@ body.gbm-app-active #content-wrapper {
 #gbm-app .top-bar .actions .update-btn:hover { background: #93c5fd; }
 #gbm-app .top-bar .actions .update-btn:disabled { opacity: 0.7; cursor: progress; }
 @media (max-width: 820px) {
-	#gbm-app .top-bar { flex-wrap: wrap; gap: 8px; padding: 10px 16px; margin: -24px -24px 16px; }
+	#gbm-app .top-bar { flex-wrap: wrap; gap: 8px; padding: 10px 16px; margin: 0 -24px 16px; }
 	#gbm-app .top-bar nav { flex: 1 0 100%; justify-content: flex-start; order: 3; }
 	#gbm-app .top-bar .brand-title { display: none; }
 }

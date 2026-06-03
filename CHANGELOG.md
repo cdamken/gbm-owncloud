@@ -5,6 +5,21 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.13.4] — 2026-06-03
+
+UX fix: tighten the vertical space at the top of every page.
+Carlos noticed the cockpit started a long way below the ownCloud
+red navigation bar — way more dead space than the local dashboard.
+
+### Fixed
+
+- `css/dashboard.css`: drop the 24px top padding on `#gbm-app`.
+  ownCloud's own `#app-content` already pads the container, so we
+  were double-padding. Bottom/left/right stay at 24px.
+- Adjust the top-bar's negative-top-margin compensation accordingly
+  (`margin: -24px -24px 24px` → `margin: 0 -24px 24px`, including
+  the mobile breakpoint) so it sits flush with our content top.
+
 ## [0.13.3] — 2026-06-03
 
 Fix benchmark replay granularity. Carlos noticed the NAFTRAC/SPY
