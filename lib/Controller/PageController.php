@@ -100,6 +100,12 @@ class PageController extends Controller {
 			'settings'     => 'settings',
 			'analysis'     => 'analysis',
 		];
+		// Chart.js (vendored — CSP forbids CDN) is only needed by analysis.
+		// Load it BEFORE analysis.js so window.Chart is defined when the
+		// chart helpers fire on DOMContentLoaded.
+		if ($template === 'analysis') {
+			\OCP\Util::addScript($this->appName, 'vendor/chart.umd.min');
+		}
 		\OCP\Util::addScript($this->appName, $scriptMap[$template] ?? 'dashboard');
 
 		// Pass route URLs to the JS so it doesn't hardcode paths.

@@ -5,6 +5,36 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.10.0] — 2026-06-03
+
+Cierre del último gap de parity con gbm-dashboard: Análisis ahora
+porta el contenido completo en lugar del stub "Próximamente".
+
+### Added — Análisis funcional
+
+- **📈 Análisis** (`/analysis`): port verbatim de
+  `gbm-dashboard/app/analysis.html`. Tres charts con Chart.js:
+  - **Ring chart** de composición por mercado (BMV, SIC, Extranjero,
+    F. Común, F. Deuda, Efectivo).
+  - **Bar chart stacked** de dividendos mensuales (neto vs ISR
+    retenido, últimos 12 meses).
+  - **Line chart** de capital invertido en el tiempo (cost basis,
+    compras − ventas) con overlay de benchmark replay (NAFTRAC + SPY)
+    y range pills (1M / 3M / 6M / 1Y / All).
+- Stat row con dividendos recibidos (12m), ISR retenido (12m) y
+  proyección forward (requiere ≥90 días de historial).
+- Chart.js 4.x vendored en `js/vendor/chart.umd.min.js` (CSP forbids
+  CDN). `PageController` lo carga solo en la página de Análisis.
+- CSS scoped bajo `#gbm-app.analysis-page` (chart-card,
+  chart-container, stat-row, range-pills, chart-empty).
+
+### Notes
+
+- Los benchmarks usan el endpoint existente `/benchmark/{symbol}`
+  (Yahoo Finance proxy con caché 24h en el server).
+- Compatible con cualquier número de cuentas (Personal/Asesor/Smart
+  Cash). Trading USA sigue limitado en el upstream — no es regresión.
+
 ## [0.9.0] — 2026-06-02
 
 Upstream catch-up: gbm-mx-api v0.2.6 → v0.3.1 + gbm-dashboard v0.11.1 → v0.13.0 (partial).

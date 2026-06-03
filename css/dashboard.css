@@ -637,3 +637,73 @@ body.gbm-app-active #content-wrapper {
 	font-size: 12px;
 	margin-top: 6px;
 }
+
+/* ------------------------------------------------------------------------
+ * Analysis page — charts (allocation, dividends, net worth + benchmark).
+ * Ported from gbm-dashboard/app/analysis.html inline styles.
+ * Scoped under #gbm-app.analysis-page to avoid bleeding into other pages.
+ * ------------------------------------------------------------------------ */
+#gbm-app.analysis-page .section {
+	margin: 32px 0 16px; font-size: 18px; font-weight: 700;
+	display: flex; align-items: center; gap: 10px;
+}
+#gbm-app.analysis-page .section:first-of-type { margin-top: 0; }
+#gbm-app.analysis-page .badge {
+	background: var(--border); color: var(--muted); font-size: 12px;
+	padding: 3px 10px; border-radius: 12px; font-weight: 500;
+}
+
+#gbm-app.analysis-page .chart-card {
+	background: var(--card); border: 1px solid var(--border);
+	border-radius: 12px; padding: 20px 24px;
+	margin-bottom: 24px;
+}
+#gbm-app.analysis-page .chart-card.planned {
+	border-style: dashed; opacity: 0.65;
+}
+#gbm-app.analysis-page .chart-card .chart-title {
+	font-size: 14px; color: var(--muted); margin-bottom: 12px;
+	text-transform: uppercase; letter-spacing: 0.7px; font-weight: 600;
+}
+#gbm-app.analysis-page .chart-container {
+	position: relative; height: 320px; width: 100%;
+}
+#gbm-app.analysis-page .chart-empty {
+	height: 320px;
+	display: flex; align-items: center; justify-content: center;
+	color: var(--muted); font-size: 14px; text-align: center; padding: 20px;
+}
+
+#gbm-app.analysis-page .stat-row {
+	background: var(--card); border: 1px solid var(--border);
+	border-radius: 12px; padding: 18px 24px;
+	margin-bottom: 16px;
+	display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 18px;
+}
+#gbm-app.analysis-page .stat-row .stat-label {
+	color: var(--muted); font-size: 11px; text-transform: uppercase;
+	letter-spacing: 0.7px; font-weight: 600; margin-bottom: 4px;
+}
+#gbm-app.analysis-page .stat-row .stat-value { font-size: 22px; font-weight: 700; }
+#gbm-app.analysis-page .stat-row .stat-value.red { color: var(--red); }
+#gbm-app.analysis-page .stat-row .stat-value.green { color: var(--green); }
+#gbm-app.analysis-page .stat-row .stat-value.muted { color: var(--muted); }
+#gbm-app.analysis-page .stat-row .stat-detail { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* Range pills: 1M / 3M / 6M / 1Y / All over the history chart. */
+#gbm-app.analysis-page .range-pills {
+	display: flex; gap: 6px; flex-wrap: wrap;
+	margin-bottom: 8px; justify-content: flex-end;
+}
+#gbm-app.analysis-page .range-pills button {
+	background: var(--card); border: 1px solid var(--border);
+	color: var(--muted); padding: 5px 12px; border-radius: 6px;
+	cursor: pointer; font-size: 12px; font-weight: 600;
+	transition: all 0.15s;
+}
+#gbm-app.analysis-page .range-pills button:hover { color: var(--text); border-color: var(--muted); }
+#gbm-app.analysis-page .range-pills button.active {
+	color: var(--blue); border-color: var(--blue);
+	background: rgba(96, 165, 250, 0.10);
+}
