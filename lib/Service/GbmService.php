@@ -146,9 +146,14 @@ class GbmService {
 		$v = (int) $this->config->getUserValue($this->userId(), self::APPID, $key, (string) $default);
 		return ($v >= 1 && $v <= 3650) ? $v : $default;
 	}
-	public function getOrdersDays(): int       { return $this->getDays('orders_days', 90); }
-	public function getDividendsDays(): int    { return $this->getDays('dividends_days', 365); }
-	public function getTransactionsDays(): int { return $this->getDays('transactions_days', 365); }
+	// Defaults: 10 years (the validated maximum, 1..3650). GBM's API
+	// doesn't impose a hard ceiling on date range — the library
+	// paginates transparently. Users can lower these in Configuración
+	// for faster updates. Old defaults (90/365/365) made XIRR look
+	// broken on accounts older than one year.
+	public function getOrdersDays(): int       { return $this->getDays('orders_days',       3650); }
+	public function getDividendsDays(): int    { return $this->getDays('dividends_days',    3650); }
+	public function getTransactionsDays(): int { return $this->getDays('transactions_days', 3650); }
 	public function setDays(int $orders, int $dividends, int $transactions): void {
 		$uid = $this->userId();
 		$this->config->setUserValue($uid, self::APPID, 'orders_days',       (string) $orders);

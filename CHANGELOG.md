@@ -5,6 +5,35 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.12.0] — 2026-06-03
+
+Quita el límite artificial de 365 días en los rangos de orders /
+dividends / transactions. La API de GBM no impone un techo duro de
+fecha — la librería pagina lo que pidas. El default viejo (90/365/365)
+hacía que XIRR pareciera roto en cuentas con más de un año de
+historial porque no veía los depósitos viejos.
+
+### Changed
+
+- `GbmService::getOrdersDays/getDividendsDays/getTransactionsDays`:
+  defaults **90/365/365 → 3650/3650/3650** (10 años, la ventana
+  máxima validada).
+- `templates/glossary.php` (XIRR): reemplaza la narrativa de "la
+  API solo expone 365 días" por "el rango es configurable, default
+  10 años".
+- `templates/settings.php` (rangos de datos): texto explicativo
+  actualizado para reflejar el nuevo default.
+
+### Notes
+
+- Existing users keep su valor per-user en `oc_preferences` — el
+  cambio de default solo afecta a usuarios nuevos o los que no han
+  tocado la configuración. Quien quiera el nuevo default puede
+  resetearlo (o subirlo manualmente) en Configuración → Rangos de
+  datos.
+- El primer ⟳ Actualizar con 10 años de ventana toma más tiempo (es
+  un endpoint paginado), pero los siguientes son incrementales.
+
 ## [0.11.0] — 2026-06-03
 
 Port del chrome compartido del upstream `gbm-dashboard v0.13.0` —

@@ -169,9 +169,10 @@ $routes = $_['routes'];
 			<dd>Tasa anualizada money-weighted: considera el momento exacto de
 				cada flujo externo (depósitos, retiros) hacia/desde GBM y el valor
 				actual del portafolio. Es el "verdadero" rendimiento.<br><br>
-				<b>Limitación en GBM</b>: la API solo expone 365 días de
-				transacciones, por lo que si depositaste capital antes de esa
-				ventana, XIRR no puede reconciliar y muestra "—".</dd>
+				<b>Nota en GBM</b>: el rango de transacciones es configurable en
+				Configuración (default 10 años, máx 3650 días). Si tu ventana
+				no cubre tus depósitos más antiguos, XIRR no puede reconciliar
+				y muestra "—" — sube los días en Configuración.</dd>
 		</dl>
 
 		<dl class="term">

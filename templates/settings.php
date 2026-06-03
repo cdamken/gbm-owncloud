@@ -66,7 +66,7 @@ $routes = $_['routes'];
 				<p class="section-desc">
 					Cuántos días hacia atrás bajar al hacer ⟳ Actualizar. Valores
 					mayores → más datos pero el fetch tarda más. Defaults: órdenes
-					90, dividendos y libro diario 365.
+					10 años (3650 días) — la ventana máxima validada.
 					<br><br>
 					<b>Tip</b>: la API de GBM no impone un límite duro de fecha. Si
 					quieres que la <b>línea de patrimonio</b> en Análisis empiece a
