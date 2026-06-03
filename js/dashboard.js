@@ -676,6 +676,10 @@
 		const startOverlay = () => {
 			if (overlayShown) return;
 			overlayShown = true;
+			// If we got here from the TOTP modal (user just typed a code),
+			// close that modal as the progress overlay takes over —
+			// otherwise both stack visibly on top of each other.
+			if (totpCode) closeTotpModal();
 			showProgressOverlay();
 			pollTimer = startProgressPolling();
 			btn.textContent = '⟳ Actualizando...';

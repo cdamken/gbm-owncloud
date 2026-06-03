@@ -5,6 +5,21 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.13.1] — 2026-06-03
+
+UX fix: close the TOTP modal when the progress overlay opens so the
+two don't stack visually. Reported by Carlos during a local debug —
+GBM dashboard showed both `🔒 Código de seguridad` modal AND the
+`Actualizando tu portafolio` overlay at the same time after entering
+the code. TR already handles this correctly; this brings GBM to
+parity.
+
+### Fixed
+
+- `js/dashboard.js::startOverlay`: when invoked from the TOTP-flow
+  (totpCode present), call `closeTotpModal()` before showing the
+  progress overlay.
+
 ## [0.13.0] — 2026-06-03
 
 Incremental fetch — el ⟳ Actualizar diario ya no re-descarga 10 años
