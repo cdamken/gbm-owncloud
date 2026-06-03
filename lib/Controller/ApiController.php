@@ -265,8 +265,10 @@ class ApiController extends Controller {
 
 		// Yahoo Finance chart endpoint. CORS blocks the browser from hitting
 		// this directly so we proxy server-side.
+		// interval=1d so the benchmark replay line moves day-by-day,
+		// not in monthly stair-steps. ~252 closes/year, ~5y = ~1260 points.
 		$url = 'https://query1.finance.yahoo.com/v8/finance/chart/'
-			. rawurlencode($symbol) . '?interval=1mo&range=5y';
+			. rawurlencode($symbol) . '?interval=1d&range=5y';
 		$ctx = stream_context_create(['http' => [
 			'timeout' => 12,
 			'header'  => "User-Agent: gbm-owncloud benchmark proxy\r\n",

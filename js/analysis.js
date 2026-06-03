@@ -495,32 +495,45 @@
 	function _replayBenchmark(bench, dailyMap) {
 		if (!bench || !bench.history || bench.history.length === 0) return null;
 		if (!dailyMap || dailyMap.size === 0) return null;
-		const benchByMonth = {};
-		for (const h of bench.history) benchByMonth[h.date.slice(0, 7)] = h.close;
 
-		const dates = [...dailyMap.keys()].sort();
-		const monthlyDelta = {};
-		let prevValue = null;
-		for (const d of dates) {
-			const m = d.slice(0, 7);
-			const v = dailyMap.get(d);
-			if (prevValue == null) {
-				monthlyDelta[m] = v;
-			} else {
-				monthlyDelta[m] = (monthlyDelta[m] || 0) + (v - prevValue);
-			}
-			prevValue = v;
-		}
+		// Daily-close map (we ask Yahoo for interval=1d).
+		const benchByDay = {};
+		for (const h of bench.history) benchByDay[h.date] = h.close;
+		const sortedBenchDates = Object.keys(benchByDay).sort();
+		if (sortedBenchDates.length === 0) return null;
 
-		const monthsList = Object.keys(monthlyDelta).sort();
+		// Walk every calendar day from user's first trade to today,
+		// carrying forward the last benchmark close on weekends/holidays.
+		// Emits one value per day → smooth line.
+		const userDates = [...dailyMap.keys()].sort();
+		const startDate = new Date(userDates[0] + 'T00:00:00Z');
+		const lastBenchDate = sortedBenchDates[sortedBenchDates.length - 1];
+		const endDate = new Date(lastBenchDate + 'T00:00:00Z');
+		const today = new Date();
+		if (today > endDate) endDate.setTime(today.getTime());
+
 		let units = 0;
+		let prevCostBasis = null;
+		let lastClose = null;
 		const out = {};
-		for (const m of monthsList) {
-			const close = benchByMonth[m];
-			if (!close || close <= 0) continue;
-			const delta = monthlyDelta[m];
-			if (delta !== 0) units += delta / close;
-			out[m + '-01'] = +(units * close).toFixed(2);
+
+		for (let cur = new Date(startDate); cur <= endDate;
+		     cur.setUTCDate(cur.getUTCDate() + 1)) {
+			const dateStr = cur.toISOString().slice(0, 10);
+			if (benchByDay[dateStr] != null) lastClose = benchByDay[dateStr];
+
+			if (dailyMap.has(dateStr)) {
+				const cb = dailyMap.get(dateStr);
+				const delta = prevCostBasis == null ? cb : (cb - prevCostBasis);
+				if (delta !== 0 && lastClose != null && lastClose > 0) {
+					units += delta / lastClose;
+				}
+				prevCostBasis = cb;
+			}
+
+			if (lastClose != null && lastClose > 0 && units !== 0) {
+				out[dateStr] = +(units * lastClose).toFixed(2);
+			}
 		}
 		return out;
 	}
@@ -610,10 +623,9 @@
 		const spyMap     = _replayBenchmark(benchSPY,     dailyMap);
 		const alignBench = (m) => {
 			if (!m) return null;
-			return filteredDates.map(d => {
-				const key = d.slice(0, 7) + '-01';
-				return key in m ? m[key] : null;
-			});
+			// One benchmark value per calendar day (replay carries
+			// forward the close on weekends/holidays).
+			return filteredDates.map(d => d in m ? m[d] : null);
 		};
 		const naftracValues = alignBench(naftracMap);
 		const spyValues = alignBench(spyMap);

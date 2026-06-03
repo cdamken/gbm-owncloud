@@ -5,6 +5,34 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.13.3] — 2026-06-03
+
+Fix benchmark replay granularity. Carlos noticed the NAFTRAC/SPY
+overlay lines were "step-shaped" — flat for a whole month, then
+jumping. Same pattern in TR. Root cause: we were asking Yahoo for
+`interval=1mo` and the JS chart was aggregating cost-basis deltas
+by month — two compounding mistakes hiding the day-by-day movement
+of the index.
+
+### Fixed
+
+- `lib/Controller/ApiController::benchmark()`: Yahoo URL now uses
+  `interval=1d`. Returns ~252 closes/year instead of ~12.
+- `js/analysis.js::_replayBenchmark`: rewritten to walk **calendar
+  day by calendar day**. Carries the last known close forward on
+  weekends/holidays so the line stays continuous. Cost-basis deltas
+  consumed daily (not month-aggregated). Output is one value per day,
+  not per month-start.
+- `alignBench`: maps by exact date instead of month-key.
+
+### Notes
+
+- Old benchmark caches (monthly data) need to be invalidated. On
+  next ⟳ Actualizar the per-user `benchmark_cache/*.json` is
+  regenerated with daily data.
+- Both NAFTRAC (BMV) and SPY (USA) benchmarks affected.
+- Same fix applied upstream in `gbm-dashboard` and mirrored to TR.
+
 ## [0.13.2] — 2026-06-03
 
 Fix data quality: the "Capital invertido en el tiempo" chart was
