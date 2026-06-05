@@ -5,6 +5,49 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.11] — 2026-06-05
+
+### THE bug
+
+`$('settings-btn').addEventListener('click', ...)` was throwing a
+`TypeError: Cannot read properties of null` in the DOMContentLoaded
+callback because **`#settings-btn` no longer exists** in the DOM —
+when we moved settings into the top-bar nav as the
+"⚙ Configuración" tab (back in v0.11), we removed the old subtitle
+settings link from the template but the JS wire-up never got
+updated. The error aborted the rest of the callback, so every
+listener below that line silently failed to attach:
+
+- `search`, `account-filter`, `market-filter`, `pnl-filter` inputs
+- `positions-table` sort headers
+- `config-modal` / `totp-modal` backdrop close
+- `config-cancel`, `totp-cancel`
+- `config-email`, `config-password`, `config-submit`
+- **`totp-input` input handler** (no validation on type)
+- **`totp-input` keydown Enter → submitTotp**
+- **`totp-submit` click → submitTotp** ← Carlos's complaint
+- `toast-close-btn`
+
+The visible symptom was: click "Actualizar" inside the TOTP modal
+→ nothing happens. The button event fired but no listener was
+attached, so the request never went out. We spent hours hunting
+for a flow / cache / autofill / event-ordering bug; the actual
+cause was a one-line crash 27 lines above the broken listener.
+
+### Fix
+
+Wrapped every `addEventListener` call in a tiny `on(id, evt, fn)`
+helper that no-ops if the element is missing. One missing ID can
+no longer take out every listener after it. Defensive wiring; no
+behavior change for elements that do exist.
+
+### Upstream
+
+The upstream `gbm-dashboard` doesn't have this bug — it never had
+a settings-btn in the first place, and its wire-up uses inline
+`oninput="..."` attrs that fail-soft per-attribute. No upstream
+change needed.
+
 ## [0.14.10] — 2026-06-05
 
 Rewrite `submitTotp` as a verbatim port of Trade-Republic-owncloud's

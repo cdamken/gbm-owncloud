@@ -1034,39 +1034,52 @@
 			update:     root.dataset.routeUpdate,
 		};
 
-		$('update-btn').addEventListener('click', () => triggerUpdate());
-		$('settings-btn').addEventListener('click', () => openConfigModal());
-		$('search').addEventListener('input', renderTable);
-		$('account-filter').addEventListener('change', renderTable);
-		$('market-filter').addEventListener('change', renderTable);
-		$('pnl-filter').addEventListener('change', renderTable);
+		// Defensive wiring: `$('settings-btn')` returns null in the
+		// post-top-bar layout (the old subtitle settings link was
+		// replaced by the "⚙ Configuración" tab in the nav). Before
+		// today, `null.addEventListener(...)` was throwing a TypeError
+		// that aborted the rest of THIS callback — so every listener
+		// below this line (search, filters, modal close, TOTP submit
+		// click + Enter) silently failed to attach. Result: clicking
+		// "Actualizar" in the TOTP modal did nothing because its
+		// listener was never wired up.
+		//
+		// Fix: a small helper that no-ops on null targets. Every
+		// addEventListener below now goes through it.
+		const on = (id, evt, fn) => {
+			const el = $(id);
+			if (el) el.addEventListener(evt, fn);
+		};
+
+		on('update-btn',    'click', () => triggerUpdate());
+		on('settings-btn',  'click', () => openConfigModal());
+		on('search',        'input', renderTable);
+		on('account-filter','change', renderTable);
+		on('market-filter', 'change', renderTable);
+		on('pnl-filter',    'change', renderTable);
 
 		document.querySelectorAll('#positions-table th[data-sort]').forEach(th => {
 			th.addEventListener('click', () => setSort(th.dataset.sort));
 		});
 
-		// Modal close on backdrop click + cancel buttons.
-		$('config-modal').addEventListener('click', (e) => {
-			if (e.target.id === 'config-modal') closeConfigModal();
-		});
-		$('totp-modal').addEventListener('click', (e) => {
-			if (e.target.id === 'totp-modal') closeTotpModal();
-		});
-		$('config-cancel').addEventListener('click', closeConfigModal);
-		$('totp-cancel').addEventListener('click', closeTotpModal);
+		// Modal close on backdrop click + cancel buttons. All routed
+		// through `on()` so any missing element no-ops cleanly instead
+		// of aborting the rest of the wire-up.
+		on('config-modal',    'click', (e) => { if (e.target.id === 'config-modal') closeConfigModal(); });
+		on('totp-modal',      'click', (e) => { if (e.target.id === 'totp-modal')   closeTotpModal();   });
+		on('config-cancel',   'click', closeConfigModal);
+		on('totp-cancel',     'click', closeTotpModal);
 
-		$('config-email').addEventListener('input', onConfigInput);
-		$('config-password').addEventListener('input', onConfigInput);
-		$('config-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitConfig(); });
-		$('config-submit').addEventListener('click', submitConfig);
+		on('config-email',    'input',   onConfigInput);
+		on('config-password', 'input',   onConfigInput);
+		on('config-password', 'keydown', (e) => { if (e.key === 'Enter') submitConfig(); });
+		on('config-submit',   'click',   submitConfig);
 
-		$('totp-input').addEventListener('input', onTotpInput);
-		$('totp-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitTotp(); });
-		$('totp-submit').addEventListener('click', submitTotp);
+		on('totp-input',  'input',   onTotpInput);
+		on('totp-input',  'keydown', (e) => { if (e.key === 'Enter') submitTotp(); });
+		on('totp-submit', 'click',   submitTotp);
 
-		// Toast close button — manually dismiss the non-blocking banner.
-		const toastClose = $('toast-close-btn');
-		if (toastClose) toastClose.addEventListener('click', () => {
+		on('toast-close-btn', 'click', () => {
 			$('toast').classList.remove('active');
 		});
 
