@@ -120,11 +120,14 @@
 
 			// Benchmarks: fetched lazily via /benchmark/{symbol} (24h cache).
 			// Errors don't block the page — the overlay just doesn't render.
-			// ^GSPC is the S&P 500 index itself (price-return, no ETF
-			// expense ratio); SPY tracks it but lags ~0.09%/year.
+			// ^SP500TR is the S&P 500 Total Return index — dividends
+			// reinvested, no expense ratio. Cleanest possible benchmark
+			// (mathematically equivalent to a hypothetical zero-cost
+			// accumulating ETF). ^GSPC would miss dividends and SPY/VOO
+			// drag ~0.03-0.09%/year + distribute dividends out.
 			state.benchmarks = await Promise.all([
 				safeJson(benchmarkUrl('NAFTRACISHRS.MX')),
-				safeJson(benchmarkUrl('^GSPC')),
+				safeJson(benchmarkUrl('^SP500TR')),
 			]);
 
 			if (!accounts) {
@@ -668,7 +671,7 @@
 		}
 		if (sp500Values && sp500Values.some(v => v != null)) {
 			datasets.push({
-				label: 'Si invirtieras en el S&P 500 en su lugar',
+				label: 'Si invirtieras en el S&P 500 (Total Return) en su lugar',
 				data: sp500Values,
 				borderColor: '#4ade80',
 				backgroundColor: 'transparent',

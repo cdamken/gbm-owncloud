@@ -5,6 +5,29 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.3] — 2026-06-05
+
+USA benchmark switched from `^GSPC` (price-return index) to
+**`^SP500TR`** — the S&P 500 **Total Return** index, with
+dividends reinvested. Carlos pointed out that a price-return
+index undercounts returns vs a real buy-and-hold investor; an
+accumulating ETF like CSPX.L would also work but carries
+~0.07%/year expense ratio. `^SP500TR` is the cleanest possible
+benchmark — dividends reinvested, zero costs.
+
+### Changed
+
+- `js/analysis.js` — USA benchmark symbol: `^GSPC` → `^SP500TR`.
+- Chart label: "Si invirtieras en el S&P 500 en su lugar" →
+  "Si invirtieras en el S&P 500 (Total Return) en su lugar".
+
+### Notes
+
+- Yahoo Finance serves `^SP500TR` (verified `200 OK`).
+- Old `^GSPC.json` / `SPY.json` caches sit unused.
+- Variable names (`benchSP500`, `sp500Map`, `sp500Values`)
+  unchanged — still refer to the S&P 500 conceptually.
+
 ## [0.14.2] — 2026-06-05
 
 USA benchmark in the Análisis chart switched from **SPY** (the
