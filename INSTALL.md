@@ -204,11 +204,41 @@ sudo rm -rf /mnt/owncloud/data/<uid>/gbm/
 
 ### Actualizar el app
 
+**Desde tu máquina** (NO `git pull` en el server — saltea los 3 pilares):
+
 ```bash
-cd /var/www/owncloud/apps/gbm
-sudo -u www-data git pull
-sudo -u www-data php /var/www/owncloud/occ maintenance:repair
+cd ~/damkencloud/Claude/gbm-owncloud
+./scripts/deploy.sh --bump patch
 ```
 
-(`maintenance:repair` no es estrictamente necesario para esta app porque
-no toca la DB, pero no estorba.)
+El script:
+1. Corre `scripts/verify_dom_ids.py` (pre-deploy check obligatorio —
+   detecta referencias muertas a IDs antes de que rompan la app en
+   producción)
+2. Bumpea `<version>` en `appinfo/info.xml`
+3. rsync de la app a `/var/www/owncloud/apps/gbm/`
+4. `chown www-data` + `occ upgrade` + `maintenance:mode --off`
+5. Reinstala `gbm-mx-api` en `/opt/gbm-venv` (con
+   `--force-reinstall --no-deps`, mandatorio para paquetes git —
+   ver CLAUDE.md)
+6. `occ app:enable gbm` regenera el cache buster `?v=<hash>`
+
+**Sin bumpear** (solo cambios en lib o JS hot-fix con `.htaccess` que ya
+revalida):
+
+```bash
+./scripts/deploy.sh                # app + lib, sin bump
+./scripts/deploy.sh --no-lib       # JS-only, no toca el venv
+./scripts/deploy.sh --lib --no-app # gbm-mx-api hot-fix
+```
+
+### Garantías de paridad con upstream
+
+La app es un **port verbatim del dashboard local** (`gbm-dashboard`),
+con sólo las divergencias listadas en
+[`TR-GBM-Project/OWNCLOUD-PATCHES.md`](https://github.com/cdamken/TR-GBM-Project/blob/main/OWNCLOUD-PATCHES.md).
+Cualquier cambio futuro debe quedar dentro de ese catálogo o
+documentar el patch nuevo. El verificador `scripts/verify_dom_ids.py`
+protege contra una clase específica de divergencia (IDs referenciados
+en JS pero no presentes en el HTML — abortan toda la wire-up al
+ejecutar `null.addEventListener`).

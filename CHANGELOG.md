@@ -5,6 +5,45 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.12] — 2026-06-05
+
+Catch-up release rounding out the structural fixes from today:
+adds `scripts/deploy.sh` (the GBM port never had one — Carlos
+was deploying manually via raw rsync, which is exactly what the
+script's "three pillars" header rant warns against), ports the
+last functional divergence vs upstream, integrates the DOM-ID
+verifier as a mandatory pre-deploy check, and refreshes
+INSTALL.md.
+
+### Added
+
+- **`scripts/deploy.sh`** — full-feature deploy script ported
+  from `Trade-Republic-owncloud@scripts/deploy.sh` and adapted
+  for the GBM topology (`/opt/gbm-venv`, `gbm-mx-api`, app id
+  `gbm`). Includes `--bump patch/minor/major`, `--no-lib`,
+  `--no-app`, `--skip-verify` (latter only for debugging the
+  verifier itself).
+- Pre-deploy step 0 in `scripts/deploy.sh`: runs
+  `scripts/verify_dom_ids.py`; aborts deploy if a JS reference
+  points to an unknown DOM id. This is what would have caught
+  the v0.11 `settings-btn` bug before it shipped.
+
+### Changed
+
+- **Port `window.onAccountChanged` callback** to `submitConfig`
+  (was missing — divergence vs `gbm-dashboard@v0.13.0
+  _shared.js:892`). When the user switches GBM accounts via
+  the Config modal, the page can now wipe its in-memory state
+  before the next fetch fills it.
+- `INSTALL.md`'s "Actualizar el app" section now instructs to
+  use `./scripts/deploy.sh` from the developer's laptop instead
+  of `git pull` on the server (which would skip the lib + cache
+  pillars).
+- New section "Garantías de paridad con upstream" in
+  `INSTALL.md` with a link to
+  `TR-GBM-Project/OWNCLOUD-PATCHES.md` (the catalog of permitted
+  dashboard→ownCloud transformations).
+
 ## [0.14.11] — 2026-06-05
 
 ### THE bug

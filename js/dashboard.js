@@ -900,6 +900,13 @@
 			if (res.ok && payload.status === 'ok') {
 				btn.textContent = 'Guardar';
 				closeConfigModal();
+				// If the user switched to a different GBM account, the
+				// page exposes window.onAccountChanged so it can wipe its
+				// in-memory portfolio state before the next fetch fills
+				// it. Mirrors gbm-dashboard@v0.13.0 _shared.js:892.
+				if (payload.account_changed && typeof window.onAccountChanged === 'function') {
+					try { await window.onAccountChanged(); } catch (_) {}
+				}
 				triggerUpdate();
 				return;
 			}
