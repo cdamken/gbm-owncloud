@@ -1,0 +1,36 @@
+name: CI
+
+# Runs every push + PR. Three gates, all mandatory:
+#   1. verify_dom_ids.py  — JS references must point at real DOM IDs
+#   2. verify_wiring.py   — JS callable references must point at defined funcs
+#   3. unittest discover  — wrapper smoke tests + verifier regression tests
+#
+# All run on stdlib Python; no pip install. Total runtime ~2 s.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: verify DOM IDs (catch stranded JS → HTML references)
+        run: python3 scripts/verify_dom_ids.py
+
+      - name: verify JS wiring (catch refs to undefined functions)
+        run: python3 scripts/verify_wiring.py
+
+      - name: unit tests
+        run: python3 -m unittest discover -s tests -v

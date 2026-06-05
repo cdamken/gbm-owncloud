@@ -5,6 +5,49 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.13] — 2026-06-05
+
+CI + automated test harness. Closes the largest remaining gap
+surfaced by today's code review: zero tests, zero CI. Now there
+are 10 tests on every push.
+
+### Added
+
+- **`scripts/verify_wiring.py`** — companion to `verify_dom_ids.py`.
+  Walks `js/*.js`, collects every callable reference (call sites,
+  addEventListener args, our `on()` helper args), and verifies
+  each one points at a function defined somewhere in the JS or in
+  the BUILTINS allowlist. Catches the *other* half of the
+  settings-btn class of bugs: a JS file referencing a function
+  name that no JS file defines (typo, rename without updating
+  callers, etc).
+- **`tests/test_fetch_wrapper_smoke.py`** — 5 stdlib-unittest
+  tests that spawn `python/fetch_wrapper.py` with controlled env
+  and assert: file exists, no Python crash on `--help`, missing
+  creds returns `EXIT_CONFIG_ERROR`, `--full` flag is recognized,
+  exit-code constants stay in sync with `lib/Service/GbmService.php`.
+- **`tests/test_verify_scripts.py`** — 5 regression tests for the
+  verifiers themselves. Plants known-bad mini-repos in `tmp/` and
+  asserts the verifier flags them. If the verifier is broken,
+  nothing protects us; these are its safety net.
+- **`.github/workflows/ci.yml`** — runs both verifiers + the
+  unittest suite on every push and PR to `main`. Pure stdlib
+  Python, no `pip install` required, ~2 s runtime.
+- **`scripts/deploy.sh`** now also runs `verify_wiring.py` and
+  `python3 -m unittest discover -s tests` in pre-deploy step 0.
+  All three gates green or the deploy aborts.
+
+### Tests
+
+```
+$ python3 -m unittest discover -s tests -v
+... 10 tests ...
+----------------------------------------------------------------------
+Ran 10 tests in 0.276s
+
+OK
+```
+
 ## [0.14.12] — 2026-06-05
 
 Catch-up release rounding out the structural fixes from today:

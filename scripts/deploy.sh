@@ -118,12 +118,23 @@ if [[ $DO_LIB -eq 1 ]] && [[ ! -d "$GBM_API_REPO" ]]; then
 fi
 [[ -f "$SERVER_KEY" ]] || die "SSH key not found at $SERVER_KEY"
 
-# ---------- step 0: pre-deploy DOM-ID verifier ----------
+# ---------- step 0: pre-deploy checks ----------
 if [[ $DO_APP -eq 1 ]] && [[ $SKIP_VERIFY -eq 0 ]]; then
   say "Pre-deploy: verify DOM-ID sync (scripts/verify_dom_ids.py)"
   if ! python3 "${REPO_ROOT}/scripts/verify_dom_ids.py"; then
     die "DOM-ID check failed. Fix the missing IDs or pass --skip-verify (not recommended)."
   fi
+
+  say "Pre-deploy: verify JS wiring (scripts/verify_wiring.py)"
+  if ! python3 "${REPO_ROOT}/scripts/verify_wiring.py"; then
+    die "JS wiring check failed. Fix the stranded refs or pass --skip-verify."
+  fi
+
+  say "Pre-deploy: unit tests (python3 -m unittest)"
+  if ! (cd "${REPO_ROOT}" && python3 -m unittest discover -s tests >/dev/null 2>&1); then
+    die "Tests failed. Run 'python3 -m unittest discover -s tests -v' to see details."
+  fi
+  ok "All pre-deploy checks green"
 fi
 
 # ---------- step 1: optional version bump ----------
