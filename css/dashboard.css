@@ -337,12 +337,17 @@ body.gbm-app-active #content-wrapper {
 	box-sizing: border-box;
 }
 #gbm-app .modal input.totp:focus { outline: none; border-color: var(--blue) !important; }
-#gbm-app .modal label {
+/* Field labels (e.g. "Email", "Contraseña") above each input — small,
+   uppercased, muted. Excludes `.modal-checkbox`, which is a wrapper
+   around a checkbox + description sentence and must render as normal
+   prose (the upper-case rule was bleeding into it and turned the
+   Recargar-todo blurb into ALL-CAPS). */
+#gbm-app .modal label:not(.modal-checkbox) {
 	display: block; font-size: 12px; text-transform: uppercase;
 	letter-spacing: 0.7px; color: var(--muted); margin-bottom: 6px;
 	margin-top: 14px; font-weight: 600;
 }
-#gbm-app .modal label:first-of-type { margin-top: 0; }
+#gbm-app .modal label:not(.modal-checkbox):first-of-type { margin-top: 0; }
 #gbm-app .modal input.field {
 	width: 100% !important;
 	background: var(--bg) !important;
