@@ -143,7 +143,7 @@
 		} catch (err) {
 			$('error-box').innerHTML =
 				'<div class="error"><b>No se pudieron cargar los datos.</b><br>' +
-				'Haz clic en <code>⟳ Actualizar</code> para descargar.<br>' +
+				'Haz clic en <code>🔄 Actualizar</code> para descargar.<br>' +
 				'Detalle: ' + (err.message || err) + '</div>';
 		}
 	}
@@ -679,7 +679,7 @@
 		const fullReload = opts && opts.full === true;
 		const btn = $('update-btn');
 		btn.disabled = true;
-		btn.textContent = totpCode ? '⟳ Verificando código...' : '⟳ Conectando...';
+		btn.textContent = totpCode ? '🔄 Verificando código...' : '🔄 Conectando...';
 
 		// Defer the heavy overlay: the first probe (no TOTP) might
 		// immediately come back with mfa_required, in which case we don't
@@ -693,7 +693,7 @@
 			overlayShown = true;
 			showProgressOverlay();
 			pollTimer = startProgressPolling();
-			btn.textContent = '⟳ Actualizando...';
+			btn.textContent = '🔄 Actualizando...';
 		};
 		const stopOverlay = () => {
 			if (pollTimer) { stopProgressPolling(pollTimer); pollTimer = null; }
@@ -703,7 +703,7 @@
 		// minutes — i.e. when the user just typed a TOTP code. The
 		// first probe (no TOTP) only verifies the session and either
 		// succeeds immediately or returns mfa_required to open the
-		// modal; for that path the button text "⟳ Conectando..." is
+		// modal; for that path the button text "🔄 Conectando..." is
 		// the only feedback we show.
 		//
 		// Earlier versions deferred the toast 700 ms (then 5500 ms)
@@ -725,7 +725,7 @@
 		} catch (err) {
 			stopOverlay();
 			btn.disabled = false;
-			btn.textContent = '⟳ Actualizar';
+			btn.textContent = '🔄 Actualizar';
 			alert('No se pudo conectar al server.\nDetalle: ' + err.message);
 			return;
 		}
@@ -737,17 +737,17 @@
 
 		if (res.ok && payload.status === 'ok') {
 			closeTotpModal();
-			btn.textContent = '⟳ Refrescando vista...';
+			btn.textContent = '🔄 Refrescando vista...';
 			await load();
 			stopOverlay();
 			btn.disabled = false;
-			btn.textContent = '⟳ Actualizar';
+			btn.textContent = '🔄 Actualizar';
 			return;
 		}
 
 		stopOverlay();
 		btn.disabled = false;
-		btn.textContent = '⟳ Actualizar';
+		btn.textContent = '🔄 Actualizar';
 
 		if (payload.status === 'mfa_required') { openTotpModal(); return; }
 		if (payload.status === 'mfa_invalid') { openTotpModal('Código incorrecto o ya expiró. Genera uno nuevo.'); return; }
@@ -1004,7 +1004,7 @@
 				chip.textContent = stale.label;
 				chip.className = 'staleness-chip show ' + stale.severity;
 				chip.title = formatTimestamp(ts) + '\n' + (
-					stale.severity === 'stale' ? 'Tu snapshot es viejo — dale ⟳ Actualizar.'
+					stale.severity === 'stale' ? 'Tu snapshot es viejo — dale 🔄 Actualizar.'
 					: stale.severity === 'warn' ? 'Tu snapshot tiene más de 15 min.'
 					: 'Datos frescos.'
 				);

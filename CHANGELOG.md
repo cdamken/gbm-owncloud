@@ -5,6 +5,31 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.6] — 2026-06-05
+
+Replace the `⟳` glyph with `🔄` everywhere the button or status
+text uses an icon. Carlos saw the `⟳` (U+27F3 ANTICLOCKWISE
+GAPPED CIRCLE ARROW) **animated as a spinning wheel** on the
+Actualizar button — recent macOS releases ship animated SVG
+emoji renderings for some Unicode arrow glyphs, and `⟳` is
+among them. From the user's perspective the button looked
+"already updating" even though nothing was happening.
+
+`🔄` (U+1F504 COUNTERCLOCKWISE ARROWS BUTTON) is the standard
+refresh emoji — Trade-Republic-owncloud uses it and it renders
+static on macOS / iOS, so this matches the working TR pattern.
+
+### Touched (11 + 10 + 1 = 22 occurrences)
+
+- `js/_shared.js` (1) — the injected top-bar button label.
+- `js/dashboard.js` (10) — `btn.textContent = …` assignments
+  + the error-box hint + the staleness chip "Tu snapshot es
+  viejo — dale 🔄 Actualizar" string.
+
+### Upstream
+
+Mirrors `gbm-dashboard@HEAD` (`app/_shared.js`).
+
 ## [0.14.5] — 2026-06-05
 
 Eliminate the toast race on the first MFA probe. Carlos reported

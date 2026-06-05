@@ -74,7 +74,7 @@
 		updateBtn.className = 'update-btn';
 		updateBtn.id = 'update-btn';
 		updateBtn.type = 'button';
-		updateBtn.textContent = '⟳ Actualizar';
+		updateBtn.textContent = '🔄 Actualizar';
 		actions.appendChild(updateBtn);
 
 		bar.appendChild(brand);
