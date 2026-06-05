@@ -767,6 +767,13 @@
 		alert('Update falló (HTTP ' + res.status + '): ' + (payload.detail || 'sin detalle'));
 	}
 
+	// Polls the TOTP input state while the modal is open. Even when
+	// paste / Chrome autofill / IME composition skips the `input`
+	// event (we hit exactly that bug today: input had a valid
+	// 6-digit code, but `submit.disabled` was still true because
+	// onTotpInput never fired), the button catches up within 200 ms.
+	let _totpPollTimer = null;
+
 	function openTotpModal(errorMsg) {
 		const modal = $('totp-modal');
 		const errEl = $('totp-error');
@@ -777,8 +784,22 @@
 		$('totp-submit').disabled = true;
 		modal.classList.add('show');
 		setTimeout(() => input.focus(), 100);
+		if (_totpPollTimer) clearInterval(_totpPollTimer);
+		_totpPollTimer = setInterval(revalidateTotpSubmit, 200);
 	}
-	function closeTotpModal() { $('totp-modal').classList.remove('show'); }
+	function closeTotpModal() {
+		$('totp-modal').classList.remove('show');
+		if (_totpPollTimer) { clearInterval(_totpPollTimer); _totpPollTimer = null; }
+	}
+
+	function revalidateTotpSubmit() {
+		const inp = $('totp-input');
+		const btn = $('totp-submit');
+		if (!inp || !btn) return;
+		const cleaned = inp.value.replace(/\D/g, '').slice(0, 6);
+		if (inp.value !== cleaned) inp.value = cleaned;
+		btn.disabled = cleaned.length !== 6;
+	}
 
 	async function loadConfigStatus() {
 		try {
@@ -892,10 +913,12 @@
 		onConfigInput();
 	}
 
-	function onTotpInput(e) {
-		const cleaned = e.target.value.replace(/\D/g, '').slice(0, 6);
-		e.target.value = cleaned;
-		$('totp-submit').disabled = cleaned.length !== 6;
+	function onTotpInput(_e) {
+		// Thin wrapper around revalidateTotpSubmit so the existing
+		// addEventListener('input', onTotpInput) wiring keeps working.
+		// The same logic also runs every 200 ms from openTotpModal's
+		// safety-net poll.
+		revalidateTotpSubmit();
 	}
 
 	function submitTotp() {

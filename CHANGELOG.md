@@ -5,6 +5,40 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.9] — 2026-06-05
+
+Make the TOTP submit button robust against paste / Chrome
+autofill / IME composition. Carlos hit a case today where the
+input had a valid 6-digit code ("952251") but the Actualizar
+button stayed `disabled` — `onTotpInput` never fired because the
+code arrived via a path that didn't emit the `input` event.
+
+### Changed
+
+- `js/dashboard.js` — refactored validation into a standalone
+  `revalidateTotpSubmit()` function. `onTotpInput` is now a thin
+  wrapper that just calls it.
+- `openTotpModal()` — starts a 200 ms `setInterval` that calls
+  `revalidateTotpSubmit()` while the modal is open. This is the
+  safety net: even when paste / autofill skips the `input` event,
+  the button catches up within 200 ms of any value change.
+- `closeTotpModal()` — clears the interval the instant the modal
+  closes; no wasted polling.
+- `submitTotp()` — already re-validated the code at click time, so
+  it correctly rejects an empty / malformed code if somehow the
+  button got clicked while empty.
+
+### Why a poll vs more events
+
+We could have added listeners for `paste`, `change`, `focus`,
+`blur` — but those still miss some autofill paths (Chrome password
+manager has been known to skip all of them). A 200 ms poll always
+sees the truth and the cost is negligible (a couple of DOM reads).
+
+### Upstream
+
+Mirrors `gbm-dashboard@HEAD` (`app/_shared.js`).
+
 ## [0.14.8] — 2026-06-05
 
 Add `.htaccess` that forces browsers to revalidate JS/CSS requests
