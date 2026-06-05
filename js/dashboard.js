@@ -821,12 +821,27 @@
 	let _progressStartedAt = null;
 
 	function showProgressOverlay() {
-		$('progress-overlay').classList.add('show');
-		$('progress-stage').textContent = PROGRESS_STAGES[0].text;
+		// Non-blocking: thin progress bar at the top + toast under the
+		// top-bar. Ported from Trade-Republic-owncloud's update_flow.js so
+		// users keep scrolling while the fetch runs.
+		const bar = $('progress-bar');
+		const toast = $('toast');
+		const title = $('toast-title');
+		const stage = $('progress-stage');
+		if (bar) bar.classList.add('active', 'indet');
+		if (toast) {
+			toast.classList.remove('ok', 'err');
+			toast.classList.add('active');
+		}
+		if (title) title.textContent = 'Actualizando tu portafolio';
+		if (stage) stage.textContent = PROGRESS_STAGES[0].text;
 		_progressStartedAt = Date.now();
 	}
 	function hideProgressOverlay() {
-		$('progress-overlay').classList.remove('show');
+		const bar = $('progress-bar');
+		const toast = $('toast');
+		if (bar) bar.classList.remove('active', 'indet');
+		if (toast) toast.classList.remove('active');
 		_progressStartedAt = null;
 	}
 	function startProgressPolling() {
@@ -936,6 +951,12 @@
 		$('totp-input').addEventListener('input', onTotpInput);
 		$('totp-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitTotp(); });
 		$('totp-submit').addEventListener('click', submitTotp);
+
+		// Toast close button — manually dismiss the non-blocking banner.
+		const toastClose = $('toast-close-btn');
+		if (toastClose) toastClose.addEventListener('click', () => {
+			$('toast').classList.remove('active');
+		});
 
 		document.addEventListener('keydown', (e) => {
 			if (e.key !== 'Escape') return;

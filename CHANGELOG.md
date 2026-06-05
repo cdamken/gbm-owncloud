@@ -5,6 +5,44 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.1] — 2026-06-05
+
+Replace the blocking update modal+overlay with the non-blocking
+toast + thin-progress-bar pattern from Trade-Republic-owncloud. The
+page stays interactive while `/update` runs, matching the
+**non-blocking update flow** unification policy in `TR-GBM-Project/`.
+
+### Removed
+
+- The full-viewport `#progress-overlay` div with the centered
+  `.progress-box` (big spinner + H2 title + stage + hint). It dimmed
+  the entire page and blocked clicks while a fetch was running,
+  which Carlos found heavy compared to TR's lighter status banner.
+
+### Added
+
+- **`#progress-bar`** — 2px indeterminate bar pinned to the top of
+  the viewport (`top: 0; height: 2px; z-index: 100`).
+- **`#toast`** — small status banner under the sticky top-bar
+  (`top: 200px; left: 50%`). Shows the same "Conectando…" /
+  "Descargando portafolio…" stage text the overlay used to show.
+- **`#toast-close-btn`** — × button to dismiss the toast manually.
+
+### Touched
+
+- `templates/main.php` — overlay HTML → progress-bar + toast HTML.
+- `css/dashboard.css` — `.progress-overlay` / `.progress-box` /
+  `.spinner` CSS blocks replaced by `.progress-bar` + `.toast`
+  selectors (all scoped under `#gbm-app`).
+- `js/dashboard.js` — `showProgressOverlay()` / `hideProgressOverlay()`
+  now toggle `.active` on `#progress-bar` and `#toast` instead of
+  `.show` on `#progress-overlay`. Polling logic untouched — it
+  still writes the rotating stage text into `#progress-stage`.
+
+### Upstream
+
+Mirrors `gbm-dashboard@HEAD` (`app/_shared.js`).
+
 ## [0.14.0] — 2026-06-03
 
 Cockpit parity with TR — add **Investment Cost** and **Available

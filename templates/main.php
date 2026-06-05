@@ -162,15 +162,18 @@ $routes = $_['routes'];
 		</div>
 	</div>
 
-	<div class="progress-overlay" id="progress-overlay">
-		<div class="progress-box">
-			<div class="spinner"></div>
-			<h2>Actualizando tu portafolio</h2>
-			<div class="progress-stage" id="progress-stage">Conectando con GBM…</div>
-			<div class="progress-hint">
-				Esto puede tardar un par de minutos. Por favor, no cierres la pestaña.
-			</div>
+	<!-- Non-blocking update flow (ported from Trade-Republic-owncloud).
+	     Was a centered progress modal that blocked the viewport; now a
+	     thin top bar + a toast under the top-bar so the page stays
+	     interactive while the fetch runs. -->
+	<div id="progress-bar" class="progress-bar"></div>
+	<div id="toast" class="toast">
+		<button id="toast-close-btn" class="t-close" aria-label="Cerrar">×</button>
+		<div class="t-title">
+			<span class="spin"></span>
+			<span id="toast-title">Actualizando tu portafolio</span>
 		</div>
+		<div class="t-stage" id="progress-stage">Conectando con GBM…</div>
 	</div>
 
 	<div class="modal-backdrop" id="totp-modal">
