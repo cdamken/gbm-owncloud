@@ -5,6 +5,44 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.4] — 2026-06-05
+
+Match Trade-Republic-owncloud's MFA submit flow exactly. Carlos
+reported two symptoms in GBM after the v0.14.1 toast refactor:
+
+1. *"Empieza a actualizar al escribir el código"* — the toast
+   would briefly appear during the first-probe MFA roundtrip
+   when Cognito took > 700 ms to respond, then disappear, then
+   the modal opened. From the user's perspective it looked like
+   the fetch started by itself before they entered the code.
+2. *"Si quería poner Recargar todo, ya no funciona"* — on
+   re-prompting after a wrong/expired code, the previous Full
+   Reload checkbox state could carry over, and the brief
+   modal+toast overlap on submit made it feel like the checkbox
+   wasn't being read.
+
+### Changed
+
+- `js/dashboard.js::triggerUpdate` — first-probe overlay delay
+  bumped **700 ms → 5500 ms** (matches TR's `update_flow.js`).
+  Quick `mfa_required` responses (sub-5 s, which is essentially
+  always) now dismiss the timer before the toast appears.
+- `js/dashboard.js::triggerUpdate` — when `totpCode` is present
+  the toast is now shown by calling `startOverlay()` directly,
+  not via a `setTimeout(_, 0)`. Removes the brief frame where
+  the modal and toast could both be visible.
+- `js/dashboard.js::submitTotp` — closes the TOTP modal
+  **synchronously** (after reading checkbox state) before
+  calling `triggerUpdate`. The `closeTotpModal()` call that
+  used to live inside `startOverlay` is removed.
+- `js/dashboard.js::openTotpModal` — resets `#totp-full-reload`
+  to unchecked on every open, so a stale `true` from a previous
+  attempt can't silently re-trigger an expensive wipe.
+
+### Upstream
+
+Mirrors `gbm-dashboard@HEAD` (`app/_shared.js`).
+
 ## [0.14.3] — 2026-06-05
 
 USA benchmark switched from `^GSPC` (price-return index) to
