@@ -5,6 +5,32 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.8] — 2026-06-05
+
+Add `.htaccess` that forces browsers to revalidate JS/CSS requests
+instead of relying on the 6-month `max-age` ownCloud sets by default.
+This eliminates the class of bugs where Carlos's browser kept loading
+v0.14.5's broken `dashboard.js` even after the v0.14.6 and v0.14.7
+deploys had landed on the server.
+
+### Added
+
+- `.htaccess` at the app root with a `<FilesMatch "\.(js|css|map)$">`
+  block setting `Cache-Control: no-cache, must-revalidate, max-age=0`
+  and unsetting `Expires`. ETags and `Last-Modified` (already emitted
+  by Apache) handle the actual conditional GETs, so unchanged files
+  return a tiny 304 and changed files return 200 with the new body.
+
+### Why this over fixing the `?v=` cache-buster
+
+ownCloud's `Util::addScript` builds `/apps/gbm/js/dashboard.js?v=<H>`
+URLs where `<H>` is derived from the app version. Bumping `info.xml`
+SHOULD regenerate H — but Carlos hit cases (today, 2026-06-05) where
+v0.14.7 was on the server, the version was bumped, and his browser
+was still running v0.14.5's JS for an hour. Trusting the `?v=` token
+alone has proved insufficient. Forcing revalidation is the only
+race-free pattern.
+
 ## [0.14.7] — 2026-06-05
 
 Revert the v0.14.4 + v0.14.5 changes to the TOTP submit flow.

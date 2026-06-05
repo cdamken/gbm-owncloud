@@ -1,0 +1,25 @@
+# gbm-owncloud — cache override for browser-cached assets.
+#
+# Why this exists:
+#   ownCloud's default Apache config serves /apps/*/js/*.js and *.css
+#   with `Cache-Control: max-age=15778463` (~6 months). The intent is
+#   to leverage the ?v=<hash> cache-buster ownCloud appends, but in
+#   practice we've hit cases where:
+#     - the hash didn't bump even though the file did, or
+#     - the browser had stale HTML in disk cache and kept the old
+#       ?v= URL even after a deploy,
+#   leaving users on old broken JS for hours/days.
+#
+# The fix: force browsers to revalidate every JS/CSS request. With
+# ETag + Last-Modified in place, this means:
+#   - unchanged file → 304 Not Modified (fast, ~200 bytes)
+#   - changed file   → 200 OK with the fresh body
+# In other words: correct cache behavior at the cost of a tiny
+# revalidation handshake per asset load. We're talking <10 KB of
+# headers for the whole app — well worth never serving stale JS.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|map)$">
+    Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+    Header unset Expires
+  </FilesMatch>
+</IfModule>
