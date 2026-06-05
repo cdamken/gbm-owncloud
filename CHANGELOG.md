@@ -5,6 +5,40 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.7] — 2026-06-05
+
+Revert the v0.14.4 + v0.14.5 changes to the TOTP submit flow.
+Carlos reported the token authentication broke entirely after
+those refactors. The visual problems they were trying to address
+(brief toast flash during MFA probe, perceived race) are far
+less serious than a broken auth flow, so the safe move is to
+restore the proven v0.14.0 behavior verbatim.
+
+### Reverted (3 changes in `js/dashboard.js`)
+
+- `triggerUpdate` — restore the deferred-timer pattern:
+  `const overlayDelay = totpCode != null ? 0 : 700;` and
+  `const overlayTimer = setTimeout(startOverlay, overlayDelay);`.
+  `stopOverlay` calls `clearTimeout(overlayTimer)` again. The
+  post-await `clearTimeout(overlayTimer)` line is restored too.
+- `startOverlay` — restore the `if (totpCode) closeTotpModal()`
+  line that auto-closes the modal when the toast takes over.
+- `submitTotp` — remove the synchronous `closeTotpModal()` call;
+  modal close now happens inside `startOverlay` as before.
+- `openTotpModal` — drop the Full Reload checkbox reset; the
+  state will persist across re-prompts like it used to.
+
+### Kept
+
+- `🔄` glyph (v0.14.6) — fixes the animated-emoji spinner issue.
+- Toast + thin progress-bar HTML/CSS (v0.14.1) — the
+  non-blocking visual replacement of the old `.progress-overlay`
+  was a clean win, only the JS submit logic was the regression.
+
+### Upstream
+
+Mirrors `gbm-dashboard@HEAD` (`app/_shared.js`).
+
 ## [0.14.6] — 2026-06-05
 
 Replace the `⟳` glyph with `🔄` everywhere the button or status
