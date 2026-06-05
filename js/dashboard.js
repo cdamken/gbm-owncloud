@@ -688,7 +688,6 @@
 		// so show the overlay right away. Ports gbm-dashboard@v0.6.1.
 		let overlayShown = false;
 		let pollTimer = null;
-		let overlayTimer = null;
 		const startOverlay = () => {
 			if (overlayShown) return;
 			overlayShown = true;
@@ -697,22 +696,24 @@
 			btn.textContent = '⟳ Actualizando...';
 		};
 		const stopOverlay = () => {
-			if (overlayTimer) clearTimeout(overlayTimer);
 			if (pollTimer) { stopProgressPolling(pollTimer); pollTimer = null; }
 			if (overlayShown) { hideProgressOverlay(); overlayShown = false; }
 		};
-		// TOTP submit path: show toast IMMEDIATELY — submitTotp already
-		// closed the modal synchronously, and this fetch will take minutes.
-		// First-probe path (no TOTP): defer 5500 ms so a quick
-		// mfa_required can dismiss the timer before the toast ever
-		// appears. Matches Trade-Republic-owncloud's update_flow.js
-		// (was 700 ms before — too eager: the toast would flash on top
-		// of the MFA modal whenever Cognito responses ran > 700 ms,
-		// which made the flow look like "it started by itself").
+		// Show the toast ONLY when we KNOW the fetch will run for
+		// minutes — i.e. when the user just typed a TOTP code. The
+		// first probe (no TOTP) only verifies the session and either
+		// succeeds immediately or returns mfa_required to open the
+		// modal; for that path the button text "⟳ Conectando..." is
+		// the only feedback we show.
+		//
+		// Earlier versions deferred the toast 700 ms (then 5500 ms)
+		// for the first probe — but Cognito occasionally ran longer
+		// than the timer, briefly showing the toast on top of (or
+		// just before) the MFA modal. From the user's perspective the
+		// page looked like it was already updating before they entered
+		// the code. Removing the first-probe toast eliminates the race.
 		if (totpCode != null) {
 			startOverlay();
-		} else {
-			overlayTimer = setTimeout(startOverlay, 5500);
 		}
 
 		let res;
@@ -729,7 +730,6 @@
 			return;
 		}
 
-		clearTimeout(overlayTimer);
 		if (pollTimer) { stopProgressPolling(pollTimer); pollTimer = null; }
 
 		let payload = {};

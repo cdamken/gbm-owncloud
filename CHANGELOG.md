@@ -5,6 +5,39 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.5] — 2026-06-05
+
+Eliminate the toast race on the first MFA probe. Carlos reported
+that after v0.14.4 the page still looked like it was *"already
+updating"* on arrival — the Actualizar button felt frozen because
+the toast appeared **before** the modal whenever Cognito took
+longer than the deferred timer (700 ms in v0.14.1–v0.14.3, then
+5500 ms in v0.14.4, but never long enough to reliably cover
+worst-case auth latency).
+
+### Changed
+
+- `js/dashboard.js::triggerUpdate` — for the first probe
+  (no TOTP code), **never** show the toast. The button text
+  changing to `"⟳ Conectando..."` is the only feedback during
+  the 1–6 s auth probe. The toast only shows once the user has
+  typed a code and we know the fetch will take minutes.
+- Removed the deferred-timer machinery (`overlayTimer`,
+  `setTimeout(startOverlay, …)`, the `clearTimeout` after
+  `await fetch`). The toast is now strictly demand-driven from
+  `submitTotp` / `submitConfig`'s explicit `startOverlay()` call.
+
+### Why this is safer than tweaking the delay
+
+There is no single delay that covers worst-case Cognito latency
+(I've seen 6+ s during AWS hiccups) while also feeling responsive
+on the typical 1-2 s case. Eliminating the race by not arming
+the timer at all is the only pattern that's race-free.
+
+### Upstream
+
+Mirrors `gbm-dashboard@HEAD` (`app/_shared.js`).
+
 ## [0.14.4] — 2026-06-05
 
 Match Trade-Republic-owncloud's MFA submit flow exactly. Carlos
