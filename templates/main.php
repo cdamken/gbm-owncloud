@@ -32,15 +32,25 @@ $routes = $_['routes'];
 			<div class="value" id="total-value">—</div>
 			<div class="delta muted">suma de todas las cuentas</div>
 		</div>
+		<div class="card" title="Costo total — suma del precio promedio × cantidad de todas tus posiciones. Capital comprometido en instrumentos. Equivalente al 'Investment Cost' del dashboard de TR.">
+			<div class="label">Costo invertido</div>
+			<div class="value" id="investment-cost">—</div>
+			<div class="delta muted">suma de compras netas</div>
+		</div>
 		<div class="card">
 			<div class="label">P&amp;L acumulado</div>
 			<div class="value" id="total-pnl">—</div>
 			<div class="delta" id="total-pnl-pct">—</div>
 		</div>
-		<div class="card" title="Retorno anualizado money-weighted (XIRR) usando depósitos/retiros externos como flujos y el valor actual como terminal. Solo ve los últimos 365 días de transacciones por API; flujos previos no se pueden reconciliar.">
+		<div class="card" title="Retorno anualizado money-weighted (XIRR) usando depósitos/retiros externos como flujos y el valor actual del portafolio como terminal. La ventana de transacciones es configurable en Configuración (default 10 años) — si tu XIRR muestra '—', sube los días para incluir tus depósitos más antiguos.">
 			<div class="label">XIRR (anualizado)</div>
 			<div class="value" id="xirr-value">—</div>
 			<div class="delta muted" id="xirr-detail">basado en flujos externos</div>
+		</div>
+		<div class="card" title="Cash sin invertir en cuentas Smart Cash. GBM hace barrido automático a money market funds, así que típicamente es $0 — solo crece si vendiste algo y aún no recompraste.">
+			<div class="label">Cash disponible</div>
+			<div class="value" id="available-cash">—</div>
+			<div class="delta muted">Smart Cash sin reinvertir</div>
 		</div>
 		<div class="card">
 			<div class="label">Posiciones</div>

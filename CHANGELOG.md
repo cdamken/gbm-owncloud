@@ -5,6 +5,45 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.0] — 2026-06-03
+
+Cockpit parity with TR — add **Investment Cost** and **Available
+Cash** KPIs. Closes 2 of the gaps surfaced in the GBM vs TR audit.
+
+### Added
+
+- **Costo invertido** card: sum of cost basis (precio promedio ×
+  cantidad) across all positions. Equivalent to TR's "Investment
+  Cost". Already computed internally as `totalCost`; now surfaced.
+- **Cash disponible** card: sum of Smart Cash account balances
+  (idle pesos/dollars not yet redeployed). Equivalent to TR's
+  "Available Cash". Typically $0 because GBM auto-sweeps idle cash
+  into money market funds; non-zero only between sell and rebuy.
+
+Both cards have explanatory `title` tooltips on hover.
+
+### Cockpit order (now 7 KPIs)
+
+| # | Card | Source |
+|---|---|---|
+| 1 | Valor total | accounts sum |
+| 2 | **Costo invertido** ⭐ NEW | sum(average_cost) |
+| 3 | P&L acumulado | sum(yield_value) |
+| 4 | XIRR (anualizado) | xirr() |
+| 5 | **Cash disponible** ⭐ NEW | Smart Cash balances |
+| 6 | Posiciones | unique issue_ids |
+| 7 | Cuentas activas | accounts.length |
+
+The `.cards` grid uses auto-fit, so 7 cards wrap to 2 rows on
+narrow screens and fit on one row at full width.
+
+### Notes
+
+- TR cockpit has 5 cards. GBM has 7 because the broker model is
+  multi-account (Personal / Asesor / Smart Cash / Trading USA),
+  which justifies keeping Posiciones + Cuentas activas. Per
+  UNIFICATION.md "Where they CAN diverge → Account model".
+
 ## [0.13.6] — 2026-06-03
 
 Honor the "no backdrop-blur on modals" policy. Carlos spotted that

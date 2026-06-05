@@ -352,7 +352,18 @@
 		const totalCost = state.positionsFlat.reduce((s, p) => s + (Number(p.average_cost) || 0), 0);
 		const totalPnLPct = totalCost > 0 ? totalPnL / totalCost : 0;
 		const numPositions = new Set(state.positionsFlat.map(p => p.issue_id)).size;
-		return { totalValue, totalPnL, totalPnLPct, numPositions };
+		// Available cash = sum of Smart Cash account balances. GBM
+		// auto-sweeps idle cash into Smart Cash, so this is "money sitting
+		// around not yet reinvested". Matches TR's "Available Cash" KPI
+		// semantically. Typically $0 unless the user just sold something.
+		const availableCash = state.accounts.reduce((s, a) => {
+			const t = a.management_type_template || '';
+			if (t === 'smart_cash' || t === 'wealth') {
+				return s + Number((a.position || {}).amount || 0);
+			}
+			return s;
+		}, 0);
+		return { totalValue, totalPnL, totalPnLPct, numPositions, investmentCost: totalCost, availableCash };
 	}
 
 	// ----------------------------------------------------------------------
@@ -401,14 +412,18 @@
 	}
 
 	function renderCards() {
-		const { totalValue, totalPnL, totalPnLPct, numPositions } = aggregates();
+		const { totalValue, totalPnL, totalPnLPct, numPositions, investmentCost, availableCash } = aggregates();
 		$('total-value').textContent = fmtMoney(totalValue, { currency: true });
+		// Investment Cost — sum of cost basis across positions.
+		$('investment-cost').textContent = fmtMoney(investmentCost, { currency: true });
 		const pnlEl = $('total-pnl');
 		pnlEl.textContent = fmtMoney(totalPnL, { sign: true, currency: true });
 		pnlEl.className = 'value ' + pnlClass(totalPnL);
 		const pctEl = $('total-pnl-pct');
 		pctEl.textContent = fmtPct(totalPnLPct);
 		pctEl.className = 'delta ' + pnlClass(totalPnL);
+		// Available Cash — Smart Cash account balances (idle pesos/dollars).
+		$('available-cash').textContent = fmtMoney(availableCash, { currency: true });
 		$('num-positions').textContent = numPositions;
 		$('num-accounts').textContent = state.accounts.length;
 
