@@ -1051,8 +1051,10 @@
 			if (el) el.addEventListener(evt, fn);
 		};
 
+		// NOTE: the old subtitle `#settings-btn` was removed in v0.11
+		// when settings moved into the top-bar as "⚙ Configuración".
+		// Nothing to wire up here anymore.
 		on('update-btn',    'click', () => triggerUpdate());
-		on('settings-btn',  'click', () => openConfigModal());
 		on('search',        'input', renderTable);
 		on('account-filter','change', renderTable);
 		on('market-filter', 'change', renderTable);
