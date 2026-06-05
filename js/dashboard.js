@@ -921,13 +921,100 @@
 		revalidateTotpSubmit();
 	}
 
-	function submitTotp() {
+	// Verbatim port of Trade-Republic-owncloud's submitMfa() flow:
+	// read state → close modal SYNC → show toast SYNC → await fetch
+	// → handle response. Self-contained on purpose: delegating to
+	// triggerUpdate() (which used setTimeout(startOverlay, 0))
+	// occasionally left the modal open and the toast invisible
+	// because the deferred startOverlay wasn't firing reliably.
+	// TR's submitMfa pattern has worked unmodified for months.
+	async function submitTotp() {
 		const code = $('totp-input').value.trim();
+		const errEl = $('totp-error');
+		errEl.classList.add('hidden');
+		if (!(code.length === 6 && /^\d+$/.test(code))) {
+			errEl.textContent = 'El código debe ser de 6 dígitos.';
+			errEl.classList.remove('hidden');
+			return;
+		}
 		const fullEl = $('totp-full-reload');
-		const full = fullEl ? fullEl.checked === true : false;
-		if (!(code.length === 6 && /^\d+$/.test(code))) return;
-		$('totp-submit').disabled = true;
-		triggerUpdate(code, { full });
+		const fullReload = fullEl ? fullEl.checked === true : false;
+		const submitBtn = $('totp-submit');
+		const topBtn = $('update-btn');
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Verificando...';
+		topBtn.disabled = true;
+		topBtn.textContent = fullReload ? '🔄 Re-descargando todo...' : '🔄 Actualizando...';
+
+		// Close modal + show toast SYNCHRONOUSLY before the fetch.
+		// Identical to TR's submitMfa().
+		closeTotpModal();
+		showProgressOverlay();
+		const pollTimer = startProgressPolling();
+
+		let res;
+		try {
+			res = await postJson(routes.update, {
+				totp_code: code,
+				...(fullReload ? { full: true } : {}),
+			});
+		} catch (err) {
+			stopProgressPolling(pollTimer);
+			hideProgressOverlay();
+			topBtn.disabled = false;
+			topBtn.textContent = '🔄 Actualizar';
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Actualizar';
+			alert('No se pudo conectar al server.\nDetalle: ' + err.message);
+			return;
+		}
+
+		stopProgressPolling(pollTimer);
+
+		let payload = {};
+		try { payload = await res.json(); } catch (_) {}
+
+		if (res.ok && payload.status === 'ok') {
+			topBtn.textContent = '🔄 Refrescando vista...';
+			await load();
+			hideProgressOverlay();
+			topBtn.disabled = false;
+			topBtn.textContent = '🔄 Actualizar';
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Actualizar';
+			return;
+		}
+
+		hideProgressOverlay();
+		topBtn.disabled = false;
+		topBtn.textContent = '🔄 Actualizar';
+		submitBtn.disabled = false;
+		submitBtn.textContent = 'Actualizar';
+
+		if (payload.status === 'mfa_invalid') {
+			openTotpModal('Código incorrecto o ya expiró. Genera uno nuevo.');
+			return;
+		}
+		if (payload.status === 'mfa_required') {
+			openTotpModal();
+			return;
+		}
+		if (payload.status === 'auth_failed') {
+			openConfigModal();
+			const cfgErr = $('config-error');
+			cfgErr.textContent = 'Las credenciales son incorrectas o GBM las rechazó.';
+			cfgErr.classList.remove('hidden');
+			return;
+		}
+		if (payload.status === 'config_error') {
+			openConfigModal(true);
+			return;
+		}
+		if (payload.status === 'api_error' || payload.status === 'timeout') {
+			alert('La API de GBM falló: ' + (payload.detail || 'sin detalle'));
+			return;
+		}
+		alert('Update falló (HTTP ' + res.status + '): ' + (payload.detail || 'sin detalle'));
 	}
 
 	// ----------------------------------------------------------------------

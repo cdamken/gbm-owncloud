@@ -5,6 +5,48 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.10] — 2026-06-05
+
+Rewrite `submitTotp` as a verbatim port of Trade-Republic-owncloud's
+`submitMfa` flow. GBM was delegating to a shared `triggerUpdate()`
+that used `setTimeout(startOverlay, 0)` to close the modal and show
+the toast — that deferred-start pattern occasionally left the
+modal open and the toast invisible because the timer didn't fire
+reliably in all event-loop orderings. Carlos hit this end-to-end:
+clicking Actualizar in the modal produced no progress feedback.
+
+### Changed
+
+- `js/dashboard.js::submitTotp` — now self-contained: validates
+  input, reads checkbox, **closes modal SYNCHRONOUSLY**, **shows
+  toast SYNCHRONOUSLY**, then awaits the fetch and handles every
+  status path inline. Identical structure to TR's `submitMfa`.
+- All UI state changes (button text, disabled, overlay) happen
+  in the synchronous prologue before `await`. No more
+  `setTimeout(_, 0)`.
+
+### Behavior diff
+
+- Before: click → modal stays open for one tick → setTimeout
+  fires → modal closes + toast appears → fetch in flight.
+  If the timer was deprioritized by the JS engine the modal
+  could stay open indefinitely with no visible progress.
+- After: click → modal gone + toast on screen IMMEDIATELY
+  (single event-loop tick) → fetch in flight.
+
+### Why this is the same as v0.14.4 (which I previously reverted)
+
+v0.14.4 also did sync close, but it kept the toast inside
+`triggerUpdate` with a deferred timer. The new flow doesn't use
+`triggerUpdate` at all on the TOTP-submit path — it mirrors TR
+bit-for-bit. `triggerUpdate` is still used by the top-bar
+Actualizar button for the first MFA probe (no TOTP code yet);
+that path is untouched.
+
+### Upstream
+
+Mirrors `gbm-dashboard@HEAD` (`app/_shared.js::submitTotp`).
+
 ## [0.14.9] — 2026-06-05
 
 Make the TOTP submit button robust against paste / Chrome
