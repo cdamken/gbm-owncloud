@@ -19,7 +19,12 @@
 # headers for the whole app — well worth never serving stale JS.
 <IfModule mod_headers.c>
   <FilesMatch "\.(js|css|map)$">
-    Header set Cache-Control "no-cache, must-revalidate, max-age=0"
-    Header unset Expires
+    # `always` applies even on responses where another module already
+    # emitted a Cache-Control header (PHP / ownCloud's middleware do).
+    # `unset` first → no duplicate "Cache-Control:" headers in the wire
+    # response, only ours.
+    Header always unset Cache-Control
+    Header always unset Expires
+    Header always set Cache-Control "no-cache, must-revalidate, max-age=0"
   </FilesMatch>
 </IfModule>
