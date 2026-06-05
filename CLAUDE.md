@@ -197,6 +197,28 @@ cross-user data access.
 
 ## Recently resolved
 
+- **2026-06-05**: Tests + CI harness landed (v0.14.13). 10 unit
+  tests, GitHub Actions green on push, `scripts/verify_dom_ids.py`
+  + `scripts/verify_wiring.py` + `unittest discover` as mandatory
+  pre-deploy gates in `scripts/deploy.sh`.
+- **2026-06-05**: `scripts/deploy.sh` finally exists (v0.14.12).
+  Before today GBM was deployed via raw rsync — exactly what
+  TR-owncloud's deploy.sh warns against (3-pillar drift).
+- **2026-06-05**: Fixed the **null `addEventListener` → silent
+  wire-up abort** bug (v0.14.11). `$('settings-btn')` returned
+  null (button was removed in v0.11) and the TypeError killed
+  every listener registered after that line — including the TOTP
+  submit click. All `addEventListener` calls now go through a
+  null-safe `on()` helper.
+- **2026-06-05**: Ported `account_changed` callback (v0.14.12) —
+  the last functional divergence vs `gbm-dashboard@v0.13.0`
+  surfaced by the audit. submitConfig now invokes
+  `window.onAccountChanged` after a successful save.
+- **2026-06-05**: Catalog of permitted dashboard→owncloud patches
+  written at [`TR-GBM-Project/OWNCLOUD-PATCHES.md`](https://github.com/cdamken/TR-GBM-Project/blob/main/OWNCLOUD-PATCHES.md).
+  Any future divergence outside the 9 listed transformations is
+  treated as a bug.
+
 - **2026-06-02**: Templates portados — `analysis.php` (stub
   "Próximamente"), `glossary.php`, `settings.php` con sidebar; nuevos
   endpoints (settings, reset, export CSV, benchmark, progress).
