@@ -5,6 +5,24 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.13.6] — 2026-06-03
+
+Honor the "no backdrop-blur on modals" policy. Carlos spotted that
+the GBM ownCloud progress overlay had a blurred background, which
+he'd asked me to remove from both apps earlier (documented as
+`feedback_no_backdrop_blur.md` in memory). I re-violated it in
+0.13.5 by adding `backdrop-filter: blur(8px)` to the progress
+overlay. Cleaned up now.
+
+### Fixed
+
+- `css/dashboard.css`: remove `backdrop-filter` from
+  `#gbm-app .progress-overlay` and `#gbm-app .modal-backdrop`.
+  Use solid darkened scrim only.
+- Policy added to `TR-GBM-Project/UNIFICATION.md` so future passes
+  don't reintroduce it. Top-bar's translucent header blur is fine —
+  it's not a scrim.
+
 ## [0.13.5] — 2026-06-03
 
 UX fix attempt: progress overlay not visible during /update fetch.

@@ -256,11 +256,13 @@ body.gbm-app-active #content-wrapper {
 
 /* ----- progress overlay (shown during /update fetches) ----- */
 /* Defensive z-index: 9999 + !important — owncloud's own header/sidebar
-   can introduce stacking contexts that swallow z-index: 200. */
+   can introduce stacking contexts that swallow z-index: 200.
+   No backdrop-filter — Carlos prefers a solid darkened scrim, see the
+   "No backdrop-blur on modals" policy in TR-GBM-Project. */
 #gbm-app .progress-overlay {
 	position: fixed !important; inset: 0; background: rgba(15, 20, 25, 0.92);
 	display: none; align-items: center; justify-content: center;
-	z-index: 9999 !important; backdrop-filter: blur(8px);
+	z-index: 9999 !important;
 }
 #gbm-app .progress-overlay.show { display: flex !important; }
 #gbm-app .progress-box {
@@ -288,7 +290,7 @@ body.gbm-app-active #content-wrapper {
 #gbm-app .modal-backdrop {
 	position: fixed; inset: 0; background: rgba(0,0,0,0.65);
 	display: none; align-items: center; justify-content: center;
-	z-index: 100; backdrop-filter: blur(4px);
+	z-index: 100;
 }
 #gbm-app .modal-backdrop.show { display: flex; }
 #gbm-app .modal {
