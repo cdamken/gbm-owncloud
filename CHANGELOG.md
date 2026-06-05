@@ -5,6 +5,32 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.2] — 2026-06-05
+
+USA benchmark in the Análisis chart switched from **SPY** (the
+SPDR ETF) to **^GSPC** (the S&P 500 index itself). Carlos prefers
+the pure index — SPY tracks it but lags ~0.09% per year (expense
+ratio) and pays dividends separately, so the overlay drifts
+slightly below "what the market really did".
+
+### Changed
+
+- `js/analysis.js` — benchmark fetch list:
+  `['NAFTRACISHRS.MX', 'SPY']` → `['NAFTRACISHRS.MX', '^GSPC']`.
+- Variable names + chart label updated: `spy*` → `sp500*`, label
+  from "Si compraras SPY en su lugar" → "Si invirtieras en el
+  S&P 500 en su lugar".
+
+### Notes
+
+- The benchmark allowlist regex (`/^[A-Za-z0-9.^_-]{1,40}$/` in
+  `ApiController::benchmark`) already permits `^`, so no
+  server-side change needed.
+- Old `SPY.json` cache files sit unused; the new symbol writes
+  `^GSPC.json`.
+- Upstream `gbm-dashboard/app/analysis.html` carries the same
+  switch.
+
 ## [0.14.1] — 2026-06-05
 
 Replace the blocking update modal+overlay with the non-blocking

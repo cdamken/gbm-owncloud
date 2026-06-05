@@ -120,9 +120,11 @@
 
 			// Benchmarks: fetched lazily via /benchmark/{symbol} (24h cache).
 			// Errors don't block the page — the overlay just doesn't render.
+			// ^GSPC is the S&P 500 index itself (price-return, no ETF
+			// expense ratio); SPY tracks it but lags ~0.09%/year.
 			state.benchmarks = await Promise.all([
 				safeJson(benchmarkUrl('NAFTRACISHRS.MX')),
-				safeJson(benchmarkUrl('SPY')),
+				safeJson(benchmarkUrl('^GSPC')),
 			]);
 
 			if (!accounts) {
@@ -618,9 +620,9 @@
 		emptyEl.style.display = 'none';
 
 		const benchNAFTRAC = state.benchmarks[0];
-		const benchSPY = state.benchmarks[1];
+		const benchSP500   = state.benchmarks[1];
 		const naftracMap = _replayBenchmark(benchNAFTRAC, dailyMap);
-		const spyMap     = _replayBenchmark(benchSPY,     dailyMap);
+		const sp500Map   = _replayBenchmark(benchSP500,   dailyMap);
 		const alignBench = (m) => {
 			if (!m) return null;
 			// One benchmark value per calendar day (replay carries
@@ -628,7 +630,7 @@
 			return filteredDates.map(d => d in m ? m[d] : null);
 		};
 		const naftracValues = alignBench(naftracMap);
-		const spyValues = alignBench(spyMap);
+		const sp500Values   = alignBench(sp500Map);
 
 		const datasets = [
 			{
@@ -664,10 +666,10 @@
 				spanGaps: true,
 			});
 		}
-		if (spyValues && spyValues.some(v => v != null)) {
+		if (sp500Values && sp500Values.some(v => v != null)) {
 			datasets.push({
-				label: 'Si compraras SPY en su lugar',
-				data: spyValues,
+				label: 'Si invirtieras en el S&P 500 en su lugar',
+				data: sp500Values,
 				borderColor: '#4ade80',
 				backgroundColor: 'transparent',
 				borderWidth: 2,
