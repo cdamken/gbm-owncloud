@@ -37,7 +37,7 @@ const MODAL_HTML = (
   '<div id="toast" class="toast">\n' +
   '  <button id="toast-close-btn" class="t-close" aria-label="Close">×</button>\n' +
   '  <div class="t-title"><span class="spin"></span> <span id="toast-title">Actualizando tu portafolio</span></div>\n' +
-  '  <div class="t-stage" id="toast-stage">Conectando con GBM…</div>\n' +
+  '  <div class="t-stage" id="progress-stage">Conectando con GBM…</div>\n' +
   '</div>\n' +
   '<div id="totp-modal" class="modal-backdrop">\n' +
   '  <div class="modal">\n' +
@@ -106,7 +106,7 @@ function showStatus(kind, msg) {
     t.classList.remove('ok', 'err');
     if (kind) t.classList.add(kind);
     const title = document.getElementById('toast-title');
-    const stage = document.getElementById('toast-stage');
+    const stage = document.getElementById('progress-stage');
     if (title) title.textContent = msg || '';
     if (stage) stage.textContent = '';
     t.classList.add('active');
@@ -120,7 +120,7 @@ function showToast(stage, kind) {
   if (!t) return;
   t.classList.remove('ok', 'err');
   if (kind) t.classList.add(kind);
-  const stageEl = document.getElementById('toast-stage');
+  const stageEl = document.getElementById('progress-stage');
   if (stageEl) stageEl.textContent = stage;
   t.classList.add('active');
 }
