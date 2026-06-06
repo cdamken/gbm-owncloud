@@ -5,6 +5,45 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.15] — 2026-06-06
+
+The "🔄 Actualizar" button in the top-bar finally works on **every
+page**, not just Portafolio. Carlos noticed clicking it from
+Órdenes / Dividendos / Libro Diario / Análisis / Glosario /
+Configuración did nothing.
+
+### Root cause
+
+`dashboard.js` carried the entire update flow (triggerUpdate,
+submitTotp, openTotpModal, modal HTML, etc) — but
+`PageController` only loads it on the Portafolio page. The
+other pages got `orders.js` / `dividends.js` / etc. which never
+wired the top-bar Update button. So the click landed on a button
+with no listener.
+
+### Fix
+
+Mirrored the pattern that `Trade-Republic-owncloud` already uses:
+
+- New **`js/update_flow.js`** (467 lines) — self-contained
+  update flow, auto-injects the TOTP modal + toast HTML on
+  pages that don't already have them, wires the `#update-btn`
+  click, runs the staleness chip refresh.
+- **`PageController` now loads `update_flow.js` on every page**
+  (right after `_shared.js`, before the per-page JS).
+- **`main.php` opts out** with `data-update-flow-owner="page"`
+  on `#gbm-app`. `dashboard.js` continues to handle the flow
+  there itself (verbatim port from `gbm-dashboard` upstream,
+  not refactored to avoid an unnecessary divergence).
+
+### Verified gates
+
+```
+verify_dom_ids.py: ✅ PASS
+verify_wiring.py : ✅ PASS
+unittest discover: ✅ 10/10
+```
+
 ## [0.14.14] — 2026-06-06
 
 Fix tab highlight bug — clicking "Libro Diario" / "Órdenes" /

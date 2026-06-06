@@ -110,6 +110,12 @@ class PageController extends Controller {
 		if ($template === 'analysis') {
 			\OCP\Util::addScript($this->appName, 'vendor/chart.umd.min');
 		}
+		// update_flow.js makes the "🔄 Actualizar" button work on every
+		// page (not just main.php). Auto-injects the TOTP modal + toast
+		// HTML when the page doesn't already carry it. main.php opts out
+		// via data-update-flow-owner="page" — dashboard.js handles the
+		// flow there itself (verbatim port from gbm-dashboard upstream).
+		\OCP\Util::addScript($this->appName, 'update_flow');
 		\OCP\Util::addScript($this->appName, $scriptMap[$template] ?? 'dashboard');
 
 		// Pass route URLs to the JS so it doesn't hardcode paths.
