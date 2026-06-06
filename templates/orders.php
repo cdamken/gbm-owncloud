@@ -2,7 +2,7 @@
 /** @var array $_ */
 $routes = $_['routes'];
 ?>
-<div id="gbm-app"
+<div id="gbm-app" data-tab="orders"
 	data-route-index="<?php p($routes['index']); ?>"
 	data-route-orders="<?php p($routes['orders']); ?>"
 	data-route-orders-all="<?php p($routes['orders_all']); ?>"

@@ -28,12 +28,18 @@
 	];
 
 	function _tabFromUrl() {
-		const path = location.pathname;
+		// Match the LAST path segment, not indexOf — every ownCloud URL
+		// starts with `/index.php/...` which made the old loop match the
+		// portfolio tab (slug=`index`) on every page (transactions,
+		// analysis, dividends, …) and always render Portafolio active.
+		// Regression caught 2026-06-06 by Carlos on the Libro Diario tab.
+		const path = location.pathname.replace(/\/+$/, '');
+		const last = path.split('/').pop() || '';
 		// orders_all groups under "orders" so the tab stays highlighted.
-		if (path.indexOf('/orders_all') !== -1) return 'orders';
+		if (last === 'orders_all') return 'orders';
 		for (const t of TABS) {
-			const slug = t.tab === 'portfolio' ? 'index' : t.tab;
-			if (path.indexOf('/' + slug) !== -1) return t.tab;
+			if (t.tab === 'portfolio') continue;  // portfolio is the default below
+			if (last === t.tab) return t.tab;
 		}
 		return 'portfolio';
 	}

@@ -5,6 +5,45 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.14] — 2026-06-06
+
+Fix tab highlight bug — clicking "Libro Diario" / "Órdenes" /
+"Glosario" navigated to the correct URL but the **Portafolio
+tab stayed visually highlighted**. Carlos caught it on
+`/transactions`.
+
+### Root cause
+
+Two bugs compounded:
+
+1. **4 templates were missing `data-tab=` attrs**
+   (`transactions.php`, `orders.php`, `orders_all.php`,
+   `glossary.php`). The other 4 had them. The injectTopBar code
+   falls through to `_tabFromUrl()` when `data-tab` is absent.
+
+2. **`_tabFromUrl()` used `path.indexOf('/' + slug)`** which is
+   substring-match, not segment-match. Every ownCloud URL starts
+   with `/index.php/...`, so when the loop checked the portfolio
+   tab (slug=`index`) it matched `/index` in **every** path and
+   returned `portfolio` before checking transactions / orders /
+   etc.
+
+### Fix
+
+- Added `data-tab="<id>"` to all 4 missing templates so the
+  fast path always wins.
+- Rewrote `_tabFromUrl()` to match the **last path segment**
+  exactly (`path.split('/').pop()`), not via `indexOf`. The
+  portfolio tab now serves as the fallback at the end.
+
+### Tests
+
+```
+verify_dom_ids.py: ✅ PASS
+verify_wiring.py : ✅ PASS
+unittest discover: ✅ 10/10
+```
+
 ## [0.14.13] — 2026-06-05
 
 CI + automated test harness. Closes the largest remaining gap
