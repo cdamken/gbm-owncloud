@@ -5,6 +5,32 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.19] — 2026-06-10
+
+Refactor D: broke up the 216-line `renderNetWorthChart()` in
+`js/analysis.js` into four single-purpose helpers + a thin
+orchestrator.
+
+### What changed
+
+- `_buildNetWorthDailyMap(rows)` — walks transactions and builds
+  the cost-basis trajectory (deposits/withdrawals/repos/MM-sweeps
+  filtered out — same noise filter as Libro Diario).
+- `_filterRangeDates(dailyMap, range)` — pads to today + applies
+  the 1M/3M/6M/1Y/All range filter.
+- `_netWorthDataset(label, data, color, isUserCurve)` — the
+  Chart.js dataset shape used for the user's cost-basis line and
+  the two benchmark overlays (NAFTRAC dashed, S&P 500 TR dashed).
+- `_netWorthChartOptions(datasetsCount)` — Chart.js options. Pure
+  config, no logic.
+
+`renderNetWorthChart()` itself is now ~50 lines of orchestration
+that reads top-down: load, early-out, build, render. Behavior
+is unchanged.
+
+Verified: `node --check`, verify_dom_ids, verify_wiring, all 10
+unit tests green.
+
 ## [0.14.18] — 2026-06-10
 
 Refactor C: shared JS formatters in `js/_shared.js`.

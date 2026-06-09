@@ -530,20 +530,20 @@
 		return out;
 	}
 
-	function renderNetWorthChart() {
-		if (typeof window.Chart !== 'function') return;
-		const canvas = document.getElementById('history-chart');
-		const emptyEl = document.getElementById('history-empty');
-		if (!canvas) return;
+	// ----------------------------------------------------------------------
+	// Net-worth chart helpers (extracted from renderNetWorthChart in
+	// v0.14.19 — the function had ballooned to 216 lines mixing data prep,
+	// dataset construction, and Chart.js options).
+	// ----------------------------------------------------------------------
 
-		const rows = (state.transactions && state.transactions.transactions) || [];
-		if (rows.length === 0) {
-			if (_histChart) { _histChart.destroy(); _histChart = null; }
-			canvas.style.display = 'none';
-			emptyEl.style.display = 'flex';
-			return;
-		}
-
+	/**
+	 * Walk the transaction list and accumulate a cost-basis trajectory
+	 * (capital deployed minus capital withdrawn). Filters the same system
+	 * noise as Libro Diario's "Mostrar ruido" toggle: deposits/withdrawals,
+	 * repo round-trips, and the GBMF2/GBMDINT money-market sweeps that
+	 * auto-roll idle cash.
+	 */
+	function _buildNetWorthDailyMap(rows) {
 		const sorted = [...rows].sort(
 			(a, b) => (a.process_date || '').localeCompare(b.process_date || '')
 		);
@@ -552,10 +552,6 @@
 		for (const t of sorted) {
 			const date = (t.process_date || '').slice(0, 10);
 			if (!date) continue;
-			// Filter system noise (same as Libro Diario "Mostrar ruido"
-			// toggle): internal transfers, repos, and Smart Cash GBMF2
-			// sweeps inflate is_buy/is_sell with movements that don't
-			// represent real capital deployment.
 			const cat = t.category;
 			if (cat === 'deposit' || cat === 'withdrawal') continue;
 			if (cat === 'repo_buy' || cat === 'repo_mature') continue;
@@ -568,14 +564,15 @@
 			else continue;
 			dailyMap.set(date, Math.round(running * 100) / 100);
 		}
+		return dailyMap;
+	}
 
-		if (dailyMap.size === 0) {
-			if (_histChart) { _histChart.destroy(); _histChart = null; }
-			canvas.style.display = 'none';
-			emptyEl.style.display = 'flex';
-			return;
-		}
-
+	/**
+	 * Pads the daily map up to today (carrying forward the last value) and
+	 * filters down to the user's chosen range (1M / 3M / 6M / 1Y / all).
+	 * Returns the sorted list of in-range dates.
+	 */
+	function _filterRangeDates(dailyMap, range) {
 		const today = new Date().toISOString().slice(0, 10);
 		const datesSorted = [...dailyMap.keys()].sort();
 		const lastDate = datesSorted[datesSorted.length - 1];
@@ -583,20 +580,133 @@
 			dailyMap.set(today, dailyMap.get(lastDate));
 			datesSorted.push(today);
 		}
+		const rangeDays = { '1M': 30, '3M': 90, '6M': 180, '1Y': 365 }[range];
+		if (!rangeDays) return datesSorted;
+		const cutoff = new Date();
+		cutoff.setDate(cutoff.getDate() - rangeDays);
+		const cutoffStr = cutoff.toISOString().slice(0, 10);
+		const filtered = datesSorted.filter(d => d >= cutoffStr);
+		return filtered.length === 0 ? [datesSorted[datesSorted.length - 1]] : filtered;
+	}
 
-		const rangeDays = { '1M': 30, '3M': 90, '6M': 180, '1Y': 365 }[_histRange];
-		let filteredDates = datesSorted;
-		if (rangeDays) {
-			const cutoff = new Date();
-			cutoff.setDate(cutoff.getDate() - rangeDays);
-			const cutoffStr = cutoff.toISOString().slice(0, 10);
-			filteredDates = datesSorted.filter(d => d >= cutoffStr);
-			if (filteredDates.length === 0) filteredDates = [datesSorted[datesSorted.length - 1]];
-		}
+	/**
+	 * Reusable Chart.js dataset shape for the net-worth chart. The user's
+	 * cost-basis is filled + bold; benchmarks are dashed lines on top.
+	 */
+	function _netWorthDataset(label, data, color, isUserCurve) {
+		return {
+			label,
+			data,
+			borderColor: color,
+			backgroundColor: isUserCurve ? 'rgba(96, 165, 250, 0.10)' : 'transparent',
+			borderWidth: 2,
+			borderDash: isUserCurve ? undefined : (color === '#fbbf24' ? [6, 4] : [2, 4]),
+			fill: !!isUserCurve,
+			tension: 0.15,
+			pointRadius: 0,
+			pointHoverRadius: 5,
+			pointHoverBackgroundColor: color,
+			pointHoverBorderColor: '#0f1419',
+			pointHoverBorderWidth: 2,
+			spanGaps: !isUserCurve,
+		};
+	}
 
+	/**
+	 * Build the Chart.js options object for the net-worth chart. Pulled
+	 * out so the orchestrator stays readable; this is pure config.
+	 */
+	function _netWorthChartOptions(datasetsCount) {
+		return {
+			maintainAspectRatio: false,
+			animation: { duration: 600, easing: 'easeOutQuart' },
+			interaction: { mode: 'index', intersect: false },
+			scales: {
+				x: {
+					ticks: {
+						color: '#7a8599',
+						font: { size: 11 },
+						maxRotation: 0,
+						autoSkip: true,
+						maxTicksLimit: 8,
+						callback: function (value) {
+							const label = this.getLabelForValue(value);
+							const d = new Date(label);
+							if (isNaN(d)) return label;
+							return d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+						},
+					},
+					grid: { display: false },
+				},
+				y: {
+					ticks: {
+						color: '#7a8599',
+						callback: (v) => fmtMoney(v, { currency: true, decimals: 0 }),
+						font: { size: 11 },
+					},
+					grid: { color: 'rgba(42, 49, 66, 0.5)' },
+				},
+			},
+			plugins: {
+				legend: {
+					display: datasetsCount > 1,
+					position: 'top',
+					align: 'end',
+					labels: {
+						color: '#e8eef5',
+						font: { size: 11, weight: '600' },
+						usePointStyle: true,
+						pointStyle: 'line',
+						boxWidth: 24,
+						boxHeight: 2,
+						padding: 12,
+					},
+				},
+				tooltip: {
+					backgroundColor: '#0f1419',
+					titleColor: '#e8eef5',
+					bodyColor: '#e8eef5',
+					borderColor: '#2a3142',
+					borderWidth: 1,
+					padding: 10,
+					callbacks: {
+						title: (items) => {
+							if (!items.length) return '';
+							const d = new Date(items[0].label);
+							return isNaN(d)
+								? items[0].label
+								: d.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+						},
+						label: (ctx) => ' ' + fmtMoney(ctx.parsed.y, { currency: true, decimals: 2 }),
+					},
+				},
+			},
+		};
+	}
+
+	function renderNetWorthChart() {
+		if (typeof window.Chart !== 'function') return;
+		const canvas = document.getElementById('history-chart');
+		const emptyEl = document.getElementById('history-empty');
+		if (!canvas) return;
+
+		const showEmpty = () => {
+			if (_histChart) { _histChart.destroy(); _histChart = null; }
+			canvas.style.display = 'none';
+			emptyEl.style.display = 'flex';
+		};
+
+		const rows = (state.transactions && state.transactions.transactions) || [];
+		if (rows.length === 0) { showEmpty(); return; }
+
+		const dailyMap = _buildNetWorthDailyMap(rows);
+		if (dailyMap.size === 0) { showEmpty(); return; }
+
+		const filteredDates = _filterRangeDates(dailyMap, _histRange);
 		const labels = filteredDates.map(d => d);
 		const values = filteredDates.map(d => dailyMap.get(d));
 
+		// Header badge: date range + min/max value
 		const minV = Math.min.apply(null, values);
 		const maxV = Math.max.apply(null, values);
 		const fromDate = filteredDates[0];
@@ -609,141 +719,28 @@
 		canvas.style.display = '';
 		emptyEl.style.display = 'none';
 
-		const benchNAFTRAC = state.benchmarks[0];
-		const benchSP500   = state.benchmarks[1];
-		const naftracMap = _replayBenchmark(benchNAFTRAC, dailyMap);
-		const sp500Map   = _replayBenchmark(benchSP500,   dailyMap);
-		const alignBench = (m) => {
-			if (!m) return null;
-			// One benchmark value per calendar day (replay carries
-			// forward the close on weekends/holidays).
-			return filteredDates.map(d => d in m ? m[d] : null);
-		};
-		const naftracValues = alignBench(naftracMap);
-		const sp500Values   = alignBench(sp500Map);
+		// Build benchmark curves (NAFTRAC + S&P 500 TR). _replayBenchmark
+		// returns null when the benchmark has no data — we just skip it.
+		const alignBench = (m) =>
+			m ? filteredDates.map(d => d in m ? m[d] : null) : null;
+		const naftracValues = alignBench(_replayBenchmark(state.benchmarks[0], dailyMap));
+		const sp500Values   = alignBench(_replayBenchmark(state.benchmarks[1], dailyMap));
 
 		const datasets = [
-			{
-				label: 'Capital invertido (cost basis)',
-				data: values,
-				borderColor: '#60a5fa',
-				backgroundColor: 'rgba(96, 165, 250, 0.10)',
-				borderWidth: 2,
-				fill: true,
-				tension: 0.15,
-				pointRadius: 0,
-				pointHoverRadius: 5,
-				pointHoverBackgroundColor: '#60a5fa',
-				pointHoverBorderColor: '#0f1419',
-				pointHoverBorderWidth: 2,
-			},
+			_netWorthDataset('Capital invertido (cost basis)', values, '#60a5fa', true),
 		];
 		if (naftracValues && naftracValues.some(v => v != null)) {
-			datasets.push({
-				label: 'Si compraras NAFTRAC en su lugar',
-				data: naftracValues,
-				borderColor: '#fbbf24',
-				backgroundColor: 'transparent',
-				borderWidth: 2,
-				borderDash: [6, 4],
-				fill: false,
-				tension: 0.15,
-				pointRadius: 0,
-				pointHoverRadius: 5,
-				pointHoverBackgroundColor: '#fbbf24',
-				pointHoverBorderColor: '#0f1419',
-				pointHoverBorderWidth: 2,
-				spanGaps: true,
-			});
+			datasets.push(_netWorthDataset('Si compraras NAFTRAC en su lugar', naftracValues, '#fbbf24', false));
 		}
 		if (sp500Values && sp500Values.some(v => v != null)) {
-			datasets.push({
-				label: 'Si invirtieras en el S&P 500 (Total Return) en su lugar',
-				data: sp500Values,
-				borderColor: '#4ade80',
-				backgroundColor: 'transparent',
-				borderWidth: 2,
-				borderDash: [2, 4],
-				fill: false,
-				tension: 0.15,
-				pointRadius: 0,
-				pointHoverRadius: 5,
-				pointHoverBackgroundColor: '#4ade80',
-				pointHoverBorderColor: '#0f1419',
-				pointHoverBorderWidth: 2,
-				spanGaps: true,
-			});
+			datasets.push(_netWorthDataset('Si invirtieras en el S&P 500 (Total Return) en su lugar', sp500Values, '#4ade80', false));
 		}
 
 		if (_histChart) _histChart.destroy();
 		_histChart = new window.Chart(canvas, {
 			type: 'line',
 			data: { labels, datasets },
-			options: {
-				maintainAspectRatio: false,
-				animation: { duration: 600, easing: 'easeOutQuart' },
-				interaction: { mode: 'index', intersect: false },
-				scales: {
-					x: {
-						ticks: {
-							color: '#7a8599',
-							font: { size: 11 },
-							maxRotation: 0,
-							autoSkip: true,
-							maxTicksLimit: 8,
-							callback: function (value) {
-								const label = this.getLabelForValue(value);
-								const d = new Date(label);
-								if (isNaN(d)) return label;
-								return d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
-							},
-						},
-						grid: { display: false },
-					},
-					y: {
-						ticks: {
-							color: '#7a8599',
-							callback: (v) => fmtMoney(v, { currency: true, decimals: 0 }),
-							font: { size: 11 },
-						},
-						grid: { color: 'rgba(42, 49, 66, 0.5)' },
-					},
-				},
-				plugins: {
-					legend: {
-						display: datasets.length > 1,
-						position: 'top',
-						align: 'end',
-						labels: {
-							color: '#e8eef5',
-							font: { size: 11, weight: '600' },
-							usePointStyle: true,
-							pointStyle: 'line',
-							boxWidth: 24,
-							boxHeight: 2,
-							padding: 12,
-						},
-					},
-					tooltip: {
-						backgroundColor: '#0f1419',
-						titleColor: '#e8eef5',
-						bodyColor: '#e8eef5',
-						borderColor: '#2a3142',
-						borderWidth: 1,
-						padding: 10,
-						callbacks: {
-							title: (items) => {
-								if (!items.length) return '';
-								const d = new Date(items[0].label);
-								return isNaN(d)
-									? items[0].label
-									: d.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
-							},
-							label: (ctx) => ' ' + fmtMoney(ctx.parsed.y, { currency: true, decimals: 2 }),
-						},
-					},
-				},
-			},
+			options: _netWorthChartOptions(datasets.length),
 		});
 	}
 
