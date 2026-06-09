@@ -3,11 +3,7 @@
 /** @var \OCP\IL10N $l */
 $routes = $_['routes'];
 ?>
-<!-- data-update-flow-owner="page" tells update_flow.js to NOT wire
-     itself on this template — main.php carries the modal markup
-     verbatim and dashboard.js already handles the update flow for
-     the Portfolio page. -->
-<div id="gbm-app" data-tab="portfolio" data-update-flow-owner="page"
+<div id="gbm-app" data-tab="portfolio"
 	data-route-index="<?php p($routes['index']); ?>"
 	data-route-orders="<?php p($routes['orders']); ?>"
 	data-route-orders-all="<?php p($routes['orders_all']); ?>"

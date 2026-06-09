@@ -673,134 +673,19 @@
 		});
 	}
 
-	async function triggerUpdate(totpCode, opts) {
-		// opts.full: bypass incremental and force a full-window refetch.
-		// Used by "Recargar todo desde cero" in the TOTP modal.
-		const fullReload = opts && opts.full === true;
-		const btn = $('update-btn');
-		btn.disabled = true;
-		btn.textContent = totpCode ? '🔄 Verificando código...' : '🔄 Conectando...';
+	// Update flow (triggerUpdate / submitTotp / openTotpModal /
+	// closeTotpModal / showProgressOverlay / hideProgressOverlay /
+	// startProgressPolling / stopProgressPolling / revalidateTotpSubmit /
+	// onTotpInput) lives in js/update_flow.js — loaded on every page by
+	// PageController. dashboard.js used to carry its own verbatim copy
+	// (~330 duplicate lines); removed in v0.14.16 once update_flow.js
+	// became the single owner. Use window.UpdateFlow.updateData() to
+	// trigger an update programmatically.
 
-		// Defer the heavy overlay: the first probe (no TOTP) might
-		// immediately come back with mfa_required, in which case we don't
-		// want to flash the overlay before opening the TOTP modal. When a
-		// TOTP code IS present we already know the fetch will take minutes,
-		// so show the overlay right away. Ports gbm-dashboard@v0.6.1
-		// (restored verbatim — the v0.14.4-v0.14.5 refactor broke the
-		// TOTP submit flow, see CHANGELOG).
-		let overlayShown = false;
-		let pollTimer = null;
-		const startOverlay = () => {
-			if (overlayShown) return;
-			overlayShown = true;
-			// If we got here from the TOTP modal (user just typed a code),
-			// close that modal as the progress overlay takes over —
-			// otherwise both stack visibly on top of each other.
-			if (totpCode) closeTotpModal();
-			showProgressOverlay();
-			pollTimer = startProgressPolling();
-			btn.textContent = '🔄 Actualizando...';
-		};
-		const overlayDelay = totpCode != null ? 0 : 700;
-		const overlayTimer = setTimeout(startOverlay, overlayDelay);
-		const stopOverlay = () => {
-			clearTimeout(overlayTimer);
-			if (pollTimer) { stopProgressPolling(pollTimer); pollTimer = null; }
-			if (overlayShown) { hideProgressOverlay(); overlayShown = false; }
-		};
-
-		let res;
-		try {
-			const reqBody = {};
-			if (totpCode) reqBody.totp_code = totpCode;
-			if (fullReload) reqBody.full = true;
-			res = await postJson(routes.update, reqBody);
-		} catch (err) {
-			stopOverlay();
-			btn.disabled = false;
-			btn.textContent = '🔄 Actualizar';
-			alert('No se pudo conectar al server.\nDetalle: ' + err.message);
-			return;
-		}
-
-		clearTimeout(overlayTimer);
-		if (pollTimer) { stopProgressPolling(pollTimer); pollTimer = null; }
-
-		let payload = {};
-		try { payload = await res.json(); } catch (_) {}
-
-		if (res.ok && payload.status === 'ok') {
-			closeTotpModal();
-			btn.textContent = '🔄 Refrescando vista...';
-			await load();
-			stopOverlay();
-			btn.disabled = false;
-			btn.textContent = '🔄 Actualizar';
-			return;
-		}
-
-		stopOverlay();
-		btn.disabled = false;
-		btn.textContent = '🔄 Actualizar';
-
-		if (payload.status === 'mfa_required') { openTotpModal(); return; }
-		if (payload.status === 'mfa_invalid') { openTotpModal('Código incorrecto o ya expiró. Genera uno nuevo.'); return; }
-		if (payload.status === 'auth_failed') {
-			closeTotpModal();
-			openConfigModal();
-			const errEl = $('config-error');
-			errEl.textContent = 'Las credenciales son incorrectas o GBM las rechazó.';
-			errEl.classList.remove('hidden');
-			return;
-		}
-		if (payload.status === 'config_error') {
-			closeTotpModal();
-			openConfigModal(true);
-			return;
-		}
-		if (payload.status === 'api_error' || payload.status === 'timeout') {
-			closeTotpModal();
-			alert('La API de GBM falló: ' + (payload.detail || 'sin detalle'));
-			return;
-		}
-		closeTotpModal();
-		alert('Update falló (HTTP ' + res.status + '): ' + (payload.detail || 'sin detalle'));
-	}
-
-	// Polls the TOTP input state while the modal is open. Even when
-	// paste / Chrome autofill / IME composition skips the `input`
-	// event (we hit exactly that bug today: input had a valid
-	// 6-digit code, but `submit.disabled` was still true because
-	// onTotpInput never fired), the button catches up within 200 ms.
-	let _totpPollTimer = null;
-
-	function openTotpModal(errorMsg) {
-		const modal = $('totp-modal');
-		const errEl = $('totp-error');
-		const input = $('totp-input');
-		if (errorMsg) { errEl.textContent = errorMsg; errEl.classList.remove('hidden'); }
-		else { errEl.classList.add('hidden'); }
-		input.value = '';
-		$('totp-submit').disabled = true;
-		modal.classList.add('show');
-		setTimeout(() => input.focus(), 100);
-		if (_totpPollTimer) clearInterval(_totpPollTimer);
-		_totpPollTimer = setInterval(revalidateTotpSubmit, 200);
-	}
-	function closeTotpModal() {
-		$('totp-modal').classList.remove('show');
-		if (_totpPollTimer) { clearInterval(_totpPollTimer); _totpPollTimer = null; }
-	}
-
-	function revalidateTotpSubmit() {
-		const inp = $('totp-input');
-		const btn = $('totp-submit');
-		if (!inp || !btn) return;
-		const cleaned = inp.value.replace(/\D/g, '').slice(0, 6);
-		if (inp.value !== cleaned) inp.value = cleaned;
-		btn.disabled = cleaned.length !== 6;
-	}
-
+	// ----------------------------------------------------------------------
+	// Config modal (GBM-specific — only lives on main.php). The TOTP modal
+	// + progress bar + toast are NOT here; they belong to update_flow.js.
+	// ----------------------------------------------------------------------
 	async function loadConfigStatus() {
 		try {
 			const res = await fetch(routes.config, { headers: { Accept: 'application/json' } });
@@ -829,58 +714,6 @@
 	}
 	function closeConfigModal() { $('config-modal').classList.remove('show'); }
 
-	// ----------------------------------------------------------------------
-	// Progress overlay during /update fetches (ports gbm-dashboard v0.6.2).
-	// Friendly Spanish stages that rotate based on elapsed time.
-	// ----------------------------------------------------------------------
-	const PROGRESS_STAGES = [
-		{ until: 3,        text: 'Conectando con GBM…' },
-		{ until: 12,       text: 'Descargando tu portafolio…' },
-		{ until: 45,       text: 'Descargando posiciones…' },
-		{ until: 120,      text: 'Descargando historial de operaciones…' },
-		{ until: 180,      text: 'Ya casi terminamos…' },
-		{ until: Infinity, text: 'Sigue trabajando, espera un poco más…' },
-	];
-	let _progressStartedAt = null;
-
-	function showProgressOverlay() {
-		// Non-blocking: thin progress bar at the top + toast under the
-		// top-bar. Ported from Trade-Republic-owncloud's update_flow.js so
-		// users keep scrolling while the fetch runs.
-		const bar = $('progress-bar');
-		const toast = $('toast');
-		const title = $('toast-title');
-		const stage = $('progress-stage');
-		if (bar) bar.classList.add('active', 'indet');
-		if (toast) {
-			toast.classList.remove('ok', 'err');
-			toast.classList.add('active');
-		}
-		if (title) title.textContent = 'Actualizando tu portafolio';
-		if (stage) stage.textContent = PROGRESS_STAGES[0].text;
-		_progressStartedAt = Date.now();
-	}
-	function hideProgressOverlay() {
-		const bar = $('progress-bar');
-		const toast = $('toast');
-		if (bar) bar.classList.remove('active', 'indet');
-		if (toast) toast.classList.remove('active');
-		_progressStartedAt = null;
-	}
-	function startProgressPolling() {
-		const updateStage = () => {
-			if (_progressStartedAt == null) return;
-			const elapsed = (Date.now() - _progressStartedAt) / 1000;
-			const stage = PROGRESS_STAGES.find(s => elapsed < s.until)
-				|| PROGRESS_STAGES[PROGRESS_STAGES.length - 1];
-			const el = $('progress-stage');
-			if (el && el.textContent !== stage.text) el.textContent = stage.text;
-		};
-		updateStage();
-		return setInterval(updateStage, 1000);
-	}
-	function stopProgressPolling(timer) { if (timer != null) clearInterval(timer); }
-
 	function onConfigInput() {
 		const email = $('config-email').value.trim();
 		const pw = $('config-password').value;
@@ -907,7 +740,11 @@
 				if (payload.account_changed && typeof window.onAccountChanged === 'function') {
 					try { await window.onAccountChanged(); } catch (_) {}
 				}
-				triggerUpdate();
+				// Update flow now lives in js/update_flow.js (loaded on every
+				// page by PageController). Call its public entry point.
+				if (window.UpdateFlow && typeof window.UpdateFlow.updateData === 'function') {
+					window.UpdateFlow.updateData();
+				}
 				return;
 			}
 			errEl.textContent = payload.detail || 'Error guardando credenciales.';
@@ -918,110 +755,6 @@
 		}
 		btn.textContent = 'Guardar';
 		onConfigInput();
-	}
-
-	function onTotpInput(_e) {
-		// Thin wrapper around revalidateTotpSubmit so the existing
-		// addEventListener('input', onTotpInput) wiring keeps working.
-		// The same logic also runs every 200 ms from openTotpModal's
-		// safety-net poll.
-		revalidateTotpSubmit();
-	}
-
-	// Verbatim port of Trade-Republic-owncloud's submitMfa() flow:
-	// read state → close modal SYNC → show toast SYNC → await fetch
-	// → handle response. Self-contained on purpose: delegating to
-	// triggerUpdate() (which used setTimeout(startOverlay, 0))
-	// occasionally left the modal open and the toast invisible
-	// because the deferred startOverlay wasn't firing reliably.
-	// TR's submitMfa pattern has worked unmodified for months.
-	async function submitTotp() {
-		const code = $('totp-input').value.trim();
-		const errEl = $('totp-error');
-		errEl.classList.add('hidden');
-		if (!(code.length === 6 && /^\d+$/.test(code))) {
-			errEl.textContent = 'El código debe ser de 6 dígitos.';
-			errEl.classList.remove('hidden');
-			return;
-		}
-		const fullEl = $('totp-full-reload');
-		const fullReload = fullEl ? fullEl.checked === true : false;
-		const submitBtn = $('totp-submit');
-		const topBtn = $('update-btn');
-		submitBtn.disabled = true;
-		submitBtn.textContent = 'Verificando...';
-		topBtn.disabled = true;
-		topBtn.textContent = fullReload ? '🔄 Re-descargando todo...' : '🔄 Actualizando...';
-
-		// Close modal + show toast SYNCHRONOUSLY before the fetch.
-		// Identical to TR's submitMfa().
-		closeTotpModal();
-		showProgressOverlay();
-		const pollTimer = startProgressPolling();
-
-		let res;
-		try {
-			res = await postJson(routes.update, {
-				totp_code: code,
-				...(fullReload ? { full: true } : {}),
-			});
-		} catch (err) {
-			stopProgressPolling(pollTimer);
-			hideProgressOverlay();
-			topBtn.disabled = false;
-			topBtn.textContent = '🔄 Actualizar';
-			submitBtn.disabled = false;
-			submitBtn.textContent = 'Actualizar';
-			alert('No se pudo conectar al server.\nDetalle: ' + err.message);
-			return;
-		}
-
-		stopProgressPolling(pollTimer);
-
-		let payload = {};
-		try { payload = await res.json(); } catch (_) {}
-
-		if (res.ok && payload.status === 'ok') {
-			topBtn.textContent = '🔄 Refrescando vista...';
-			await load();
-			hideProgressOverlay();
-			topBtn.disabled = false;
-			topBtn.textContent = '🔄 Actualizar';
-			submitBtn.disabled = false;
-			submitBtn.textContent = 'Actualizar';
-			return;
-		}
-
-		hideProgressOverlay();
-		topBtn.disabled = false;
-		topBtn.textContent = '🔄 Actualizar';
-		submitBtn.disabled = false;
-		submitBtn.textContent = 'Actualizar';
-
-		if (payload.status === 'mfa_invalid') {
-			openTotpModal('Código incorrecto o ya expiró. Genera uno nuevo.');
-			return;
-		}
-		if (payload.status === 'mfa_required') {
-			openTotpModal();
-			return;
-		}
-		if (payload.status === 'auth_failed') {
-			openConfigModal();
-			const cfgErr = $('config-error');
-			cfgErr.textContent = 'Las credenciales son incorrectas o GBM las rechazó.';
-			cfgErr.classList.remove('hidden');
-			return;
-		}
-		if (payload.status === 'config_error') {
-			openConfigModal(true);
-			return;
-		}
-		if (payload.status === 'api_error' || payload.status === 'timeout') {
-			alert('La API de GBM falló: ' + (payload.detail || 'sin detalle'));
-			return;
-		}
-		alert('Update falló (HTTP ' + res.status + '): ' + (payload.detail || 'sin detalle'));
 	}
 
 	// ----------------------------------------------------------------------
@@ -1060,8 +793,10 @@
 
 		// NOTE: the old subtitle `#settings-btn` was removed in v0.11
 		// when settings moved into the top-bar as "⚙ Configuración".
-		// Nothing to wire up here anymore.
-		on('update-btn',    'click', () => triggerUpdate());
+		// The `#update-btn`, `#totp-*` and `#toast-close-btn` listeners
+		// are now wired by js/update_flow.js (loaded on every page) —
+		// removed here in v0.14.16 to eliminate the duplicate update-flow
+		// implementation.
 		on('search',        'input', renderTable);
 		on('account-filter','change', renderTable);
 		on('market-filter', 'change', renderTable);
@@ -1075,26 +810,15 @@
 		// through `on()` so any missing element no-ops cleanly instead
 		// of aborting the rest of the wire-up.
 		on('config-modal',    'click', (e) => { if (e.target.id === 'config-modal') closeConfigModal(); });
-		on('totp-modal',      'click', (e) => { if (e.target.id === 'totp-modal')   closeTotpModal();   });
 		on('config-cancel',   'click', closeConfigModal);
-		on('totp-cancel',     'click', closeTotpModal);
 
 		on('config-email',    'input',   onConfigInput);
 		on('config-password', 'input',   onConfigInput);
 		on('config-password', 'keydown', (e) => { if (e.key === 'Enter') submitConfig(); });
 		on('config-submit',   'click',   submitConfig);
 
-		on('totp-input',  'input',   onTotpInput);
-		on('totp-input',  'keydown', (e) => { if (e.key === 'Enter') submitTotp(); });
-		on('totp-submit', 'click',   submitTotp);
-
-		on('toast-close-btn', 'click', () => {
-			$('toast').classList.remove('active');
-		});
-
 		document.addEventListener('keydown', (e) => {
 			if (e.key !== 'Escape') return;
-			closeTotpModal();
 			closeConfigModal();
 		});
 

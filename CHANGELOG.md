@@ -5,6 +5,44 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.16] — 2026-06-09
+
+Refactor A: removed the duplicate update-flow implementation from
+`js/dashboard.js`. Since v0.14.15 every page already loads the
+single-owner `js/update_flow.js`, but `dashboard.js` kept its own
+verbatim copy of `triggerUpdate` / `submitTotp` / `openTotpModal` /
+`closeTotpModal` / `showProgressOverlay` / `hideProgressOverlay` /
+`startProgressPolling` / `stopProgressPolling` /
+`revalidateTotpSubmit` / `onTotpInput` — roughly 330 duplicate
+lines that drifted independently from `update_flow.js`.
+
+### What changed
+
+- Removed 10 update-flow functions from `js/dashboard.js` (file
+  dropped from 1130 → 845 lines).
+- Removed the duplicate wire-up of `#update-btn`, `#totp-modal`,
+  `#totp-cancel`, `#totp-input`, `#totp-submit` and
+  `#toast-close-btn` from `dashboard.js`'s DOMContentLoaded —
+  `update_flow.js` is now the sole owner of those listeners.
+- `submitConfig()` no longer calls a local `triggerUpdate()`;
+  it now invokes `window.UpdateFlow.updateData()` after a
+  successful save (same public entry point used everywhere else).
+- The config flow (`openConfigModal`, `closeConfigModal`,
+  `loadConfigStatus`, `maybeShowConfigOnFirstLoad`,
+  `onConfigInput`, `submitConfig`) stays in `dashboard.js`
+  — it is genuinely GBM-specific (only main.php has the modal).
+
+### Why
+
+Bug fixes to the update flow only had to be remembered in one
+place going forward. The duplicate was the root cause of the
+"⟳ spinning emoji" and "TOTP modal raced the toast" regressions
+that ate a chunk of v0.14.4 → v0.14.11.
+
+Verified: `verify_dom_ids`, `verify_wiring`, 10 unit tests all
+green; Portafolio's "🔄 Actualizar" still works end-to-end via
+`update_flow.js`.
+
 ## [0.14.15] — 2026-06-06
 
 The "🔄 Actualizar" button in the top-bar finally works on **every
