@@ -3,8 +3,8 @@
  * Per-user bridge to the gbm-mx-api Python library.
  *
  * Every public method here operates on a single ownCloud user. The userId
- * is bound at construction time (see Application::__construct), which makes
- * leaking another user's data structurally impossible.
+ * is resolved lazily from IUserSession (see BaseOwnCloudService::userId()),
+ * which makes leaking another user's data structurally impossible.
  *
  * Storage layout (datadirectory is the ownCloud root data dir):
  *
@@ -24,77 +24,27 @@
  *     occ config:system:set gbm.orders_days --value=90
  *
  * The venv must have gbm-mx-api installed.
+ *
+ * Shared DI plumbing (constructor, userId, userDir, runProcess, EXIT_*)
+ * lives in BaseOwnCloudService — see that file for the security boundary
+ * + subprocess gotchas. This class only carries GBM-specific logic.
  */
 
 namespace OCA\Gbm\Service;
 
-use OCP\IConfig;
-use OCP\IUserSession;
-use OCP\Security\ICrypto;
-
-class GbmService {
+class GbmService extends BaseOwnCloudService {
 
 	const APPID = 'gbm';
 
-	const EXIT_OK            = 0;
-	const EXIT_MFA_REQUIRED  = 10;
-	const EXIT_MFA_INVALID   = 11;
-	const EXIT_AUTH_FAILED   = 12;
-	const EXIT_API_ERROR     = 20;
-	const EXIT_CONFIG_ERROR  = 30;
-
-	private $userSession;
-	private $config;
-	private $crypto;
-	private $dataDirRoot;
-	private $userIdCache = null;
-
-	/**
-	 * Constructor only takes interfaces the ownCloud DI container can
-	 * auto-wire — string parameters confuse it (it tries to resolve them as
-	 * service ids). userId is computed lazily from IUserSession.
-	 */
-	public function __construct(IUserSession $userSession, IConfig $config, ICrypto $crypto) {
-		$this->userSession = $userSession;
-		$this->config = $config;
-		$this->crypto = $crypto;
-		$this->dataDirRoot = rtrim(
-			(string) $config->getSystemValue('datadirectory', \OC::$SERVERROOT . '/data'),
-			'/'
-		);
-	}
-
-	/**
-	 * The userId of the currently-logged-in ownCloud user.
-	 * Resolved lazily so the service can be constructed even when no user
-	 * is in session (e.g. background jobs). All public methods that touch
-	 * per-user state go through this.
-	 */
-	private function userId(): string {
-		if ($this->userIdCache === null) {
-			$user = $this->userSession->getUser();
-			if ($user === null) {
-				throw new \RuntimeException('GBM app: no user in session');
-			}
-			$this->userIdCache = $user->getUID();
-		}
-		return $this->userIdCache;
+	protected function appDirName(): string {
+		return 'gbm';
 	}
 
 	// ------------------------------------------------------------------
 	// Paths (per-user, isolated)
 	// ------------------------------------------------------------------
-	public function userGbmDir(): string {
-		$path = $this->dataDirRoot . '/' . $this->userId() . '/gbm';
-		if (!is_dir($path)) {
-			// 0700 — only the web-server user should read these files.
-			@mkdir($path, 0700, true);
-		}
-		return $path;
-	}
-
 	public function sessionPath(): string {
-		return $this->userGbmDir() . '/session.json';
+		return $this->userDir() . '/session.json';
 	}
 
 	public function dataPath(string $name): string {
@@ -109,7 +59,7 @@ class GbmService {
 		if (!in_array($name, $allowed, true)) {
 			throw new \InvalidArgumentException("unknown data file: $name");
 		}
-		return $this->userGbmDir() . '/' . $name;
+		return $this->userDir() . '/' . $name;
 	}
 
 	// ------------------------------------------------------------------
@@ -196,7 +146,7 @@ class GbmService {
 	}
 
 	private function wipeUserData(): void {
-		$dir = $this->userGbmDir();
+		$dir = $this->userDir();
 		foreach (['accounts.json','positions.json','orders.json','orders_all.json',
 				  'dividends.json','transactions.json','investments_groups.json',
 				  'last_update.date','session.json'] as $name) {
@@ -243,7 +193,7 @@ class GbmService {
 			$python,
 			$script,
 			'--session-path', $this->sessionPath(),
-			'--data-dir',     $this->userGbmDir(),
+			'--data-dir',     $this->userDir(),
 		];
 		if ($totpCode !== null) {
 			$cmd[] = '--totp';
@@ -266,64 +216,5 @@ class GbmService {
 		];
 
 		return $this->runProcess($cmd, $env, 180);
-	}
-
-	private function runProcess(array $cmd, array $env, int $timeoutSec): array {
-		$descriptorSpec = [
-			0 => ['pipe', 'r'],
-			1 => ['pipe', 'w'],
-			2 => ['pipe', 'w'],
-		];
-		$proc = proc_open($cmd, $descriptorSpec, $pipes, null, $env);
-		if (!is_resource($proc)) {
-			return ['exitCode' => self::EXIT_CONFIG_ERROR, 'stdout' => '', 'stderr' => 'proc_open failed'];
-		}
-		fclose($pipes[0]);
-
-		stream_set_blocking($pipes[1], false);
-		stream_set_blocking($pipes[2], false);
-
-		$stdout = '';
-		$stderr = '';
-		$exitCode = -1;
-		$deadline = microtime(true) + $timeoutSec;
-		while (true) {
-			$status = proc_get_status($proc);
-			$stdout .= stream_get_contents($pipes[1]);
-			$stderr .= stream_get_contents($pipes[2]);
-			if (!$status['running']) {
-				// PHP gotcha: proc_get_status() captures the exit status the
-				// first time it sees the process exited. proc_close() called
-				// afterwards returns -1 because the status was already reaped.
-				// So we read exitcode from the LAST non-running status here.
-				$exitCode = (int) $status['exitcode'];
-				break;
-			}
-			if (microtime(true) > $deadline) {
-				proc_terminate($proc, 9);
-				$stderr .= "\n[timeout after {$timeoutSec}s]";
-				$exitCode = self::EXIT_CONFIG_ERROR;
-				break;
-			}
-			usleep(100 * 1000);
-		}
-		// Drain anything still buffered after exit.
-		$stdout .= stream_get_contents($pipes[1]);
-		$stderr .= stream_get_contents($pipes[2]);
-		fclose($pipes[1]);
-		fclose($pipes[2]);
-		// proc_close will return -1 here (status already reaped above) — we
-		// don't use its return value, just close the handle.
-		proc_close($proc);
-
-		// fetch.log is handy for debugging from the server side without
-		// having to re-trigger an Update.
-		@file_put_contents(
-			$this->userGbmDir() . '/fetch.log',
-			'[' . date('c') . "] exit=$exitCode\n--- stdout ---\n$stdout\n--- stderr ---\n$stderr\n",
-			LOCK_EX
-		);
-
-		return ['exitCode' => $exitCode, 'stdout' => $stdout, 'stderr' => $stderr];
 	}
 }

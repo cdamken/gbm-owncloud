@@ -5,6 +5,43 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.17] — 2026-06-10
+
+Refactor B: extracted `BaseOwnCloudService` parent class.
+
+`GbmService` and the sister `TrService` (Trade-Republic-owncloud)
+carried ~100 lines of byte-identical code each — DI constructor,
+lazy `userId()` resolution, the EXIT_* constants, and the proc_open
+`runProcess()` body. That duplication drifted independently twice
+in the past, and any future bug fix would have had to be
+remembered in both files.
+
+### What changed
+
+- New abstract class `BaseOwnCloudService` (171 lines) holds the
+  shared plumbing:
+  - DI-friendly constructor (IUserSession + IConfig + ICrypto)
+  - Lazy `userId()` — security boundary against cross-user access
+  - `userDir()` per-user data dir under `{datadir}/<uid>/<app>/`
+    (subclass provides `<app>` via abstract `appDirName()`)
+  - `runProcess()` — proc_open wrapper with timeout + fetch.log
+  - `EXIT_OK` / `EXIT_MFA_REQUIRED` / `EXIT_MFA_INVALID` /
+    `EXIT_AUTH_FAILED` / `EXIT_API_ERROR` / `EXIT_RATE_LIMITED` /
+    `EXIT_CONFIG_ERROR`
+- `GbmService` extends it, drops the duplicated lines, and now
+  only carries GBM-specific logic (credentials, days config,
+  sessionPath, resetSession + Cognito GlobalSignOut, wipeUserData).
+- `GbmService.php`: 329 → 220 lines (−33%).
+- `userDir()` replaces the old `userGbmDir()` (no external callers
+  to migrate).
+- The class is intentionally VENDORED-DUPLICATED with
+  `Trade-Republic-owncloud/lib/Service/BaseOwnCloudService.php`
+  (same content, different namespace) — two ownCloud apps can't
+  share a class via composer without an extra package.
+
+Verified: `php -l` clean, verify_dom_ids, verify_wiring, all 10
+unit tests green.
+
 ## [0.14.16] — 2026-06-09
 
 Refactor A: removed the duplicate update-flow implementation from
