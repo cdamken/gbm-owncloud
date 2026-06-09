@@ -13,6 +13,51 @@
 (function () {
 	'use strict';
 
+	// ------------------------------------------------------------------
+	// Shared formatters (v0.14.18 — Refactor C)
+	//
+	// fmtMoney, fmtPct, pnlClass used to be redefined inline in every
+	// page-level JS (dashboard, analysis, orders, orders_all, dividends,
+	// transactions) — six near-identical copies that drifted slightly.
+	// Exposed here on `window` so per-page files can grab them with a
+	// one-line const alias: `const fmtMoney = window.fmtMoney;`.
+	//
+	// Mirrors gbm-dashboard/app/_shared.js where fmtMoney is already a
+	// top-level function (the upstream isn't wrapped in an IIFE).
+	// ------------------------------------------------------------------
+
+	function fmtMoney(n, opts) {
+		opts = opts || {};
+		if (n == null || isNaN(n)) return '—';
+		var sign = opts.sign === true;
+		var decimals = opts.decimals != null ? opts.decimals : 2;
+		var currency = opts.currency === true;
+		var abs = Math.abs(n);
+		var formatted = abs.toLocaleString('es-MX', {
+			minimumFractionDigits: decimals,
+			maximumFractionDigits: decimals,
+		});
+		var signPrefix = n < 0 ? '-' : (sign && n > 0 ? '+' : '');
+		var currencyPrefix = currency ? '$' : '';
+		return signPrefix + currencyPrefix + formatted;
+	}
+
+	// `n` is a FRACTION, e.g. 0.05 → "+5.00%" (matches upstream
+	// gbm-dashboard/app/_shared.js + index.html). Pass already-multiplied
+	// values explicitly if you must — divide by 100 before calling.
+	function fmtPct(n) {
+		if (n == null || isNaN(n)) return '—';
+		return (n >= 0 ? '+' : '') + (n * 100).toFixed(2) + '%';
+	}
+
+	function pnlClass(n) {
+		return n > 0 ? 'pos' : n < 0 ? 'neg' : 'muted';
+	}
+
+	window.fmtMoney = fmtMoney;
+	window.fmtPct   = fmtPct;
+	window.pnlClass = pnlClass;
+
 	// Single source of truth for the tabs — same 7 tabs as upstream
 	// (gbm-dashboard/app/_shared.js v0.13.0). "Histórico" (orders_all)
 	// is intentionally NOT in the top-bar; it stays reachable via the

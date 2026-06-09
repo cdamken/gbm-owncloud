@@ -11,20 +11,8 @@
 	const dataUrl = (type) => routes.data.replace('__TYPE__', type);
 	const $ = (id) => document.getElementById(id);
 
-	const fmtMoney = (n, opts) => {
-		opts = opts || {};
-		if (n == null || isNaN(n)) return '—';
-		const decimals = opts.decimals != null ? opts.decimals : 2;
-		const currency = opts.currency === true;
-		const abs = Math.abs(n);
-		const formatted = abs.toLocaleString('es-MX', {
-			minimumFractionDigits: decimals,
-			maximumFractionDigits: decimals,
-		});
-		const signPrefix = n < 0 ? '-' : '';
-		const currencyPrefix = currency ? '$' : '';
-		return signPrefix + currencyPrefix + formatted;
-	};
+	// Shared formatter — single source of truth in js/_shared.js (v0.14.18).
+	const fmtMoney = window.fmtMoney;
 	const formatDate = (iso) => {
 		if (!iso) return '—';
 		const d = new Date(iso);

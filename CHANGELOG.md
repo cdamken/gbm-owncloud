@@ -5,6 +5,48 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.18] — 2026-06-10
+
+Refactor C: shared JS formatters in `js/_shared.js`.
+
+Six page-level files (`dashboard.js`, `analysis.js`, `orders.js`,
+`orders_all.js`, `dividends.js`, `transactions.js`) each carried
+their own copy of `fmtMoney` — five of which had slightly drifted
+signatures (some accepted `sign:true`, some didn't, some hadn't
+been updated when the convention changed in dashboard.js). Plus
+`fmtPct` + `pnlClass` lived only in `dashboard.js`, so other pages
+couldn't render P&L colors consistently.
+
+### What changed
+
+- `js/_shared.js` now exposes `window.fmtMoney`, `window.fmtPct`,
+  `window.pnlClass` from inside its IIFE. The implementation matches
+  upstream `gbm-dashboard/app/_shared.js` byte-for-byte (sign-aware
+  variant; fmtPct treats `n` as a fraction so `0.05 → "+5.00%"`).
+- Each of the six page-level files now grabs the helper via a
+  one-line const alias:
+  ```js
+  const fmtMoney = window.fmtMoney;
+  ```
+  instead of redefining the 14-line body.
+- Net: −60 lines across page-level files, +45 lines in `_shared.js`,
+  net −15 lines but a single source of truth that the verifiers and
+  CI can sanity-check.
+
+Verified: 7-file `node --check` clean, verify_dom_ids,
+verify_wiring, all 10 unit tests green.
+
+### TR-owncloud parity
+
+Trade-Republic-owncloud has the same shape (`_shared.js` with the
+shared bits) but `_shared.js` is only loaded on `orders` + `ledger`
+pages, and the older pages have tiny one-line inline helpers
+declared INSIDE function bodies. Unifying them would require
+loading `_shared.js` everywhere AND resolving a global-name collision
+with `dashboard.js`'s top-level `const fmtEUR` — risk-to-reward is
+poor for ~5 lines saved. Documented in
+TR-GBM-Project/TECHNICAL-PATTERNS.md as a future cleanup.
+
 ## [0.14.17] — 2026-06-10
 
 Refactor B: extracted `BaseOwnCloudService` parent class.

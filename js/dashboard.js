@@ -18,28 +18,12 @@
 	const dataUrl = (type) => routes.data.replace('__TYPE__', type);
 
 	// ----------------------------------------------------------------------
-	// Format helpers
+	// Format helpers — single source of truth in js/_shared.js (loaded
+	// first by PageController). v0.14.18 dropped six duplicate copies.
 	// ----------------------------------------------------------------------
-	const fmtMoney = (n, opts) => {
-		opts = opts || {};
-		if (n == null || isNaN(n)) return '—';
-		const sign = opts.sign === true;
-		const decimals = opts.decimals != null ? opts.decimals : 2;
-		const currency = opts.currency === true;
-		const abs = Math.abs(n);
-		const formatted = abs.toLocaleString('es-MX', {
-			minimumFractionDigits: decimals,
-			maximumFractionDigits: decimals,
-		});
-		const signPrefix = n < 0 ? '-' : (sign && n > 0 ? '+' : '');
-		const currencyPrefix = currency ? '$' : '';
-		return signPrefix + currencyPrefix + formatted;
-	};
-	const fmtPct = (n) => {
-		if (n == null || isNaN(n)) return '—';
-		return (n >= 0 ? '+' : '') + (n * 100).toFixed(2) + '%';
-	};
-	const pnlClass = (n) => (n > 0 ? 'pos' : n < 0 ? 'neg' : 'muted');
+	const fmtMoney = window.fmtMoney;
+	const fmtPct   = window.fmtPct;
+	const pnlClass = window.pnlClass;
 	// Server is UTC; user may be in another TZ. Attach 'Z' if no TZ marker
 	// then display in Mexico City time (where the market trades).
 	const formatTimestamp = (iso) => {
