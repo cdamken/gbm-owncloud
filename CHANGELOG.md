@@ -5,6 +5,23 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.20] — 2026-06-10
+
+`BaseOwnCloudService` now also exposes `EXIT_TIMEOUT` (alias for the
+existing `EXIT_RATE_LIMITED`, both = 21). The two names track
+semantically distinct conditions — TR's API genuinely emits HTTP
+429 rate limits, while GBM and Scalable hit the same code as a
+wrapper timeout. PHP forbids self-referential `const` so the
+literal `21` is duplicated.
+
+Added in preparation for the Scalable-Capital-owncloud port to
+the shared base class (Scalable's ApiController uses `EXIT_TIMEOUT`
+naturally — it has no rate-limit semantics).
+
+Also bumps the matching constant in `tests/test_fetch_wrapper_smoke.py`'s
+PHP-drift check to look for either name. All 10 unit tests still
+green.
+
 ## [0.14.19] — 2026-06-10
 
 Refactor D: broke up the 216-line `renderNetWorthChart()` in

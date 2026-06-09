@@ -36,11 +36,18 @@ abstract class BaseOwnCloudService {
 
 	// Exit codes returned by python/fetch_wrapper.py. Shared by every
 	// downstream ownCloud bridge — see ApiController for the HTTP mapping.
+	//
+	// Code 21 has two semantically-distinct names: TR's API genuinely
+	// emits HTTP 429 rate limits → `EXIT_RATE_LIMITED`; GBM and Scalable
+	// hit it as a wrapper timeout → `EXIT_TIMEOUT`. Same value, two
+	// names so each ApiController can use the locally-meaningful one.
+	// PHP forbids self-referential `const`, so we duplicate the literal.
 	const EXIT_OK            = 0;
 	const EXIT_MFA_REQUIRED  = 10;
 	const EXIT_MFA_INVALID   = 11;
 	const EXIT_AUTH_FAILED   = 12;
 	const EXIT_API_ERROR     = 20;
+	const EXIT_TIMEOUT       = 21;
 	const EXIT_RATE_LIMITED  = 21;
 	const EXIT_CONFIG_ERROR  = 30;
 
