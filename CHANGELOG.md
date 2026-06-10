@@ -5,6 +5,29 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.21] — 2026-06-10
+
+Per-page CSV exports (gbm-owncloud closes upstream
+[gbm-dashboard#1](https://github.com/cdamken/gbm-dashboard/issues/1)).
+
+### What changed
+
+- New route `api#exportPageCsv` at `GET /export/{kind}.csv`.
+- 5 kinds whitelisted: `ordenes`, `historico`, `dividendos`,
+  `transacciones`, `posiciones`.
+- Each page's controls bar gets a "↓ Exportar CSV" link rendering
+  inline — no JS, read-only GET.
+- Verbatim port of `gbm-dashboard/app/server.py::_handle_export_page_csv()`.
+
+### Why not replacing /export/transactions.csv
+
+The existing 13-column SAT-shaped `transactions.csv` stays — it's
+the right shape for the accountant. The new per-page CSVs are the
+analyst's shape (only the columns visible on screen).
+
+Verified: php -l clean, verify_dom_ids, verify_wiring, 10/10 unit
+tests green.
+
 ## [0.14.20] — 2026-06-10
 
 `BaseOwnCloudService` now also exposes `EXIT_TIMEOUT` (alias for the

@@ -112,6 +112,9 @@ $routes = $_['routes'];
 			<option value="winners">Solo ganadores (+)</option>
 			<option value="losers">Solo perdedores (−)</option>
 		</select>
+		<a href="<?php p(str_replace('__KIND__', 'posiciones', $routes['export_page'])); ?>" download="gbm-posiciones.csv"
+		   style="background: rgba(96,165,250,0.08); color: var(--blue); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; border: 1px solid var(--blue); white-space: nowrap;"
+		   title="Descarga el portafolio como CSV (ticker, cuenta, cantidad, precio promedio, último precio, valor mercado, P&L MXN, P&L %)">↓ Exportar CSV</a>
 	</div>
 
 	<table id="positions-table">

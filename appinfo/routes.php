@@ -27,6 +27,10 @@ return [
 		['name' => 'api#settingsSet',   'url' => '/api/settings',  'verb' => 'POST'],
 		['name' => 'api#reset',         'url' => '/api/reset',     'verb' => 'POST'],
 		['name' => 'api#exportTransactionsCsv', 'url' => '/export/transactions.csv', 'verb' => 'GET'],
+		// Per-page CSV exports — focused subsets, complement the SAT-shaped
+		// /export/transactions.csv. Verbatim port of gbm-dashboard. {kind}
+		// is whitelisted in ApiController::exportPageCsv.
+		['name' => 'api#exportPageCsv', 'url' => '/export/{kind}.csv', 'verb' => 'GET'],
 		['name' => 'api#benchmark',     'url' => '/benchmark/{symbol}', 'verb' => 'GET'],
 		['name' => 'api#data',          'url' => '/data/{type}',   'verb' => 'GET'],
 		['name' => 'api#getConfig',     'url' => '/api/config',    'verb' => 'GET'],

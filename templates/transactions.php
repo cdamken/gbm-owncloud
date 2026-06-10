@@ -80,6 +80,9 @@ $routes = $_['routes'];
 			<input type="checkbox" id="show-noise">
 			Mostrar ruido del sistema (sweep GBMF2, reportos, traspasos internos)
 		</label>
+		<a href="<?php p(str_replace('__KIND__', 'transacciones', $routes['export_page'])); ?>" download="gbm-transacciones.csv"
+		   style="background: rgba(96,165,250,0.08); color: var(--blue); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; border: 1px solid var(--blue); white-space: nowrap;"
+		   title="Descarga el libro diario como CSV (fecha, ticker, descripción, monto, categoría, cuenta)">↓ Exportar CSV</a>
 	</div>
 
 	<div id="noise-banner" class="noise-banner"></div>

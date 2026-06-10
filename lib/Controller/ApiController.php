@@ -243,6 +243,147 @@ class ApiController extends Controller {
 	}
 
 	/**
+	 * Per-page CSV exports — focused subsets matching each dashboard
+	 * page's columns. Verbatim port of gbm-dashboard/app/server.py
+	 * `_handle_export_page_csv`. The whitelist below is the security
+	 * boundary; {kind} comes from URL path.
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function exportPageCsv(string $kind): Http\Response {
+		$SPECS = [
+			'ordenes' => [
+				'file' => 'orders.json',
+				'list_key' => 'orders',
+				'columns' => ['fecha', 'side', 'ticker', 'descripcion', 'mercado', 'cantidad', 'monto', 'estado'],
+				'row' => function ($o) {
+					return [
+						substr((string) ($o['operation_date'] ?? ''), 0, 10),
+						!empty($o['is_buy']) ? 'Compra' : (!empty($o['is_sell']) ? 'Venta' : ''),
+						$o['security_id'] ?? '',
+						$o['description'] ?? '',
+						$o['market_label'] ?? $o['market'] ?? '',
+						number_format((float) ($o['quantity'] ?? 0), 4, '.', ''),
+						number_format((float) ($o['amount'] ?? 0), 4, '.', ''),
+						$o['status'] ?? 'filled',
+					];
+				},
+			],
+			'historico' => [
+				'file' => 'orders_all.json',
+				'list_key' => 'orders',
+				'columns' => ['fecha', 'ticker', 'side', 'cantidad', 'monto', 'estado'],
+				'row' => function ($o) {
+					return [
+						substr((string) ($o['operation_date'] ?? ''), 0, 10),
+						$o['security_id'] ?? '',
+						!empty($o['is_buy']) ? 'Compra' : (!empty($o['is_sell']) ? 'Venta' : ''),
+						number_format((float) ($o['quantity'] ?? 0), 4, '.', ''),
+						number_format((float) ($o['amount'] ?? 0), 4, '.', ''),
+						$o['status'] ?? '',
+					];
+				},
+			],
+			'dividendos' => [
+				'file' => 'dividends.json',
+				'list_key' => 'dividends',
+				'columns' => ['fecha', 'ticker', 'descripcion', 'monto_bruto', 'isr_retenido', 'monto_neto'],
+				'row' => function ($d) {
+					return [
+						substr((string) ($d['payment_date'] ?? $d['ex_date'] ?? ''), 0, 10),
+						$d['security_id'] ?? '',
+						$d['description'] ?? '',
+						number_format((float) ($d['gross_amount'] ?? $d['amount'] ?? 0), 4, '.', ''),
+						number_format((float) ($d['tax_withheld'] ?? $d['tax'] ?? 0), 4, '.', ''),
+						number_format((float) ($d['net_amount'] ?? 0), 4, '.', ''),
+					];
+				},
+			],
+			'transacciones' => [
+				'file' => 'transactions.json',
+				'list_key' => 'transactions',
+				'columns' => ['fecha', 'ticker', 'descripcion', 'monto', 'categoria', 'cuenta'],
+				'row' => function ($t) {
+					return [
+						substr((string) ($t['process_date'] ?? ''), 0, 10),
+						$t['security_id'] ?? '',
+						$t['description'] ?? '',
+						number_format((float) ($t['amount'] ?? 0), 4, '.', ''),
+						$t['category'] ?? '',
+						$t['account_name'] ?? $t['account_legacy_id'] ?? '',
+					];
+				},
+			],
+			'posiciones' => [
+				'file' => 'positions.json',
+				'list_key' => null,  // custom flatten — accounts dict
+				'columns' => ['ticker', 'cuenta', 'cantidad', 'precio_promedio', 'ultimo_precio', 'valor_mercado', 'pnl_mxn', 'pnl_pct'],
+				'row' => function ($p) {
+					return [
+						$p['issue_id'] ?? $p['security_id'] ?? '',
+						$p['_account_name'] ?? '',
+						number_format((float) ($p['quantity'] ?? 0), 4, '.', ''),
+						number_format((float) ($p['average_price'] ?? 0), 4, '.', ''),
+						number_format((float) ($p['last_price'] ?? 0), 4, '.', ''),
+						number_format((float) ($p['market_value'] ?? 0), 4, '.', ''),
+						number_format((float) ($p['yield_value'] ?? 0), 4, '.', ''),
+						number_format((float) ($p['historical_variation_percentage'] ?? 0), 4, '.', ''),
+					];
+				},
+			],
+		];
+
+		if (!isset($SPECS[$kind])) {
+			return new JSONResponse(['error' => 'unknown kind'], Http::STATUS_BAD_REQUEST);
+		}
+		$spec = $SPECS[$kind];
+
+		$out = $this->csvRow($spec['columns']) . "\n";
+
+		$path = $this->gbm->dataPath($spec['file']);
+		if (is_file($path)) {
+			$data = json_decode((string) @file_get_contents($path), true);
+			if (is_array($data)) {
+				if ($spec['list_key']) {
+					$items = (array) ($data[$spec['list_key']] ?? []);
+				} else {
+					// positions.json: flatten accounts → positions w/ _account_name
+					$items = [];
+					$accountsMap = (array) ($data['accounts'] ?? []);
+					foreach ($accountsMap as $acc) {
+						if (!is_array($acc)) continue;
+						$accName = $acc['name'] ?? '';
+						foreach ((array) ($acc['positions'] ?? []) as $pos) {
+							if (!is_array($pos)) continue;
+							$pos['_account_name'] = $accName;
+							$items[] = $pos;
+						}
+					}
+					if (!$items && isset($data['positions']) && is_array($data['positions'])) {
+						$items = $data['positions'];
+					}
+				}
+				foreach ($items as $item) {
+					try {
+						$out .= $this->csvRow($spec['row']($item)) . "\n";
+					} catch (\Throwable $_) {
+						continue;
+					}
+				}
+			}
+		}
+
+		$response = new Http\DataDisplayResponse(
+			$out,
+			Http::STATUS_OK,
+			['Content-Type' => 'text/csv; charset=utf-8']
+		);
+		$response->addHeader('Content-Disposition', 'attachment; filename="gbm-' . $kind . '.csv"');
+		return $response;
+	}
+
+	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */

@@ -135,6 +135,7 @@ class PageController extends Controller {
 				'settings_api'  => $this->urlGenerator->linkToRoute('gbm.api.settingsGet'),
 				'reset'         => $this->urlGenerator->linkToRoute('gbm.api.reset'),
 				'export_csv'    => $this->urlGenerator->linkToRoute('gbm.api.exportTransactionsCsv'),
+				'export_page'   => $this->urlGenerator->linkToRoute('gbm.api.exportPageCsv', ['kind' => '__KIND__']),
 				'benchmark'     => $this->urlGenerator->linkToRoute('gbm.api.benchmark', ['symbol' => '__SYMBOL__']),
 			],
 		];

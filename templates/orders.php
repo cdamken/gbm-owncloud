@@ -98,6 +98,9 @@ $routes = $_['routes'];
 		<span id="account-filter-wrap" style="display: none;">
 			<select id="account-filter"><option value="">Todas las cuentas</option></select>
 		</span>
+		<a href="<?php p(str_replace('__KIND__', 'ordenes', $routes['export_page'])); ?>" download="gbm-ordenes.csv"
+		   style="background: rgba(96,165,250,0.08); color: var(--blue); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; border: 1px solid var(--blue); white-space: nowrap;"
+		   title="Descarga la tabla de órdenes como CSV (fecha, side, ticker, descripción, mercado, cantidad, monto, estado)">↓ Exportar CSV</a>
 	</div>
 
 	<table id="orders-table">

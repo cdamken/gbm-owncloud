@@ -62,6 +62,9 @@ $routes = $_['routes'];
 		<span id="account-filter-wrap" style="display: none;">
 			<select id="account-filter"><option value="">Todas las cuentas</option></select>
 		</span>
+		<a href="<?php p(str_replace('__KIND__', 'dividendos', $routes['export_page'])); ?>" download="gbm-dividendos.csv"
+		   style="background: rgba(96,165,250,0.08); color: var(--blue); text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; border: 1px solid var(--blue); white-space: nowrap;"
+		   title="Descarga los dividendos como CSV (fecha, ticker, descripción, monto bruto, ISR retenido, monto neto)">↓ Exportar CSV</a>
 	</div>
 
 	<table id="dividends-table">
