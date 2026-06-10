@@ -27,7 +27,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -130,13 +130,23 @@ INCREMENTAL_BUFFER_DAYS = 14
 
 
 def read_last_update_date(data_dir: Path):
-    """Date portion of {data_dir}/last_update.date, or None."""
+    """Date portion of {data_dir}/last_update.date, or None.
+
+    Accepts both formats:
+      - Legacy:  "2026-06-10 09:21:43" (naive local-of-server)
+      - Current: "2026-06-10T09:21:43Z" (UTC ISO 8601, written 2026-06-10+)
+    Only the YYYY-MM-DD prefix matters for the incremental window
+    calculation; the time component is consumed by the staleness chip.
+    """
     path = data_dir / "last_update.date"
     if not path.exists():
         return None
     try:
         first_line = path.read_text(encoding="utf-8").strip().splitlines()[0]
-        return date.fromisoformat(first_line.split()[0])
+        # Split on either 'T' (ISO) or whitespace (legacy) — both leave
+        # the YYYY-MM-DD prefix in the first element.
+        date_part = first_line.split('T')[0].split()[0]
+        return date.fromisoformat(date_part)
     except (OSError, ValueError, IndexError):
         return None
 
@@ -609,8 +619,12 @@ def main() -> None:
                     )
                 write_json(data_dir / "transactions.json", tx_file_payload)
 
+            # ISO 8601 UTC with explicit Z — browser JS parses the `Z`
+            # and converts to user-local via toLocaleTimeString(). Fixes
+            # the "Updated 07:21 AM" stale chip on a UTC server.
             (data_dir / "last_update.date").write_text(
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S\n"), encoding="utf-8"
+                datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ\n"),
+                encoding="utf-8",
             )
 
     except AuthError as e:
