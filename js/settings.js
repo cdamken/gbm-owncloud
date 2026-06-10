@@ -17,6 +17,7 @@
 	}
 
 	function flash(el, ok, msg) {
+		if (!el) return;  // callers pass $(id) which may be null
 		el.textContent = msg;
 		el.className = 'flash show ' + (ok ? 'ok' : 'err');
 		if (ok) setTimeout(() => el.classList.remove('show'), 3500);

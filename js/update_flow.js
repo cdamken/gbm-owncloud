@@ -121,7 +121,10 @@ function showToast(stage, kind) {
   t.classList.remove('ok', 'err');
   if (kind) t.classList.add(kind);
   const stageEl = document.getElementById('progress-stage');
-  if (stageEl) stageEl.textContent = stage;
+  // Skip the DOM write when the text hasn't changed — the 500 ms
+  // progress poll calls this with the same stage for minutes at a
+  // time during long fetches.
+  if (stageEl && stageEl.textContent !== stage) stageEl.textContent = stage;
   t.classList.add('active');
 }
 function setToastTitle(title) {
@@ -253,15 +256,21 @@ function closeTotpModal() {
 }
 
 async function submitTotp() {
-  const code = document.getElementById('totp-input').value.trim();
+  // Null guards: the modal is normally injected by injectModalsIfMissing(),
+  // but if injection failed (CSP, broken DOM) a naked deref here would
+  // throw and silently kill the whole flow — same bug class as the
+  // settings-btn TypeError that ate v0.14.4-0.14.11.
+  const inp = document.getElementById('totp-input');
   const errEl = document.getElementById('totp-error');
+  const submitBtn = document.getElementById('totp-submit');
+  if (!inp || !errEl || !submitBtn) return;
+  const code = inp.value.trim();
   errEl.classList.remove('show');
   if (!/^\d{6}$/.test(code)) {
-    errEl.textContent = 'The code must be exactly 6 dígitos.';
+    errEl.textContent = 'El código debe tener exactamente 6 dígitos.';
     errEl.classList.add('show');
     return;
   }
-  const submitBtn = document.getElementById('totp-submit');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Verificando…';
   const fullReload = !!document.getElementById('totp-full-reload') &&
@@ -284,14 +293,14 @@ async function submitTotp() {
       openTotpModal();
       errEl.textContent = 'Código incorrecto o ya expiró. Genera uno nuevo en tu app.';
       errEl.classList.add('show');
-      document.getElementById('totp-input').select();
+      inp.select();
     } else if (r.state === 'auth_failed') {
       openTotpModal();
       errEl.textContent = 'Credenciales inválidas. Reabre ⚙ Configuración y guárdalas otra vez.';
       errEl.classList.add('show');
     } else if (r.state === 'rate_limited') {
       openTotpModal();
-      errEl.textContent = '⚠ GBM+ rate-limited login. Wait 15–30 min and retry.';
+      errEl.textContent = '⚠ GBM+ limitó los intentos de login. Espera 15–30 min y reintenta.';
       errEl.classList.add('show');
     } else {
       openTotpModal();
@@ -406,6 +415,12 @@ function broadcastUpdateComplete() {
 
 // ============ Init ============
 function init() {
+  // Re-entry guard: a second init() (double script load, manual call)
+  // would duplicate every addEventListener below — two /update POSTs
+  // per click, validation firing twice per keystroke.
+  if (window.__updateFlowInitialized) return;
+  window.__updateFlowInitialized = true;
+
   const root = document.getElementById('gbm-app');
   if (!root) return;
   // Portfolio (main.php) ships its own copy of this logic inside dashboard.js
@@ -454,10 +469,12 @@ function init() {
   if (toastX) toastX.addEventListener('click', hideToast);
 
   // ESC closes the MFA modal (matches Portfolio's behaviour).
+  // NB: GBM's modal CSS class is `.show` (TR uses `.open`) — keep this
+  // check in sync with openTotpModal()/closeTotpModal() above.
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     const m = document.getElementById('totp-modal');
-    if (m && m.classList.contains('open')) closeTotpModal();
+    if (m && m.classList.contains('show')) closeTotpModal();
   });
 }
 

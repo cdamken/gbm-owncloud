@@ -5,6 +5,32 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.24] — 2026-06-10
+
+Quality pass — applies the cross-repo code-review findings.
+
+### Fixed
+
+- **ESC no cerraba el modal TOTP** (`js/update_flow.js`): the
+  keydown handler still checked `classList.contains('open')` after
+  v0.14.23 switched the modal to `.show` — leftover from the same
+  class-name mismatch. ESC works again.
+- **submitTotp null guards**: naked `getElementById(...).value`
+  derefs could throw and silently kill the flow if modal injection
+  failed — same TypeError class as the settings-btn bug.
+- **flash() null guard** (`js/settings.js`): callers pass `$(id)`
+  which may be null.
+- **init() re-entry guard**: a double script load duplicated every
+  listener (two `/update` POSTs per click).
+- **UI strings**: two leftover English/Spanglish error messages in
+  the TOTP modal now read in Spanish ("El código debe tener
+  exactamente 6 dígitos", "GBM+ limitó los intentos de login").
+
+### Performance
+
+- `showToast` skips the DOM write when the stage text is unchanged
+  (the 500 ms progress poll rewrote the same string for minutes).
+
 ## [0.14.23] — 2026-06-10
 
 Fix: TOTP modal didn't appear when GBM+ asked for a security code.
