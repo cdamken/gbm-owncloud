@@ -5,6 +5,30 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.23] — 2026-06-10
+
+Fix: TOTP modal didn't appear when GBM+ asked for a security code.
+
+Carlos: "Le estoy dando actualizar y no aparece la ventana para el
+código." Server-side was correct (`fetch_wrapper.py` exited 10
+`MFA_REQUIRED`, `ApiController` mapped it to HTTP 401
+`status: mfa_required`). Frontend `update_flow.js` called
+`openTotpModal()` which added the CSS class **`.open`** to
+`#totp-modal` — but `css/dashboard.css` only defines
+`#gbm-app .modal-backdrop.show { display: flex }`, not `.open`.
+
+The class-name mismatch slipped in with Refactor A (v0.14.16) when
+`update_flow.js` was ported verbatim from `Trade-Republic-owncloud`
+where the matching CSS rule IS `.modal-backdrop.open`. GBM kept the
+old `.show` convention (used by the config modal, also driven by
+`dashboard.js::openConfigModal` which still works).
+
+Fix: change the two callsites in `js/update_flow.js` to add/remove
+`.show` instead of `.open`. Aligns with GBM's CSS without changing
+the upstream-portable JS structure.
+
+Verified: verify_dom_ids + verify_wiring + 10/10 unit tests green.
+
 ## [0.14.22] — 2026-06-10
 
 Fix: `last_update.date` written as UTC ISO 8601 with explicit `Z`.

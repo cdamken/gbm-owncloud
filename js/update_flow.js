@@ -233,7 +233,11 @@ async function updateData() {
 function openTotpModal() {
   const m = document.getElementById('totp-modal');
   if (!m) return;
-  m.classList.add('open');
+  // CSS class is `.show` (matches the existing #gbm-app .modal-backdrop.show
+  // rule in css/dashboard.css). Was `.open` in v0.14.16-0.14.22 — ported
+  // verbatim from TR-owncloud which uses `.open`, but GBM's CSS never had
+  // a rule for it so the modal stayed display:none. Fixed v0.14.23.
+  m.classList.add('show');
   const errEl = document.getElementById('totp-error');
   if (errEl) errEl.classList.remove('show');
   const inp = document.getElementById('totp-input');
@@ -245,7 +249,7 @@ function openTotpModal() {
 }
 function closeTotpModal() {
   const m = document.getElementById('totp-modal');
-  if (m) m.classList.remove('open');
+  if (m) m.classList.remove('show');
 }
 
 async function submitTotp() {
