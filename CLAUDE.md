@@ -29,8 +29,10 @@ ownCloud context — per-user paths, env-injected credentials, CSP
 adaptations, etc. If you find yourself adding a new feature HERE
 first, stop and rethink — it probably belongs upstream.
 
-The orchestrator lives in `~/damkencloud/Claude/GBM-Master/`, with
-`docs/WORKFLOW.md` as canonical cross-repo flow.
+The orchestrator lives in `~/damkencloud/Claude/Portfolio-Master/`,
+with `WORKFLOW.md` as canonical cross-repo flow and `TRIO-PLAYBOOK.md`
+documenting the shared 3-part structure across all trios. (Renamed
+from the old per-trio `GBM-Master` on 2026-06-11.)
 
 ## The cardinal rule: copy verbatim, patch minimally
 
