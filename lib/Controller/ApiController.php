@@ -137,21 +137,14 @@ class ApiController extends Controller {
 	 */
 	public function settingsGet(): JSONResponse {
 		$appInfo = \OC::$server->getAppManager()->getAppInfo('gbm');
-		$apiVersion = '';
-		// Try to read the installed gbm-mx-api version from the venv.
-		// Best-effort — if pip isn't available or the lib isn't installed
-		// the about-list just shows "—".
-		$python = \OC::$server->getConfig()->getSystemValue('gbm.python_bin', 'python3');
-		$out = @shell_exec(escapeshellarg($python) . ' -c "import gbm_mx_api; print(gbm_mx_api.__version__)" 2>/dev/null');
-		if (is_string($out) && trim($out) !== '') {
-			$apiVersion = trim($out);
-		}
+		// Installed gbm-mx-api version via GbmService::libVersion() —
+		// proc_open, not shell_exec, to honor the layering contract.
 		return new JSONResponse([
 			'orders_days'        => $this->gbm->getOrdersDays(),
 			'dividends_days'     => $this->gbm->getDividendsDays(),
 			'transactions_days'  => $this->gbm->getTransactionsDays(),
 			'app_version'        => $appInfo['version'] ?? '',
-			'gbm_mx_api_version' => $apiVersion,
+			'gbm_mx_api_version' => $this->gbm->libVersion(),
 		]);
 	}
 

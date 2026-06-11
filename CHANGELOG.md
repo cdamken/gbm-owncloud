@@ -5,6 +5,17 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.26] — 2026-06-11
+
+Layering-contract fix: the Settings "About" version probe used
+`shell_exec(escapeshellarg(...))` — the only `shell_exec` in any of
+the three owncloud ports. Replaced with `GbmService::libVersion()`,
+which uses the inherited `runProcess()` (proc_open, array argv) like
+every other subprocess. Surfaced by Portfolio-Master's new
+`scripts/verify_layering.sh`.
+
+No behavior change — the About list still shows the gbm-mx-api version.
+
 ## [0.14.25] — 2026-06-11
 
 Cross-trio parity: **Yield on Cost** stat on the Analysis page.

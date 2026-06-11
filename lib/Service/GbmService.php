@@ -41,6 +41,25 @@ class GbmService extends BaseOwnCloudService {
 	}
 
 	// ------------------------------------------------------------------
+	// Library version probe (for the Settings "About" list)
+	// ------------------------------------------------------------------
+	/**
+	 * Best-effort installed gbm-mx-api version, via the same proc_open
+	 * path as everything else (NOT shell_exec — keeps the layering
+	 * contract's "subprocess only through runProcess()" rule intact).
+	 * Returns '' if the venv/lib isn't reachable.
+	 */
+	public function libVersion(): string {
+		$python = $this->config->getSystemValue('gbm.python_bin', 'python3');
+		$res = $this->runProcess(
+			[$python, '-c', 'import gbm_mx_api; print(gbm_mx_api.__version__)'],
+			['PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin', 'HOME' => sys_get_temp_dir(), 'LANG' => 'C.UTF-8'],
+			10
+		);
+		return $res['exitCode'] === 0 ? trim($res['stdout']) : '';
+	}
+
+	// ------------------------------------------------------------------
 	// Paths (per-user, isolated)
 	// ------------------------------------------------------------------
 	public function sessionPath(): string {
