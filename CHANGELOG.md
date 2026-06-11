@@ -5,6 +5,20 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.25] — 2026-06-11
+
+Cross-trio parity: **Yield on Cost** stat on the Analysis page.
+
+Forward 12-month dividend ÷ cost basis (avg_price × quantity over
+all positions). TR's analytics already showed this; GBM had the
+forward dividend projection but not the yield-on-cost ratio. Added
+as a fourth stat in the dividends row, blue like TR's `cf-yoc`.
+Verbatim port from gbm-dashboard@97b95f2.
+
+(Geographic-allocation parity does NOT apply to GBM — GBM positions
+carry `issue_id`, not ISIN, so domicile bucketing has no input. That
+gap is TR↔SC only.)
+
 ## [0.14.24] — 2026-06-10
 
 Quality pass — applies the cross-repo code-review findings.

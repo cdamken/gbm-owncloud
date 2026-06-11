@@ -70,6 +70,11 @@ $routes = $_['routes'];
 			<div class="stat-value green" id="div-forecast">—</div>
 			<div class="stat-detail" id="div-forecast-detail">—</div>
 		</div>
+		<div title="Rendimiento por dividendos sobre el costo: proyección 12m ÷ costo invertido. A diferencia del yield de mercado (÷ precio actual), te dice cuánto ingreso generas por cada peso que pagaste.">
+			<div class="stat-label">Yield on cost</div>
+			<div class="stat-value" id="div-yoc" style="color: var(--blue);">—</div>
+			<div class="stat-detail">proyección 12m ÷ costo invertido</div>
+		</div>
 	</div>
 	<div class="chart-card">
 		<div class="chart-container">

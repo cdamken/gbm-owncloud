@@ -338,6 +338,19 @@
 		forecastEl.className = 'stat-value green';
 		forecastDetailEl.textContent =
 			'proyectado de ' + payouts.length + ' pagos en ' + spanDays + 'd';
+
+		// Yield on cost = forward 12m dividend ÷ cost basis. Verbatim port
+		// from gbm-dashboard. Same calc as TR (fwd / buys.total).
+		const yocEl = document.getElementById('div-yoc');
+		if (yocEl) {
+			const costBasis = (state.positionsFlat || []).reduce(
+				(s, p) => s + (Number(p.average_price) || 0) * (Number(p.quantity) || 0),
+				0
+			);
+			yocEl.textContent = (spanDays >= 90 && costBasis > 0)
+				? (scaled / costBasis * 100).toFixed(2) + '%'
+				: '—';
+		}
 	}
 
 	// ----------------------------------------------------------------------
