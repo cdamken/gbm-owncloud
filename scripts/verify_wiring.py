@@ -94,12 +94,29 @@ def collect_definitions(js_files: list[Path]) -> dict[str, list[tuple[Path, int]
         # window.NAME = (top-level export)
         re.compile(r'window\.([A-Za-z_]\w*)\s*='),
     ]
+    # Function PARAMETERS are local definitions too. A helper like
+    #   function renderLineChart(svgId, series, getValue, fmtTick, color, opts) {…}
+    # uses getValue()/fmtTick() inside — those are params, not undefined
+    # globals. Capture the param list of `function NAME(...)` and
+    # `NAME = (...) =>` / `NAME = function(...)` so they count as defined.
+    func_params = re.compile(
+        r'(?:function\s*[A-Za-z_]*\s*\(([^)]*)\)'      # function foo(a,b)
+        r'|(?:^|[=,(]\s*)\(([^)]*)\)\s*=>)'            # (a,b) =>
+    )
     for js in js_files:
         text = js.read_text(encoding='utf-8')
         for lineno, line in enumerate(text.splitlines(), 1):
             for pat in patterns:
                 for m in pat.finditer(line):
                     defs.setdefault(m.group(1), []).append((js, lineno))
+            for m in func_params.finditer(line):
+                raw = m.group(1) or m.group(2) or ''
+                for piece in raw.split(','):
+                    # Strip default values (`opts = {}`), whitespace, and
+                    # skip destructuring / rest for now (rare in this code).
+                    name = piece.split('=')[0].strip().lstrip('.')
+                    if re.fullmatch(r'[A-Za-z_]\w*', name):
+                        defs.setdefault(name, []).append((js, lineno))
     return defs
 
 
