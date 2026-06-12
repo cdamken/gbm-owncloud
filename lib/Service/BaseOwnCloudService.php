@@ -51,6 +51,22 @@ abstract class BaseOwnCloudService {
 	const EXIT_RATE_LIMITED  = 21;
 	const EXIT_CONFIG_ERROR  = 30;
 
+	// Human-readable names for the exit codes above — used in fetch.log and
+	// owncloud.log so a glance tells you WHAT happened, not just a number.
+	private static $EXIT_NAMES = [
+		0  => 'OK',
+		10 => 'MFA_REQUIRED',
+		11 => 'MFA_INVALID',
+		12 => 'AUTH_FAILED',
+		20 => 'API_ERROR',
+		21 => 'TIMEOUT',
+		30 => 'CONFIG_ERROR',
+	];
+
+	private static function exitName(int $code): string {
+		return self::$EXIT_NAMES[$code] ?? ('UNKNOWN(' . $code . ')');
+	}
+
 	protected $userSession;
 	protected $config;
 	protected $crypto;
@@ -123,8 +139,15 @@ abstract class BaseOwnCloudService {
 			1 => ['pipe', 'w'],
 			2 => ['pipe', 'w'],
 		];
+		// The argv is safe to log (secrets travel via $env, never argv — see
+		// runFetch). This gives owncloud.log a "what did we actually run" line.
+		$cmdline = implode(' ', array_map('strval', $cmd));
+		$startedAt = microtime(true);
+		$this->logInfo(sprintf('runProcess start: %s (timeout %ds)', $cmdline, $timeoutSec));
+
 		$proc = proc_open($cmd, $descriptorSpec, $pipes, null, $env);
 		if (!is_resource($proc)) {
+			$this->logError('runProcess: proc_open failed for ' . $cmdline);
 			return ['exitCode' => self::EXIT_CONFIG_ERROR, 'stdout' => '', 'stderr' => 'proc_open failed'];
 		}
 		fclose($pipes[0]);
@@ -165,14 +188,80 @@ abstract class BaseOwnCloudService {
 		// don't use its return value, just close the handle.
 		proc_close($proc);
 
+		$durationMs = (int) round((microtime(true) - $startedAt) * 1000);
+		$exitName = self::exitName($exitCode);
+		$lastErr = $this->lastLine($stderr);
+
 		// fetch.log is handy for debugging from the server side without
-		// having to re-trigger an Update.
+		// having to re-trigger an Update. The header line is greppable and
+		// summarises the run before the raw stdout/stderr dumps.
 		@file_put_contents(
 			$this->userDir() . '/fetch.log',
-			'[' . date('c') . "] exit=$exitCode\n--- stdout ---\n$stdout\n--- stderr ---\n$stderr\n",
+			'[' . date('c') . "] exit=$exitCode ($exitName) duration=${durationMs}ms\n"
+				. "cmd: $cmdline\n"
+				. ($lastErr !== '' ? "last stderr: $lastErr\n" : '')
+				. "--- stdout ---\n$stdout\n--- stderr ---\n$stderr\n",
 			LOCK_EX
 		);
 
+		// Mirror a one-line summary into owncloud.log so an admin can follow
+		// every Update via `occ log` / the log viewer without shell access to
+		// each user's fetch.log. Level scales with severity.
+		$summary = sprintf(
+			'runProcess done: exit=%d (%s) duration=%dms%s',
+			$exitCode, $exitName, $durationMs,
+			$lastErr !== '' ? ' | ' . $lastErr : ''
+		);
+		if ($exitCode === self::EXIT_OK) {
+			$this->logInfo($summary);
+		} elseif ($exitCode === self::EXIT_MFA_REQUIRED || $exitCode === self::EXIT_MFA_INVALID) {
+			$this->logWarning($summary);
+		} else {
+			$this->logError($summary);
+		}
+
 		return ['exitCode' => $exitCode, 'stdout' => $stdout, 'stderr' => $stderr];
+	}
+
+	// ------------------------------------------------------------------
+	// Logging — to owncloud.log, tagged with this app's id. Uses the server
+	// logger via the service-locator so we don't have to thread an ILogger
+	// through the auto-wired constructor (which would force a DI change in
+	// every repo of the vendored triplet). Logging must NEVER break a request,
+	// so each call is wrapped defensively.
+	// ------------------------------------------------------------------
+	private function logger() {
+		try {
+			return \OC::$server->getLogger();
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}
+
+	protected function logInfo(string $message): void {
+		$l = $this->logger();
+		if ($l !== null) { $l->info($message, ['app' => $this->appDirName()]); }
+	}
+
+	protected function logWarning(string $message): void {
+		$l = $this->logger();
+		if ($l !== null) { $l->warning($message, ['app' => $this->appDirName()]); }
+	}
+
+	protected function logError(string $message): void {
+		$l = $this->logger();
+		if ($l !== null) { $l->error($message, ['app' => $this->appDirName()]); }
+	}
+
+	/** Last non-empty line of a multi-line string, trimmed to 240 chars. */
+	private function lastLine(string $text): string {
+		$text = trim($text);
+		if ($text === '') { return ''; }
+		$lines = preg_split('/\r?\n/', $text) ?: [];
+		for ($i = count($lines) - 1; $i >= 0; $i--) {
+			$line = trim($lines[$i]);
+			if ($line !== '') { return substr($line, 0, 240); }
+		}
+		return '';
 	}
 }
