@@ -422,7 +422,15 @@ class ApiController extends Controller {
 		$n = min(count($timestamps), count($closes));
 		for ($i = 0; $i < $n; $i++) {
 			if ($closes[$i] === null) continue;
-			$history[] = ['t' => (int) $timestamps[$i], 'c' => (float) $closes[$i]];
+			// Emit the SAME shape as gbm-dashboard's server.py _handle_benchmark
+			// ({date: 'YYYY-MM-DD', close: float}). The shared analysis.js
+			// _replayBenchmark reads h.date / h.close — the previous {t, c}
+			// epoch shape made benchByDay[undefined]=undefined, so every
+			// replay returned {} and the overlay silently never rendered.
+			$history[] = [
+				'date'  => gmdate('Y-m-d', (int) $timestamps[$i]),
+				'close' => round((float) $closes[$i], 4),
+			];
 		}
 		$payload = [
 			'symbol'     => $symbol,

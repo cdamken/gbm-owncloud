@@ -5,6 +5,18 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.27] — 2026-06-15
+
+Benchmark overlay fix — la comparación S&P 500 / NAFTRAC nunca se
+renderizaba. `ApiController::benchmark()` emitía el shape crudo de Yahoo
+`{t: epoch, c: close}`, pero el `analytics.js` compartido lee `h.date` /
+`h.close` (el shape que produce `server.py` de gbm-dashboard). Así
+`benchByDay` quedaba indexado por `undefined`, todo replay devolvía `{}`,
+y ambos datasets del overlay se descartaban en silencio — el chart solo
+mostraba la línea de cost-basis. Ahora emite `{date: 'YYYY-MM-DD',
+close: float}` como el Dashboard upstream. El dashboard local siempre
+estuvo bien; solo este port divergía (no era port verbatim).
+
 ## [0.14.26] — 2026-06-11
 
 Layering-contract fix: the Settings "About" version probe used
