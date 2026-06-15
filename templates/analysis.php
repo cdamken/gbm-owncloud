@@ -35,6 +35,34 @@ $routes = $_['routes'];
 
 	<div id="error-box"></div>
 
+	<!-- ---------- Capital y resultados ---------- -->
+	<div class="section">
+		<span>Capital y resultados</span>
+		<span class="badge muted">sobre el historial disponible</span>
+	</div>
+	<div class="stat-row" id="capital-stats">
+		<div>
+			<div class="stat-label">Capital neto comprometido</div>
+			<div class="stat-value" id="cap-net">—</div>
+			<div class="stat-detail">depósitos − retiros</div>
+		</div>
+		<div>
+			<div class="stat-label">P&amp;L de por vida</div>
+			<div class="stat-value" id="cap-pnl">—</div>
+			<div class="stat-detail" id="cap-pnl-detail">valor actual − capital neto</div>
+		</div>
+		<div>
+			<div class="stat-label">Compras totales</div>
+			<div class="stat-value" id="cap-buys">—</div>
+			<div class="stat-detail" id="cap-buys-detail">—</div>
+		</div>
+		<div>
+			<div class="stat-label">Ventas totales</div>
+			<div class="stat-value" id="cap-sells">—</div>
+			<div class="stat-detail" id="cap-sells-detail">—</div>
+		</div>
+	</div>
+
 	<!-- ---------- Composición por mercado ---------- -->
 	<div class="section">
 		<span>Composición del portafolio</span>

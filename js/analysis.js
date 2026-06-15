@@ -136,6 +136,7 @@
 			}
 
 			renderHeader();
+			renderCapitalStats();
 			renderAllocationChart();
 			renderNetWorthChart();
 		} catch (err) {
@@ -143,6 +144,43 @@
 				'<div class="error"><b>No se pudieron cargar los datos.</b><br>' +
 				'Detalle: ' + (err && err.message ? err.message : String(err)) + '</div>';
 		}
+	}
+
+	// Capital & results KPIs — parity with the TR/SC analytics cockpits.
+	// Net capital = deposits − withdrawals; Lifetime P&L = current market
+	// value − net capital; total purchases/sales = Σ is_buy / Σ is_sell
+	// (money-market sweeps + repos excluded, same as the cost-basis line).
+	function renderCapitalStats() {
+		const rows = (state.transactions && state.transactions.transactions) || [];
+		let deposits = 0, withdrawals = 0, buys = 0, sells = 0, buyCount = 0, sellCount = 0;
+		for (const t of rows) {
+			const cat = t.category;
+			const amt = Math.abs(Number(t.amount) || 0);
+			if (cat === 'deposit')    { deposits += amt; continue; }
+			if (cat === 'withdrawal') { withdrawals += amt; continue; }
+			if (cat === 'repo_buy' || cat === 'repo_mature') continue;
+			if (t.security_id === 'GBMF2 BF' || t.security_id === 'GBMDINT BO') continue;
+			if (t.is_buy)       { buys += amt; buyCount++; }
+			else if (t.is_sell) { sells += amt; sellCount++; }
+		}
+		const netCapital = deposits - withdrawals;
+		const currentValue = (state.positionsFlat || [])
+			.reduce((s, p) => s + (Number(p.market_value) || 0), 0);
+		const pnl = currentValue - netCapital;
+		const m0 = (v) => fmtMoney(v, { currency: true, decimals: 0 });
+
+		document.getElementById('cap-net').textContent = m0(netCapital);
+		const pnlEl = document.getElementById('cap-pnl');
+		pnlEl.textContent = (pnl >= 0 ? '+' : '−') + m0(Math.abs(pnl));
+		pnlEl.className = 'stat-value ' + (pnl >= 0 ? 'green' : 'red');
+		document.getElementById('cap-pnl-detail').textContent =
+			'valor actual ' + m0(currentValue) + ' − capital ' + m0(netCapital);
+		document.getElementById('cap-buys').textContent = m0(buys);
+		document.getElementById('cap-buys-detail').textContent =
+			buyCount + (buyCount === 1 ? ' orden' : ' órdenes') + ' de compra';
+		document.getElementById('cap-sells').textContent = m0(sells);
+		document.getElementById('cap-sells-detail').textContent =
+			sellCount + (sellCount === 1 ? ' orden' : ' órdenes') + ' de venta';
 	}
 
 	function renderHeader() {

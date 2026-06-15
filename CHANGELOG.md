@@ -5,6 +5,14 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.29] — 2026-06-15
+
+Paridad de KPIs en Análisis con TR/SC. Nueva fila "Capital y resultados":
+Capital neto comprometido (depósitos − retiros), P&L de por vida (valor
+de mercado actual − capital neto) y Compras/Ventas totales (Σ is_buy /
+Σ is_sell, excluyendo los sweeps GBMF2/GBMDINT y repos, como la línea de
+cost-basis). Calculado de `transactions.json` + `positions.json`.
+
 ## [0.14.28] — 2026-06-15
 
 Reorganización: dividendos en la página de Dividendos, análisis en
