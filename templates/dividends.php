@@ -43,6 +43,28 @@ $routes = $_['routes'];
 			<div class="value" id="num-issuers">—</div>
 			<div class="delta" id="num-events">—</div>
 		</div>
+		<div class="card">
+			<div class="label">Proyección próximos 12m</div>
+			<div class="value green" id="div-forecast">—</div>
+			<div class="delta" id="div-forecast-detail">—</div>
+		</div>
+		<div class="card" title="Rendimiento por dividendos sobre el costo: proyección 12m ÷ costo invertido. A diferencia del yield de mercado (÷ precio actual), te dice cuánto ingreso generas por cada peso que pagaste.">
+			<div class="label">Yield on cost</div>
+			<div class="value" id="div-yoc" style="color: var(--blue);">—</div>
+			<div class="delta">proyección 12m ÷ costo invertido</div>
+		</div>
+	</div>
+
+	<!-- ---------- monthly dividends chart (neto vs ISR) ---------- -->
+	<div class="section">
+		<span>Dividendos por mes</span>
+		<span class="badge" id="div-badge">últimos 12 meses</span>
+	</div>
+	<div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 24px;">
+		<div style="position:relative; height:280px;"><canvas id="dividends-chart"></canvas></div>
+		<div id="dividends-empty" style="display:none; color: var(--muted); padding: 40px; text-align:center;">
+			Sin dividendos en los últimos 12 meses.
+		</div>
 	</div>
 
 	<div class="section">

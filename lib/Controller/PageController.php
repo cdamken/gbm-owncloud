@@ -104,10 +104,11 @@ class PageController extends Controller {
 		// button). Must load BEFORE the per-page JS so #update-btn exists
 		// in the DOM when each page's DOMContentLoaded handler queries it.
 		\OCP\Util::addScript($this->appName, '_shared');
-		// Chart.js (vendored — CSP forbids CDN) is only needed by analysis.
-		// Load it BEFORE analysis.js so window.Chart is defined when the
+		// Chart.js (vendored — CSP forbids CDN) is needed by analysis (the
+		// cost-basis/benchmark chart) and dividends (the monthly bar). Load
+		// it BEFORE the per-page script so window.Chart is defined when the
 		// chart helpers fire on DOMContentLoaded.
-		if ($template === 'analysis') {
+		if (in_array($template, ['analysis', 'dividends'], true)) {
 			\OCP\Util::addScript($this->appName, 'vendor/chart.umd.min');
 		}
 		// update_flow.js makes the "🔄 Actualizar" button work on every

@@ -5,6 +5,16 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.28] — 2026-06-15
+
+Reorganización: dividendos en la página de Dividendos, análisis en
+Análisis (sin repetir). La gráfica mensual neto+ISR, la proyección 12m
+y el yield-on-cost vivían en Análisis; ahora están en la página
+Dividendos junto a sus KPIs all-time y la tabla. La página Análisis
+queda enfocada en allocation + la trayectoria de cost-basis con
+benchmark. `PageController` ahora carga Chart.js también en la página
+de Dividendos, y `js/dividends.js` lee `positions` para el yield-on-cost.
+
 ## [0.14.27] — 2026-06-15
 
 Benchmark overlay fix — la comparación S&P 500 / NAFTRAC nunca se
