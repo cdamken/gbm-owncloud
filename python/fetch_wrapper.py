@@ -62,11 +62,16 @@ def get_client(session_path: Path, totp_code: str | None) -> GbmClient:
     If the session is missing/expired AND no TOTP was supplied, exit 10 so
     the browser opens its TOTP modal and retries with --totp <code>.
     """
-    client = GbmClient.from_saved(session_path)
-    if client is not None:
-        return client
-
+    # Only try the saved session when we're NOT explicitly completing MFA.
+    # With a --totp code in hand the user is finishing a fresh login, so go
+    # straight to it: calling from_saved() first would attempt a doomed
+    # refresh_session() network round-trip on the dead session (the reason
+    # we're here), and that latency can push complete_mfa() past the code's
+    # 30-second TOTP window → a spurious "invalid or expired TOTP code".
     if totp_code is None:
+        client = GbmClient.from_saved(session_path)
+        if client is not None:
+            return client
         sys.stderr.write("MFA_REQUIRED: session expired, TOTP needed.\n")
         sys.exit(10)
 

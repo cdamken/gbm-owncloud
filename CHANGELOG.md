@@ -5,6 +5,19 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.31] — 2026-06-15
+
+**Fix: TOTP rejected as "invalid or expired" on the Update after a long
+idle.** When the session had been dead long enough that the refresh token
+also expired, the `--totp` retry run still called `GbmClient.from_saved()`
+first — which attempts a doomed `refresh_session()` network round-trip
+(with transport retries) on the dead session BEFORE the fresh login. That
+wasted latency pushed `complete_mfa()` past the code's 30-second TOTP
+window, so a perfectly correct code came back rejected. Now, when a TOTP
+code is supplied, we skip `from_saved()` and go straight to the fresh
+login so the code reaches Cognito immediately. (Fixed upstream in
+gbm-dashboard `fetch_data.py` too.)
+
 ## [0.14.30] — 2026-06-15
 
 Benchmark rebaseado al inicio de la ventana visible. Los overlays
