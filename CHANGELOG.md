@@ -5,6 +5,19 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.32] — 2026-06-15
+
+**Fix: Trading USA orders were never fetched.** The orders loop filtered
+`management_type_template == "trading"`, but the Trading USA account uses
+`"trading_usa"` — so it was silently excluded and USA buys/sells (incl. a
+partial sell) never appeared in Movimientos, while the Mexican `"trading"`
+accounts (Personal/Asesor) worked. Now includes `"trading_usa"`;
+`GetBlotterOrders` is attempted for it (wrapped in try/except, so if GBM
+rejects that account it's logged and skipped, not fatal). Run **Update
+Now** to pull the USA orders. NOTE: the position *quantity* is a separate
+GBM snapshot — US trades settle T+1/T+2, so the held quantity may only
+drop after settlement even once the sell order shows.
+
 ## [0.14.31] — 2026-06-15
 
 **Fix: TOTP rejected as "invalid or expired" on the Update after a long
