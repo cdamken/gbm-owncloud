@@ -558,8 +558,20 @@
 		// returns null when the benchmark has no data — we just skip it.
 		const alignBench = (m) =>
 			m ? filteredDates.map(d => d in m ? m[d] : null) : null;
-		const naftracValues = alignBench(_replayBenchmark(state.benchmarks[0], dailyMap));
-		const sp500Values   = alignBench(_replayBenchmark(state.benchmarks[1], dailyMap));
+		// Rebase each benchmark so it STARTS at the same height as the user's
+		// line at the left edge of the visible window (subtract the pre-window
+		// head-start) — otherwise an index that already ran up before the
+		// window looks like it "starts higher". No-op in the "All" view.
+		const rebaseToStart = (series) => {
+			if (!series) return series;
+			let i = 0;
+			while (i < series.length && (series[i] == null || values[i] == null)) i++;
+			if (i >= series.length) return series;
+			const offset = series[i] - values[i];
+			return series.map(v => v == null ? null : +(v - offset).toFixed(2));
+		};
+		const naftracValues = rebaseToStart(alignBench(_replayBenchmark(state.benchmarks[0], dailyMap)));
+		const sp500Values   = rebaseToStart(alignBench(_replayBenchmark(state.benchmarks[1], dailyMap)));
 
 		const datasets = [
 			_netWorthDataset('Capital invertido (cost basis)', values, '#60a5fa', true),

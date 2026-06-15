@@ -5,6 +5,15 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.30] — 2026-06-15
+
+Benchmark rebaseado al inicio de la ventana visible. Los overlays
+NAFTRAC / S&P 500 ahora arrancan a la **misma altura** que la línea de
+capital en el borde izquierdo del rango (se resta la ventaja acumulada
+del índice ANTES de la ventana), para que la comparación sea justa en
+1M/3M/6M/1Y. Sin efecto en la vista "All" (ya arrancaban juntos en la
+primera compra).
+
 ## [0.14.29] — 2026-06-15
 
 Paridad de KPIs en Análisis con TR/SC. Nueva fila "Capital y resultados":
