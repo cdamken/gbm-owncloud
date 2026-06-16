@@ -5,6 +5,13 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.34] — 2026-06-16
+
+Follow-up: 365-day order backfill STILL hit the 180s timeout on a full
+reload (3 trading accounts × 365 day-by-day calls). Reduced the default
+order window further to 200 days (`GBM_ORDERS_DAYS`). Incremental updates
+(~45-day window) remain the reliable path and already include Trading USA.
+
 ## [0.14.33] — 2026-06-16
 
 **Fix: the full reload timed out and looked like a failing TOTP.**

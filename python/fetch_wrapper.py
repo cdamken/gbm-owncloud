@@ -390,7 +390,7 @@ def main() -> None:
                     # (which then looked like a failed/expired TOTP). 365 days
                     # covers a young account with margin; bump GBM_ORDERS_DAYS
                     # for an older one.
-                    days_back = int(os.environ.get("GBM_ORDERS_DAYS", "365"))
+                    days_back = int(os.environ.get("GBM_ORDERS_DAYS", "200"))
                     from_date_ = to_date_ - timedelta(days=days_back)
                 print(
                     f"  fetching orders {from_date_} → {to_date_} "
