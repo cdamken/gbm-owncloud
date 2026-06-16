@@ -277,7 +277,11 @@
 	// ----------------------------------------------------------------------
 	// Concentration warning — single-name or top-5 risk.
 	// Heuristic: red if >50% / >85% top-5; amber if >30% / >70% top-5.
-	// Aggregates by ticker across accounts. Excludes cash buckets.
+	// Aggregates by ticker across accounts. Cash (efectivo) is never a
+	// *candidate* top holding, but it MUST count in the denominator: the
+	// banner says "% del portafolio", so a holding's share is measured against
+	// EVERYTHING owned (incl. idle cash like unused Trading USA dollars).
+	// Otherwise a small position in a mostly-cash account looks dominant.
 	// ----------------------------------------------------------------------
 	function computeConcentration() {
 		const flat = state.positionsFlat.filter(
@@ -291,8 +295,10 @@
 			byIssue[p.issue_id] = (byIssue[p.issue_id] || 0) + v;
 		}
 		const entries = Object.entries(byIssue).sort((a, b) => b[1] - a[1]);
-		const total = entries.reduce((s, kv) => s + kv[1], 0);
-		if (total <= 0 || entries.length === 0) return null;
+		if (entries.length === 0) return null;
+		// Denominator = TOTAL portfolio incl. cash + every account.
+		const total = state.accounts.reduce((s, a) => s + accountValue(a), 0);
+		if (total <= 0) return null;
 		const topTicker = entries[0][0];
 		const topShare = entries[0][1] / total;
 		const top5Share = entries.slice(0, 5).reduce((s, kv) => s + kv[1], 0) / total;
