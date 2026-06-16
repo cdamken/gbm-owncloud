@@ -199,6 +199,16 @@ cross-user data access.
 
 ## Recently resolved
 
+- **2026-06-16**: Tanda GBM (v0.14.31–36). (1) Loop de re-TOTP arreglado:
+  refresco proactivo desde `refresh_token` (el access token de GBM muere
+  antes de los 3600s que asumíamos). (2) `trading_usa` incluida en el fetch
+  de órdenes, pero **GBM devuelve 0** para Trading USA en órdenes y libro —
+  gap real de GBM (solo posiciones). Las US vía **SIC** salen bajo Personal.
+  (3) Ventana de backfill de órdenes 3650→200 días (el full día-por-día
+  excedía el timeout de 180s). (4) Trading USA se muestra en pesos con
+  `(≈ $USD)` vía `fx.json`. Detalle: ADR `2026-06-16 — GBM` en
+  Portfolio-Master/DECISIONS.md + memory `project_gbm_session_and_usa_gaps`.
+
 - **2026-06-05**: Tests + CI harness landed (v0.14.13). 10 unit
   tests, GitHub Actions green on push, `scripts/verify_dom_ids.py`
   + `scripts/verify_wiring.py` + `unittest discover` as mandatory
