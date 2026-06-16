@@ -5,6 +5,27 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.33] — 2026-06-16
+
+**Fix: the full reload timed out and looked like a failing TOTP.**
+`GetBlotterOrders` is queried **day by day** (one day per call), so the
+full-backfill window directly drives how many sequential HTTP calls run,
+× each trading account. The 3650-day (10-year) default meant ~3,650 calls
+per account even on a months-old account — thousands of them empty — which
+ran past the 180-second subprocess timeout and got SIGKILL'd mid-fetch
+(`exit=30`, duration ≈ 180,000 ms). The killed run never finished, so the
+data + session save never happened and the next Update re-prompted for the
+TOTP — making it look like the code "didn't work" when the login was
+actually fine.
+
+Reduced the default order backfill **10 years → 1 year** (`GBM_ORDERS_DAYS`,
+configurable for older accounts). A full reload now makes ~10× fewer calls
+and completes well inside the timeout, so it actually finishes — the
+session is then saved and refreshes silently for hours (no spurious
+re-TOTP). Incremental updates were never affected (≈45-day window).
+Dividends/transactions are unchanged — those endpoints honor the date
+range (one call), only orders are day-by-day.
+
 ## [0.14.32] — 2026-06-15
 
 **Fix: Trading USA orders were never fetched.** The orders loop filtered

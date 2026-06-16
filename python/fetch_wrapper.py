@@ -380,7 +380,17 @@ def main() -> None:
                 if incremental:
                     from_date_ = incremental_from
                 else:
-                    days_back = int(os.environ.get("GBM_ORDERS_DAYS", "3650"))
+                    # Full backfill window. GetBlotterOrders is queried DAY BY
+                    # DAY (one day per call), so this window directly drives
+                    # how many sequential HTTP calls a full reload makes (×
+                    # each trading account). The old 3650-day (10-year)
+                    # default meant ~3,650 calls per account even on a
+                    # months-old account — mostly empty — blowing past the
+                    # 180s subprocess timeout and getting SIGKILL'd mid-fetch
+                    # (which then looked like a failed/expired TOTP). 365 days
+                    # covers a young account with margin; bump GBM_ORDERS_DAYS
+                    # for an older one.
+                    days_back = int(os.environ.get("GBM_ORDERS_DAYS", "365"))
                     from_date_ = to_date_ - timedelta(days=days_back)
                 print(
                     f"  fetching orders {from_date_} → {to_date_} "
