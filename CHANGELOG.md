@@ -5,6 +5,20 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.35] — 2026-06-16
+
+**Fix the constant "session rejected → re-enter TOTP" loop.** GBM's access
+token dies far sooner than the 3600s we store (and can be revoked early,
+e.g. when you log into the GBM app on your phone), so GBM 401'd a token the
+code still considered valid by the local clock. `from_saved()` only
+refreshes when `is_expired` is True, so that case slipped through → 401 →
+session wiped → TOTP re-prompt, every single Update. Now every no-TOTP run
+**proactively mints a fresh access token from the long-lived `refresh_token`**
+(Cognito refresh tokens last ~days) instead of trusting the local expiry;
+only a genuinely revoked refresh token falls back to the MFA modal. The
+session now persists for days as expected. App-level (uses the library's
+existing `refresh_session` / `from_session`), no lib reinstall.
+
 ## [0.14.34] — 2026-06-16
 
 Follow-up: 365-day order backfill STILL hit the 180s timeout on a full
