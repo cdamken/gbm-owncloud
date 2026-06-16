@@ -5,6 +5,18 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.14.36] — 2026-06-16
+
+Trading USA positions now show their **USD equivalent** next to the peso
+value. GBM's API reports Trading USA in pesos with no USD/FX field, but
+GBM's own app shows those amounts in dollars. The positions table now
+appends `(≈ $X USD)` to the peso market value on `mercado_extranjero`
+rows, using a live USD/MXN rate fetched server-side at sync time
+(`fx.json`, Yahoo `MXN=X`). It's a spot rate, so it lands within a few
+dollars of GBM's internal rate — hence the `≈`. New `fx` data route +
+`fetch_usdmxn_rate()` in `fetch_wrapper.py`. Run Update once to generate
+`fx.json`.
+
 ## [0.14.35] — 2026-06-16
 
 **Fix the constant "session rejected → re-enter TOTP" loop.** GBM's access

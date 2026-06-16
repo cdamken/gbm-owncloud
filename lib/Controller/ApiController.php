@@ -39,6 +39,7 @@ class ApiController extends Controller {
 			'dividends'           => ['file' => 'dividends.json',           'ct' => 'application/json'],
 			'transactions'        => ['file' => 'transactions.json',        'ct' => 'application/json'],
 			'investments_groups'  => ['file' => 'investments_groups.json',  'ct' => 'application/json'],
+			'fx'                  => ['file' => 'fx.json',                  'ct' => 'application/json'],
 			'last_update'         => ['file' => 'last_update.date',         'ct' => 'text/plain'],
 		];
 		if (!isset($allowed[$type])) {

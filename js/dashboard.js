@@ -15,6 +15,7 @@
 	// We populate `routes` inside DOMContentLoaded and only ever call functions
 	// that touch it after that.
 	let routes;
+	let usdMxnRate = null;  // pesos per 1 USD, for the Trading USA "(≈ $USD)" hint
 	const dataUrl = (type) => routes.data.replace('__TYPE__', type);
 
 	// ----------------------------------------------------------------------
@@ -99,17 +100,20 @@
 			const opts = { cache: 'no-store', headers: { Accept: 'application/json' } };
 			// last_update is text/plain, JSON files are JSON. Each fetch silently
 			// falls back to empty on 404 so a fresh install renders correctly.
-			const [accountsRes, positionsRes, igRes, txRes, lastUpdateRes] = await Promise.all([
+			const [accountsRes, positionsRes, igRes, txRes, fxRes, lastUpdateRes] = await Promise.all([
 				fetch(dataUrl('accounts'), opts),
 				fetch(dataUrl('positions'), opts),
 				fetch(dataUrl('investments_groups'), opts),
 				fetch(dataUrl('transactions'), opts),
+				fetch(dataUrl('fx'), opts),
 				fetch(dataUrl('last_update'), opts),
 			]);
 			const accounts = accountsRes.ok ? await accountsRes.json() : [];
 			const positionsByAccount = positionsRes.ok ? await positionsRes.json() : {};
 			const investmentsGroups = igRes.ok ? await igRes.json() : null;
 			const transactions = txRes.ok ? await txRes.json() : null;
+			const fx = fxRes.ok ? await fxRes.json() : null;
+			usdMxnRate = fx && Number(fx.usdmxn) > 0 ? Number(fx.usdmxn) : null;
 			const lastUpdate = lastUpdateRes.ok ? await lastUpdateRes.text() : '';
 
 			state.accounts = sortAccounts(accounts);
@@ -543,6 +547,16 @@
 		renderTable();
 	}
 
+	// Trading USA positions arrive from GBM's API in pesos (no USD field);
+	// show the ≈ USD equivalent next to the peso value, the way GBM's own app
+	// does. Rate (pesos per USD) comes from fx.json, fetched at sync time.
+	function usdHint(p) {
+		if (!p || p._market_key !== 'mercado_extranjero' || !usdMxnRate) return '';
+		const usd = (Number(p.market_value) || 0) / usdMxnRate;
+		return ' <span class="usd-eq" style="color: var(--muted); font-size: 11px;">(≈ $'
+			+ usd.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' USD)</span>';
+	}
+
 	function renderTable() {
 		const search = $('search').value.toLowerCase();
 		const accountFilter = $('account-filter').value;
@@ -635,7 +649,7 @@
 				'<td class="num">' + fmtMoney(p.quantity, { decimals: qtyDecimals }) + '</td>' +
 				'<td class="num">' + fmtMoney(p.average_price) + '</td>' +
 				'<td class="num">' + fmtMoney(p.last_price) + '</td>' +
-				'<td class="num">' + fmtMoney(p.market_value) + '</td>' +
+				'<td class="num">' + fmtMoney(p.market_value) + usdHint(p) + '</td>' +
 				'<td class="num ' + pnlClass(p.yield_value) + '">' + fmtMoney(p.yield_value, { sign: true }) + '</td>' +
 				'<td class="num ' + pnlClass(p.historical_variation_percentage) + '">' + fmtPct(p.historical_variation_percentage) + '</td>' +
 			'</tr>';
