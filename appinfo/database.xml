@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  GBM Portfolio — database schema (ownCloud 10 legacy database.xml).
+
+  ownCloud 10.13 reads this on `occ upgrade` / `app:enable` and creates or
+  migrates the tables. It does NOT support QBMapper or IMigrationStep
+  (Nextcloud-only); the schema lives here, the data layer uses the legacy
+  OCP\AppFramework\Db\Mapper (lib/Db/*Mapper.php).
+
+  Type constraints of this format (only these are portable on oC 10.13):
+  integer / text / clob / boolean / timestamp. There is NO decimal and NO
+  date type, so money and dates are stored as `text` (exact decimal/ISO
+  strings) and all arithmetic happens in PHP/JS — see SCHEMA.md in
+  Portfolio-Master. DECIMAL travels as string by design anyway.
+
+  Layers (SCHEMA.md): 1 state · 2 history · 3 events · 4 reference · 5 lots.
+  Every per-user table carries user_id (the security boundary). Tables are
+  gbm_*; index names are gbm_-prefixed for global uniqueness.
+-->
+<database>
+	<name>*dbname*</name>
+	<create>true</create>
+	<overwrite>false</overwrite>
+	<charset>utf8</charset>
+
+	<!-- ============================================================= -->
+	<!-- Layer 4 · reference: securities (FK target for security_id)   -->
+	<!-- ============================================================= -->
+	<table>
+		<name>*dbprefix*gbm_securities</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>isin</name><type>text</type><length>12</length></field>
+			<field><name>ticker</name><type>text</type><length>32</length></field>
+			<field><name>name</name><type>text</type><length>255</length></field>
+			<field><name>asset_class</name><type>text</type><length>32</length></field>
+			<field><name>region</name><type>text</type><length>64</length></field>
+			<field><name>currency</name><type>text</type><length>3</length></field>
+			<index>
+				<name>gbm_sec_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>isin</name><sorting>ascending</sorting></field>
+			</index>
+			<index>
+				<name>gbm_sec_uid</name>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<!-- ============================================================= -->
+	<!-- Layer 1 · state: accounts                                     -->
+	<!-- ============================================================= -->
+	<table>
+		<name>*dbprefix*gbm_accounts</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>account_key</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>name</name><type>text</type><length>255</length></field>
+			<field><name>type</name><type>text</type><length>32</length></field>
+			<field><name>currency</name><type>text</type><length>3</length></field>
+			<field><name>cash_amount</name><type>text</type><length>32</length></field>
+			<field><name>total_value</name><type>text</type><length>32</length></field>
+			<field><name>updated_at</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_acc_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>account_key</name><sorting>ascending</sorting></field>
+			</index>
+			<index>
+				<name>gbm_acc_uid</name>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<!-- ============================================================= -->
+	<!-- Layer 1 · state: holdings                                     -->
+	<!-- ============================================================= -->
+	<table>
+		<name>*dbprefix*gbm_holdings</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>account_id</name><type>integer</type><unsigned>true</unsigned></field>
+			<field><name>security_id</name><type>integer</type><unsigned>true</unsigned></field>
+			<field><name>quantity</name><type>text</type><length>32</length></field>
+			<field><name>avg_cost</name><type>text</type><length>32</length></field>
+			<field><name>market_value</name><type>text</type><length>32</length></field>
+			<field><name>currency</name><type>text</type><length>3</length></field>
+			<field><name>updated_at</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_hold_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>account_id</name><sorting>ascending</sorting></field>
+				<field><name>security_id</name><sorting>ascending</sorting></field>
+			</index>
+			<index>
+				<name>gbm_hold_uacc</name>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>account_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<!-- ============================================================= -->
+	<!-- Layer 2 · history: portfolio / account / holding snapshots    -->
+	<!-- ============================================================= -->
+	<table>
+		<name>*dbprefix*gbm_portfolio_snapshots</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>captured_on</name><type>text</type><length>16</length><notnull>true</notnull></field>
+			<field><name>total_value</name><type>text</type><length>32</length></field>
+			<field><name>total_cost</name><type>text</type><length>32</length></field>
+			<field><name>cash</name><type>text</type><length>32</length></field>
+			<field><name>currency</name><type>text</type><length>3</length></field>
+			<field><name>source</name><type>text</type><length>16</length></field>
+			<index>
+				<name>gbm_psnap_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>captured_on</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<table>
+		<name>*dbprefix*gbm_account_snapshots</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>captured_on</name><type>text</type><length>16</length><notnull>true</notnull></field>
+			<field><name>account_key</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>total_value</name><type>text</type><length>32</length></field>
+			<field><name>cash</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_asnap_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>captured_on</name><sorting>ascending</sorting></field>
+				<field><name>account_key</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<table>
+		<name>*dbprefix*gbm_holding_snapshots</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>captured_on</name><type>text</type><length>16</length><notnull>true</notnull></field>
+			<field><name>security_id</name><type>integer</type><notnull>true</notnull><unsigned>true</unsigned></field>
+			<field><name>quantity</name><type>text</type><length>32</length></field>
+			<field><name>market_value</name><type>text</type><length>32</length></field>
+			<field><name>avg_cost</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_hsnap_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>captured_on</name><sorting>ascending</sorting></field>
+				<field><name>security_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<!-- ============================================================= -->
+	<!-- Layer 3 · events: orders / transactions / dividends           -->
+	<!-- ============================================================= -->
+	<table>
+		<name>*dbprefix*gbm_orders</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>external_id</name><type>text</type><length>128</length><notnull>true</notnull></field>
+			<field><name>account_key</name><type>text</type><length>64</length></field>
+			<field><name>security_id</name><type>integer</type><unsigned>true</unsigned></field>
+			<field><name>side</name><type>text</type><length>8</length></field>
+			<field><name>quantity</name><type>text</type><length>32</length></field>
+			<field><name>price</name><type>text</type><length>32</length></field>
+			<field><name>fees</name><type>text</type><length>32</length></field>
+			<field><name>currency</name><type>text</type><length>3</length></field>
+			<field><name>executed_at</name><type>text</type><length>32</length></field>
+			<field><name>status</name><type>text</type><length>16</length></field>
+			<index>
+				<name>gbm_ord_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>external_id</name><sorting>ascending</sorting></field>
+			</index>
+			<index>
+				<name>gbm_ord_sec</name>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>security_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<table>
+		<name>*dbprefix*gbm_transactions</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>external_id</name><type>text</type><length>128</length><notnull>true</notnull></field>
+			<field><name>type</name><type>text</type><length>32</length></field>
+			<field><name>raw_type</name><type>text</type><length>64</length></field>
+			<field><name>amount</name><type>text</type><length>32</length></field>
+			<field><name>currency</name><type>text</type><length>3</length></field>
+			<field><name>security_id</name><type>integer</type><unsigned>true</unsigned></field>
+			<field><name>booked_at</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_tx_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>external_id</name><sorting>ascending</sorting></field>
+			</index>
+			<index>
+				<name>gbm_tx_uid</name>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<table>
+		<name>*dbprefix*gbm_dividends</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>external_id</name><type>text</type><length>128</length><notnull>true</notnull></field>
+			<field><name>security_id</name><type>integer</type><unsigned>true</unsigned></field>
+			<field><name>gross</name><type>text</type><length>32</length></field>
+			<field><name>net</name><type>text</type><length>32</length></field>
+			<field><name>tax</name><type>text</type><length>32</length></field>
+			<field><name>currency</name><type>text</type><length>3</length></field>
+			<field><name>paid_at</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_div_uq</name>
+				<unique>true</unique>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>external_id</name><sorting>ascending</sorting></field>
+			</index>
+			<index>
+				<name>gbm_div_uid</name>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<!-- ============================================================= -->
+	<!-- Layer 5 · lots (FIFO; derived from orders)                    -->
+	<!-- ============================================================= -->
+	<table>
+		<name>*dbprefix*gbm_lots</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>security_id</name><type>integer</type><notnull>true</notnull><unsigned>true</unsigned></field>
+			<field><name>account_key</name><type>text</type><length>64</length></field>
+			<field><name>open_order_id</name><type>integer</type><unsigned>true</unsigned></field>
+			<field><name>quantity_orig</name><type>text</type><length>32</length></field>
+			<field><name>quantity_open</name><type>text</type><length>32</length></field>
+			<field><name>cost_basis</name><type>text</type><length>32</length></field>
+			<field><name>opened_at</name><type>text</type><length>32</length></field>
+			<field><name>closed_at</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_lot_sec</name>
+				<field><name>user_id</name><sorting>ascending</sorting></field>
+				<field><name>security_id</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<!-- ============================================================= -->
+	<!-- Layer 4 · reference (global lookups; app-prefixed, no user_id) -->
+	<!-- ============================================================= -->
+	<table>
+		<name>*dbprefix*gbm_fx_rates</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>base</name><type>text</type><length>3</length><notnull>true</notnull></field>
+			<field><name>quote</name><type>text</type><length>3</length><notnull>true</notnull></field>
+			<field><name>rate</name><type>text</type><length>32</length></field>
+			<field><name>as_of</name><type>text</type><length>16</length><notnull>true</notnull></field>
+			<index>
+				<name>gbm_fx_uq</name>
+				<unique>true</unique>
+				<field><name>base</name><sorting>ascending</sorting></field>
+				<field><name>quote</name><sorting>ascending</sorting></field>
+				<field><name>as_of</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+	<table>
+		<name>*dbprefix*gbm_benchmarks</name>
+		<declaration>
+			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
+			<field><name>symbol</name><type>text</type><length>32</length><notnull>true</notnull></field>
+			<field><name>as_of</name><type>text</type><length>16</length><notnull>true</notnull></field>
+			<field><name>close_price</name><type>text</type><length>32</length></field>
+			<index>
+				<name>gbm_bm_uq</name>
+				<unique>true</unique>
+				<field><name>symbol</name><sorting>ascending</sorting></field>
+				<field><name>as_of</name><sorting>ascending</sorting></field>
+			</index>
+		</declaration>
+	</table>
+
+</database>

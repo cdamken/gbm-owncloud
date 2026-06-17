@@ -1,0 +1,25 @@
+<?php
+/** HoldingMapper — layer 1 state. Scoped by user_id. */
+
+namespace OCA\Gbm\Db;
+
+use OCP\AppFramework\Db\Mapper;
+use OCP\IDBConnection;
+
+class HoldingMapper extends Mapper {
+	public function __construct(IDBConnection $db) {
+		parent::__construct($db, 'gbm_holdings', Holding::class);
+	}
+
+	/** @return Holding[] */
+	public function findByUser(string $userId): array {
+		$sql = 'SELECT * FROM `*PREFIX*gbm_holdings` WHERE `user_id` = ?';
+		return $this->findEntities($sql, [$userId]);
+	}
+
+	/** @return Holding[] */
+	public function findByAccount(string $userId, int $accountId): array {
+		$sql = 'SELECT * FROM `*PREFIX*gbm_holdings` WHERE `user_id` = ? AND `account_id` = ?';
+		return $this->findEntities($sql, [$userId, $accountId]);
+	}
+}
