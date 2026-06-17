@@ -147,8 +147,12 @@ class IngestService {
 			$counts['accounts']++;
 		}
 
-		// --- HOLDINGS from positions invest sections -----------------------
+		// --- HOLDINGS from positions invest sections ----------------------
+		// GBM can list the same instrument more than once per account (lots);
+		// aggregate by (account, security): sum qty + market value, cost is the
+		// quantity-weighted average. Avoids the (user,account,security) clash.
 		$totalCost = 0.0;
+		$agg = [];
 		foreach ($positions as $key => $sections) {
 			$accId = $keyToId[(string) $key] ?? null;
 			if ($accId === null || !is_array($sections)) {
@@ -165,25 +169,40 @@ class IngestService {
 						continue;
 					}
 					$secId = $this->resolveSecurity($uid, $extId, (string) ($h['issue_name'] ?? ''), $section);
+					$k = $accId . ':' . $secId;
+					if (!isset($agg[$k])) {
+						$agg[$k] = [
+							'acc' => $accId, 'sec' => $secId,
+							'qty' => 0.0, 'mv' => 0.0, 'costSum' => 0.0,
+							'last' => $h['last_price'] ?? null, 'close' => $h['close_price'] ?? null,
+						];
+					}
 					$qty = (float) ($h['quantity'] ?? 0);
 					$avg = (float) ($h['average_cost'] ?? $h['average_price'] ?? 0);
-					$totalCost += $qty * $avg;
-
-					$hold = new Holding();
-					$hold->setUserId($uid);
-					$hold->setAccountId($accId);
-					$hold->setSecurityId($secId);
-					$hold->setQuantity($this->num($h['quantity'] ?? null));
-					$hold->setAvgCost($this->num($h['average_cost'] ?? $h['average_price'] ?? null));
-					$hold->setLastPrice($this->num($h['last_price'] ?? null));
-					$hold->setClosePrice($this->num($h['close_price'] ?? null));
-					$hold->setMarketValue($this->num($h['market_value'] ?? null));
-					$hold->setCurrency('MXN');
-					$hold->setUpdatedAt($asOf);
-					$this->holdings->insert($hold);
-					$counts['holdings']++;
+					$agg[$k]['qty'] += $qty;
+					$agg[$k]['mv'] += (float) ($h['market_value'] ?? 0);
+					$agg[$k]['costSum'] += $qty * $avg;
 				}
 			}
+		}
+		foreach ($agg as $a) {
+			$qty = $a['qty'];
+			$avgCost = $qty != 0.0 ? $a['costSum'] / $qty : 0.0;
+			$totalCost += $a['costSum'];
+
+			$hold = new Holding();
+			$hold->setUserId($uid);
+			$hold->setAccountId($a['acc']);
+			$hold->setSecurityId($a['sec']);
+			$hold->setQuantity($this->num($qty));
+			$hold->setAvgCost($this->num($avgCost));
+			$hold->setLastPrice($this->num($a['last']));
+			$hold->setClosePrice($this->num($a['close']));
+			$hold->setMarketValue($this->num($a['mv']));
+			$hold->setCurrency('MXN');
+			$hold->setUpdatedAt($asOf);
+			$this->holdings->insert($hold);
+			$counts['holdings']++;
 		}
 		$counts['securities'] = count($this->secCache);
 
