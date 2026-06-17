@@ -25,10 +25,11 @@ class SecurityMapper extends Mapper {
 		return $this->findEntities($sql, [$userId]);
 	}
 
-	public function findByIsin(string $userId, string $isin): ?Security {
-		$sql = 'SELECT * FROM `*PREFIX*gbm_securities` WHERE `user_id` = ? AND `isin` = ?';
+	/** Resolve by broker-native id (GBM issue_id / security_id). */
+	public function findByExtId(string $userId, string $extId): ?Security {
+		$sql = 'SELECT * FROM `*PREFIX*gbm_securities` WHERE `user_id` = ? AND `ext_id` = ?';
 		try {
-			return $this->findEntity($sql, [$userId, $isin]);
+			return $this->findEntity($sql, [$userId, $extId]);
 		} catch (DoesNotExistException $e) {
 			return null;
 		}

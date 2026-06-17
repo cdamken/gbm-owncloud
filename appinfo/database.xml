@@ -31,6 +31,7 @@
 		<declaration>
 			<field><name>id</name><type>integer</type><notnull>true</notnull><autoincrement>true</autoincrement><unsigned>true</unsigned><primary>true</primary></field>
 			<field><name>user_id</name><type>text</type><length>64</length><notnull>true</notnull></field>
+			<field><name>ext_id</name><type>text</type><length>64</length><notnull>true</notnull></field>  <!-- broker-native id: GBM issue_id/security_id (no ISIN), TR/SC ISIN -->
 			<field><name>isin</name><type>text</type><length>12</length></field>
 			<field><name>ticker</name><type>text</type><length>32</length></field>
 			<field><name>name</name><type>text</type><length>255</length></field>
@@ -41,7 +42,7 @@
 				<name>gbm_sec_uq</name>
 				<unique>true</unique>
 				<field><name>user_id</name><sorting>ascending</sorting></field>
-				<field><name>isin</name><sorting>ascending</sorting></field>
+				<field><name>ext_id</name><sorting>ascending</sorting></field>
 			</index>
 			<index>
 				<name>gbm_sec_uid</name>
@@ -90,6 +91,8 @@
 			<field><name>security_id</name><type>integer</type><unsigned>true</unsigned></field>
 			<field><name>quantity</name><type>text</type><length>32</length></field>
 			<field><name>avg_cost</name><type>text</type><length>32</length></field>
+			<field><name>last_price</name><type>text</type><length>32</length></field>
+			<field><name>close_price</name><type>text</type><length>32</length></field>
 			<field><name>market_value</name><type>text</type><length>32</length></field>
 			<field><name>currency</name><type>text</type><length>3</length></field>
 			<field><name>updated_at</name><type>text</type><length>32</length></field>

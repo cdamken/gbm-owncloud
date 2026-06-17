@@ -16,6 +16,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setQuantity(string $quantity)
  * @method string getAvgCost()
  * @method void setAvgCost(string $avgCost)
+ * @method string getLastPrice()
+ * @method void setLastPrice(string $lastPrice)
+ * @method string getClosePrice()
+ * @method void setClosePrice(string $closePrice)
  * @method string getMarketValue()
  * @method void setMarketValue(string $marketValue)
  * @method string getCurrency()
@@ -29,6 +33,8 @@ class Holding extends Entity {
 	protected $securityId;
 	protected $quantity;
 	protected $avgCost;
+	protected $lastPrice;
+	protected $closePrice;
 	protected $marketValue;
 	protected $currency;
 	protected $updatedAt;

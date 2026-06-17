@@ -15,6 +15,8 @@ use OCP\AppFramework\Db\Entity;
 /**
  * @method string getUserId()
  * @method void setUserId(string $userId)
+ * @method string getExtId()
+ * @method void setExtId(string $extId)
  * @method string getIsin()
  * @method void setIsin(string $isin)
  * @method string getTicker()
@@ -30,6 +32,7 @@ use OCP\AppFramework\Db\Entity;
  */
 class Security extends Entity {
 	protected $userId;
+	protected $extId;       // broker-native id (GBM issue_id; ISIN for TR/SC)
 	protected $isin;
 	protected $ticker;
 	protected $name;
