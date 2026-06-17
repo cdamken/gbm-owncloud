@@ -1,7 +1,7 @@
 <?php
 /** Holding row (layer 1 · state). One per security per account per user. */
 
-namespace OCA\Gbm\Db;
+namespace OCA\GbmNext\Db;
 
 use OCP\AppFramework\Db\Entity;
 

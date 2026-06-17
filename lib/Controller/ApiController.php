@@ -8,9 +8,9 @@
  *   POST /api/update     → { totp_code? }        (runs fetch_wrapper.py)
  */
 
-namespace OCA\Gbm\Controller;
+namespace OCA\GbmNext\Controller;
 
-use OCA\Gbm\Service\GbmService;
+use OCA\GbmNext\Service\GbmService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -137,7 +137,7 @@ class ApiController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function settingsGet(): JSONResponse {
-		$appInfo = \OC::$server->getAppManager()->getAppInfo('gbm');
+		$appInfo = \OC::$server->getAppManager()->getAppInfo('gbm_next');
 		// Installed gbm-mx-api version via GbmService::libVersion() —
 		// proc_open, not shell_exec, to honor the layering contract.
 		return new JSONResponse([

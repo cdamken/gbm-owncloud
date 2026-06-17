@@ -1,7 +1,7 @@
 <?php
 /** AccountMapper — layer 1 state. Scoped by user_id. */
 
-namespace OCA\Gbm\Db;
+namespace OCA\GbmNext\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\Mapper;

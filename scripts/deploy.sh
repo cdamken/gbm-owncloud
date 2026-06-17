@@ -4,7 +4,7 @@
 #
 # Three moving parts that must stay in lockstep:
 #
-#   1. THE APP   →  /var/www/owncloud/apps/gbm/
+#   1. THE APP   →  /var/www/owncloud/apps/gbm_next/
 #                   (PHP controllers, JS, CSS, templates, python wrapper)
 #
 #   2. THE LIB   →  /opt/gbm-venv/   (Python venv with gbm-mx-api installed)
@@ -45,13 +45,13 @@ set -euo pipefail
 # ---------- paths / hosts (edit if the deploy topology moves) ----------
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GBM_API_REPO="${HOME}/damkencloud/Claude/gbm-mx-api"
-LOCAL_OC_APPS="${HOME}/damkencloud/oc_Apps/gbm"
+LOCAL_OC_APPS="${HOME}/damkencloud/oc_Apps/gbm_next"
 
 SERVER_HOST="carlos@cloud.damken.com"
 SERVER_PORT="2222"
 SERVER_KEY="${HOME}/.ssh/id_ed25519"
 
-SERVER_APP_DIR="/var/www/owncloud/apps/gbm"
+SERVER_APP_DIR="/var/www/owncloud/apps/gbm_next"
 SERVER_GBM_API_SRC="/opt/gbm-mx-api-src"
 SERVER_VENV="/opt/gbm-venv"
 SERVER_OCC="/var/www/owncloud/occ"
@@ -216,9 +216,9 @@ fi
 
 # ---------- step 4: cache invalidation ----------
 if [[ $DO_APP -eq 1 ]] || [[ -n "$DO_BUMP" ]]; then
-  say "Invalidating ownCloud asset cache (occ app:enable gbm)"
+  say "Invalidating ownCloud asset cache (occ app:enable gbm_next)"
   ssh "${SSH_OPTS[@]}" "$SERVER_HOST" \
-    "sudo -u www-data php ${SERVER_OCC} app:enable gbm" | tail -3
+    "sudo -u www-data php ${SERVER_OCC} app:enable gbm_next" | tail -3
   ok "App re-enabled"
 
   say "Reading version reported by occ"
@@ -227,7 +227,7 @@ if [[ $DO_APP -eq 1 ]] || [[ -n "$DO_BUMP" ]]; then
   ")
   ok "App version on server: ${srv_ver}"
   echo
-  echo "  Browsers cache /apps/gbm/js/dashboard.js?v=<hash>."
+  echo "  Browsers cache /apps/gbm_next/js/dashboard.js?v=<hash>."
   echo "  The .htaccess in this repo forces revalidation (no-cache), so"
   echo "  changed files are picked up on next request. A version bump is"
   echo "  belt-and-suspenders, not strictly required after deploy."

@@ -1,7 +1,7 @@
 <?php
 /** Order event (layer 3). Deduped by (user_id, external_id). */
 
-namespace OCA\Gbm\Db;
+namespace OCA\GbmNext\Db;
 
 use OCP\AppFramework\Db\Entity;
 

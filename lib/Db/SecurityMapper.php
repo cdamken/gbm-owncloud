@@ -8,7 +8,7 @@
  * token and positional `?` params, which the legacy Mapper binds safely.
  */
 
-namespace OCA\Gbm\Db;
+namespace OCA\GbmNext\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\Mapper;
