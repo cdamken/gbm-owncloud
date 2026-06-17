@@ -165,10 +165,15 @@ class IngestService {
 				}
 				foreach ($list as $h) {
 					$extId = (string) ($h['issue_id'] ?? '');
-					if ($extId === '') {
+					$name = (string) ($h['issue_name'] ?? '');
+					$qty = (float) ($h['quantity'] ?? 0);
+					// Skip GBM's per-section "Subtotal" summary rows (qty 0, no issue).
+					if ($extId === '' || $qty == 0.0
+						|| strcasecmp($extId, 'Subtotal') === 0
+						|| strcasecmp($name, 'Subtotal') === 0) {
 						continue;
 					}
-					$secId = $this->resolveSecurity($uid, $extId, (string) ($h['issue_name'] ?? ''), $section);
+					$secId = $this->resolveSecurity($uid, $extId, $name, $section);
 					$k = $accId . ':' . $secId;
 					if (!isset($agg[$k])) {
 						$agg[$k] = [
@@ -177,11 +182,14 @@ class IngestService {
 							'last' => $h['last_price'] ?? null, 'close' => $h['close_price'] ?? null,
 						];
 					}
-					$qty = (float) ($h['quantity'] ?? 0);
-					$avg = (float) ($h['average_cost'] ?? $h['average_price'] ?? 0);
+					// GBM's average_cost is the position's TOTAL cost basis, not
+					// per-unit. Sum totals; per-unit avg is derived on insert.
+					$costTotal = isset($h['average_cost'])
+						? (float) $h['average_cost']
+						: (float) ($h['average_price'] ?? 0) * $qty;
 					$agg[$k]['qty'] += $qty;
 					$agg[$k]['mv'] += (float) ($h['market_value'] ?? 0);
-					$agg[$k]['costSum'] += $qty * $avg;
+					$agg[$k]['costSum'] += $costTotal;
 				}
 			}
 		}
