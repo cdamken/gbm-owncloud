@@ -22,4 +22,9 @@ class HoldingMapper extends Mapper {
 		$sql = 'SELECT * FROM `*PREFIX*gbm_holdings` WHERE `user_id` = ? AND `account_id` = ?';
 		return $this->findEntities($sql, [$userId, $accountId]);
 	}
+
+	/** State layer is replaced on each ingest: wipe this user's rows first. */
+	public function deleteByUser(string $userId): void {
+		$this->execute('DELETE FROM `*PREFIX*gbm_holdings` WHERE `user_id` = ?', [$userId]);
+	}
 }

@@ -26,4 +26,9 @@ class AccountMapper extends Mapper {
 			return null;
 		}
 	}
+
+	/** State layer is replaced on each ingest: wipe this user's rows first. */
+	public function deleteByUser(string $userId): void {
+		$this->execute('DELETE FROM `*PREFIX*gbm_accounts` WHERE `user_id` = ?', [$userId]);
+	}
 }
