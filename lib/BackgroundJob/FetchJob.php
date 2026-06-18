@@ -42,11 +42,11 @@ class FetchJob extends TimedJob {
 	private $logger;
 
 	public function __construct(
-		GbmService $gbm = null,
-		IngestService $ingest = null,
-		IConfig $config = null,
-		IUserManager $userManager = null,
-		ILogger $logger = null
+		?GbmService $gbm = null,
+		?IngestService $ingest = null,
+		?IConfig $config = null,
+		?IUserManager $userManager = null,
+		?ILogger $logger = null
 	) {
 		// 6h cadence — comfortably inside GBM's refresh-token lifetime.
 		$this->setInterval(6 * 3600);
