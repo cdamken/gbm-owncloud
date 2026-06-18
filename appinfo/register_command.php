@@ -10,3 +10,4 @@ $container = $app->getContainer();
 
 /** @var \Symfony\Component\Console\Application $application */
 $application->add($container->query(\OCA\GbmNext\Command\Ingest::class));
+$application->add($container->query(\OCA\GbmNext\Command\Analyze::class));
