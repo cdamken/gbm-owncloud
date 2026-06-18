@@ -36,5 +36,9 @@ class Application extends App {
 				'name'  => 'GBM Portfolio (next)',
 			];
 		});
+
+		// Fase 3: register the background fetch+ingest job. getJobList()->add()
+		// is idempotent, so calling it on every app load is safe.
+		\OC::$server->getJobList()->add(\OCA\GbmNext\BackgroundJob\FetchJob::class);
 	}
 }

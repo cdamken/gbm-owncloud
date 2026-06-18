@@ -108,6 +108,16 @@ abstract class BaseOwnCloudService {
 	}
 
 	/**
+	 * Bind this service to an explicit user, for session-less contexts
+	 * (the background FetchJob, occ commands). The uid MUST come from a
+	 * trusted source (IUserManager iteration, CLI arg) — NEVER from request
+	 * input. Web controllers never call this; they rely on IUserSession.
+	 */
+	public function forUser(string $uid): void {
+		$this->userIdCache = $uid;
+	}
+
+	/**
 	 * Per-user data directory under {datadirectory}/<uid>/<appDirName>/.
 	 * Created with 0700 on first call — only the web-server user should
 	 * read these files.
