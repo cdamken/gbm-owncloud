@@ -370,28 +370,54 @@ class IngestService {
 		return $section === '' ? '' : 'MX';
 	}
 
-	/** [total_portfolio_value, cash] for one account's positions block. */
+	/**
+	 * [total_value, cash] for one account's positions block.
+	 *
+	 * GBM's `efectivo` section ends in a "Subtotal" row that already sums the
+	 * individual EFEC.* buckets — so cash = that Subtotal (NOT the sum of all
+	 * rows, which would double-count). And `total_portfolio_value` is the
+	 * grand total that ALREADY INCLUDES cash (TPV = invest + cash), so we take
+	 * it as-is and must NOT add cash again. Cash can be legitimately negative
+	 * (buys pending T+2 settlement).
+	 */
 	private function accountTotals($pos): array {
 		if (!is_array($pos)) {
 			return [0.0, 0.0];
 		}
-		$total = 0.0;
+		// cash = efectivo "Subtotal" row; fall back to summing the non-Subtotal rows.
+		$cash = null;
+		$cashSum = 0.0;
+		foreach (($pos['efectivo'] ?? []) as $h) {
+			if ($this->isSubtotal($h)) {
+				$cash = (float) ($h['market_value'] ?? 0);
+			} else {
+				$cashSum += (float) ($h['market_value'] ?? 0);
+			}
+		}
+		if ($cash === null) {
+			$cash = $cashSum;
+		}
+		// total_portfolio_value already includes cash → use it as-is.
 		$tpv = $pos['total_portfolio_value'][0]['market_value'] ?? null;
 		if ($tpv !== null) {
-			$total = (float) $tpv;
-		} else {
-			foreach (self::INVEST_SECTIONS as $s) {
-				foreach (($pos[$s] ?? []) as $h) {
+			return [(float) $tpv, $cash];
+		}
+		// Fallback (no TPV row): sum invest sections (skip Subtotal) + add cash.
+		$total = 0.0;
+		foreach (self::INVEST_SECTIONS as $s) {
+			foreach (($pos[$s] ?? []) as $h) {
+				if (!$this->isSubtotal($h)) {
 					$total += (float) ($h['market_value'] ?? 0);
 				}
 			}
 		}
-		$cash = 0.0;
-		foreach (($pos['efectivo'] ?? []) as $h) {
-			$cash += (float) ($h['market_value'] ?? 0);
-		}
-		$total += $cash;
-		return [$total, $cash];
+		return [$total + $cash, $cash];
+	}
+
+	/** GBM per-section "Subtotal" summary row (no real instrument). */
+	private function isSubtotal(array $h): bool {
+		return strcasecmp((string) ($h['issue_id'] ?? ''), 'Subtotal') === 0
+			|| strcasecmp((string) ($h['issue_name'] ?? ''), 'Subtotal') === 0;
 	}
 
 	/** @return array|null */
