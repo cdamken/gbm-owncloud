@@ -11,6 +11,7 @@
 namespace OCA\GbmNext\Controller;
 
 use OCA\GbmNext\Service\GbmService;
+use OCA\GbmNext\Service\IngestService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -20,10 +21,12 @@ use OCP\IRequest;
 class ApiController extends Controller {
 
 	private $gbm;
+	private $ingest;
 
-	public function __construct(string $appName, IRequest $request, GbmService $gbm) {
+	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest) {
 		parent::__construct($appName, $request);
 		$this->gbm = $gbm;
+		$this->ingest = $ingest;
 	}
 
 	/**
@@ -123,6 +126,14 @@ class ApiController extends Controller {
 
 		$payload = ['status' => $jsonStatus];
 		if ($httpStatus === Http::STATUS_OK) {
+			// Keep the DB in sync with the freshly-written JSON, so a manual
+			// "Actualizar" updates the DB-backed analytics + adds a snapshot —
+			// not just the JSON files. A DB hiccup must NOT fail the fetch.
+			try {
+				$this->ingest->ingestForUser($this->gbm->currentUserId());
+			} catch (\Throwable $e) {
+				\OC::$server->getLogger()->logException($e, ['app' => 'gbm_next']);
+			}
 			$payload['output'] = substr($result['stdout'], -2000);
 		} else {
 			$stderr = trim((string) $result['stderr']);

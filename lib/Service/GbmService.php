@@ -40,6 +40,11 @@ class GbmService extends BaseOwnCloudService {
 		return 'gbm_next';
 	}
 
+	/** Session user id, for callers that need it (e.g. post-fetch ingest). */
+	public function currentUserId(): string {
+		return $this->userId();
+	}
+
 	// ------------------------------------------------------------------
 	// Library version probe (for the Settings "About" list)
 	// ------------------------------------------------------------------
