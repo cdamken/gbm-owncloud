@@ -122,6 +122,7 @@
 			// which GBM only partially reports (Personal, ~200 days).
 			const analysisDb = await safeJson(routes.analysisData);
 			state.history = (analysisDb && analysisDb.history) || [];
+			state.dbSummary = (analysisDb && analysisDb.summary) || null;
 
 			if (!accounts) {
 				document.getElementById('error-box').innerHTML =
@@ -157,30 +158,38 @@
 	// value − net capital; total purchases/sales = Σ is_buy / Σ is_sell
 	// (money-market sweeps + repos excluded, same as the cost-basis line).
 	function renderCapitalStats() {
+		// P&L from the DB summary: market value − cost basis of current
+		// holdings (unrealized). GBM does NOT report deposits/withdrawals, so
+		// a "value − net deposits" figure is impossible (it printed the whole
+		// portfolio as profit). Cost basis comes from GBM's per-position
+		// average_cost, which IS reliable.
+		const s = state.dbSummary;
+		const m0 = (v) => fmtMoney(v, { currency: true, decimals: 0 });
+
+		// Total bought / sold (informational) — sum of filled buy/sell amounts.
 		const rows = (state.transactions && state.transactions.transactions) || [];
-		let deposits = 0, withdrawals = 0, buys = 0, sells = 0, buyCount = 0, sellCount = 0;
+		let buys = 0, sells = 0, buyCount = 0, sellCount = 0;
 		for (const t of rows) {
 			const cat = t.category;
 			const amt = Math.abs(Number(t.amount) || 0);
-			if (cat === 'deposit')    { deposits += amt; continue; }
-			if (cat === 'withdrawal') { withdrawals += amt; continue; }
-			if (cat === 'repo_buy' || cat === 'repo_mature') continue;
+			if (cat === 'deposit' || cat === 'withdrawal' || cat === 'repo_buy' || cat === 'repo_mature') continue;
 			if (t.security_id === 'GBMF2 BF' || t.security_id === 'GBMDINT BO') continue;
 			if (t.is_buy)       { buys += amt; buyCount++; }
 			else if (t.is_sell) { sells += amt; sellCount++; }
 		}
-		const netCapital = deposits - withdrawals;
-		const currentValue = (state.positionsFlat || [])
-			.reduce((s, p) => s + (Number(p.market_value) || 0), 0);
-		const pnl = currentValue - netCapital;
-		const m0 = (v) => fmtMoney(v, { currency: true, decimals: 0 });
 
-		document.getElementById('cap-net').textContent = m0(netCapital);
+		const cost  = s ? (Number(s.cost_basis) || 0) : 0;
+		const value = s ? (Number(s.market_value) || 0) : 0;
+		const pnl   = s ? (Number(s.unrealized_pl) || 0) : (value - cost);
+		const pct   = s ? (Number(s.unrealized_pct) || 0) : 0;
+
+		document.getElementById('cap-net').textContent = m0(cost);
 		const pnlEl = document.getElementById('cap-pnl');
 		pnlEl.textContent = (pnl >= 0 ? '+' : '−') + m0(Math.abs(pnl));
 		pnlEl.className = 'stat-value ' + (pnl >= 0 ? 'green' : 'red');
 		document.getElementById('cap-pnl-detail').textContent =
-			'valor actual ' + m0(currentValue) + ' − capital ' + m0(netCapital);
+			'valor ' + m0(value) + ' − costo ' + m0(cost)
+			+ ' (' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%)';
 		document.getElementById('cap-buys').textContent = m0(buys);
 		document.getElementById('cap-buys-detail').textContent =
 			buyCount + (buyCount === 1 ? ' orden' : ' órdenes') + ' de compra';

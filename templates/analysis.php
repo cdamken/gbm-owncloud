@@ -39,18 +39,17 @@ $routes = $_['routes'];
 	<!-- ---------- Capital y resultados ---------- -->
 	<div class="section">
 		<span>Capital y resultados</span>
-		<span class="badge muted">sobre el historial disponible</span>
 	</div>
 	<div class="stat-row" id="capital-stats">
 		<div>
-			<div class="stat-label">Capital neto comprometido</div>
+			<div class="stat-label">Costo invertido</div>
 			<div class="stat-value" id="cap-net">—</div>
-			<div class="stat-detail">depósitos − retiros</div>
+			<div class="stat-detail">suma del costo de tus posiciones</div>
 		</div>
 		<div>
-			<div class="stat-label">P&amp;L de por vida</div>
+			<div class="stat-label">P&amp;L no realizado</div>
 			<div class="stat-value" id="cap-pnl">—</div>
-			<div class="stat-detail" id="cap-pnl-detail">valor actual − capital neto</div>
+			<div class="stat-detail" id="cap-pnl-detail">valor − costo</div>
 		</div>
 		<div>
 			<div class="stat-label">Compras totales</div>
