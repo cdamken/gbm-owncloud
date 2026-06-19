@@ -33,7 +33,7 @@ class Application extends App {
 				'order' => 80,
 				'href'  => $url->linkToRoute('gbm_next.page.index'),
 				'icon'  => $url->imagePath(self::APPID, 'app.svg'),
-				'name'  => 'GBM Portfolio (next)',
+				'name'  => 'GBM Portfolio',
 			];
 		});
 

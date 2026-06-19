@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <info>
 	<id>gbm_next</id>
-	<name>GBM Portfolio (next)</name>
+	<name>GBM Portfolio</name>
 	<description>
 		Dashboard privado para tu portafolio de GBM+ (Grupo Bursátil Mexicano).
 		Cada usuario de ownCloud ve solo sus propios datos: las credenciales y
