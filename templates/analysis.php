@@ -25,7 +25,8 @@ $routes = $_['routes'];
 	data-route-data="<?php p($routes['data']); ?>"
 	data-route-config="<?php p($routes['config']); ?>"
 	data-route-update="<?php p($routes['update']); ?>"
-	data-route-benchmark="<?php p($routes['benchmark']); ?>">
+	data-route-benchmark="<?php p($routes['benchmark']); ?>"
+	data-route-analysis-data="<?php p($routes['analysis_data']); ?>">
 
 	<div class="subtitle">
 		Visualizaciones del portafolio · Última actualización:
@@ -82,8 +83,8 @@ $routes = $_['routes'];
 
 	<!-- ---------- Patrimonio en el tiempo (cost basis trajectory) ---------- -->
 	<div class="section">
-		<span>Capital invertido en el tiempo</span>
-		<span class="badge muted" id="hist-badge">cost basis (compras − ventas)</span>
+		<span>Valor del portafolio en el tiempo</span>
+		<span class="badge muted" id="hist-badge">valor real · crece cada día</span>
 	</div>
 	<div class="range-pills" id="history-range-pills">
 		<button data-range="1M">1M</button>
@@ -96,7 +97,8 @@ $routes = $_['routes'];
 		<div class="chart-container">
 			<canvas id="history-chart"></canvas>
 			<div id="history-empty" class="chart-empty" style="display:none;">
-				Sin transacciones suficientes para graficar.
+				El historial de valor se va llenando: el sistema guarda un punto
+				por día. Vuelve en unos días para ver la curva.
 			</div>
 		</div>
 	</div>

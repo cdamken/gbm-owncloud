@@ -10,6 +10,7 @@
 
 namespace OCA\GbmNext\Controller;
 
+use OCA\GbmNext\Service\AnalysisService;
 use OCA\GbmNext\Service\GbmService;
 use OCA\GbmNext\Service\IngestService;
 use OCP\AppFramework\Controller;
@@ -22,11 +23,28 @@ class ApiController extends Controller {
 
 	private $gbm;
 	private $ingest;
+	private $analysis;
 
-	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest) {
+	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis) {
 		parent::__construct($appName, $request);
 		$this->gbm = $gbm;
 		$this->ingest = $ingest;
+		$this->analysis = $analysis;
+	}
+
+	/**
+	 * DB-backed analytics for the Análisis page: summary, per-stock, real
+	 * portfolio-value history (snapshots). Read-only, per-session user.
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function analysisData(): JSONResponse {
+		try {
+			return new JSONResponse($this->analysis->perUser($this->gbm->currentUserId()));
+		} catch (\Throwable $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	/**

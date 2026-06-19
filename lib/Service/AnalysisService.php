@@ -14,6 +14,7 @@ use OCA\GbmNext\Analytics\PortfolioAnalytics;
 use OCA\GbmNext\Db\AccountMapper;
 use OCA\GbmNext\Db\DividendMapper;
 use OCA\GbmNext\Db\HoldingMapper;
+use OCA\GbmNext\Db\PortfolioSnapshotMapper;
 use OCA\GbmNext\Db\SecurityMapper;
 
 class AnalysisService {
@@ -25,17 +26,21 @@ class AnalysisService {
 	private $dividends;
 	/** @var AccountMapper */
 	private $accounts;
+	/** @var PortfolioSnapshotMapper */
+	private $snapshots;
 
 	public function __construct(
 		HoldingMapper $holdings,
 		SecurityMapper $securities,
 		DividendMapper $dividends,
-		AccountMapper $accounts
+		AccountMapper $accounts,
+		PortfolioSnapshotMapper $snapshots
 	) {
 		$this->holdings = $holdings;
 		$this->securities = $securities;
 		$this->dividends = $dividends;
 		$this->accounts = $accounts;
+		$this->snapshots = $snapshots;
 	}
 
 	/**
@@ -84,11 +89,22 @@ class AnalysisService {
 			$cash += $this->f($a->getCashAmount());
 		}
 
+		// Real portfolio-value history (the DB's killer feature; grows daily).
+		$history = [];
+		foreach ($this->snapshots->findByUser($uid) as $s) {
+			$history[] = [
+				'date'  => (string) $s->getCapturedOn(),
+				'value' => $this->f($s->getTotalValue()),
+				'cost'  => $this->f($s->getTotalCost()),
+			];
+		}
+
 		$perStock = PortfolioAnalytics::perStock($rows, $divBySec);
 		return [
 			'summary'       => PortfolioAnalytics::summary($perStock),
 			'per_stock'     => $perStock,
 			'concentration' => PortfolioAnalytics::concentration($perStock, $cash),
+			'history'       => $history,
 		];
 	}
 

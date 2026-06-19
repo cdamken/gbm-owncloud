@@ -117,6 +117,12 @@
 				safeJson(benchmarkUrl('^SP500TR')),
 			]);
 
+			// Real portfolio-value history from the DB (snapshots). This is
+			// the correct net-worth line — NOT the order-derived cost basis,
+			// which GBM only partially reports (Personal, ~200 days).
+			const analysisDb = await safeJson(routes.analysisData);
+			state.history = (analysisDb && analysisDb.history) || [];
+
 			if (!accounts) {
 				document.getElementById('error-box').innerHTML =
 					'<div class="warning">' +
@@ -531,10 +537,12 @@
 			emptyEl.style.display = 'flex';
 		};
 
-		const rows = (state.transactions && state.transactions.transactions) || [];
-		if (rows.length === 0) { showEmpty(); return; }
+		// Real portfolio value over time, straight from the DB snapshots.
+		// Needs ≥2 days to draw a line; the daily job fills it over time.
+		const hist = state.history || [];
+		if (hist.length < 2) { showEmpty(); return; }
 
-		const dailyMap = _buildNetWorthDailyMap(rows);
+		const dailyMap = new Map(hist.map(h => [h.date, Number(h.value) || 0]));
 		if (dailyMap.size === 0) { showEmpty(); return; }
 
 		const filteredDates = _filterRangeDates(dailyMap, _histRange);
@@ -574,7 +582,7 @@
 		const sp500Values   = rebaseToStart(alignBench(_replayBenchmark(state.benchmarks[1], dailyMap)));
 
 		const datasets = [
-			_netWorthDataset('Capital invertido (cost basis)', values, '#60a5fa', true),
+			_netWorthDataset('Valor del portafolio', values, '#60a5fa', true),
 		];
 		if (naftracValues && naftracValues.some(v => v != null)) {
 			datasets.push(_netWorthDataset('Si compraras NAFTRAC en su lugar', naftracValues, '#fbbf24', false));
@@ -597,9 +605,10 @@
 		const app = document.getElementById('gbm-app');
 		if (!app) return;
 		routes = {
-			data:      app.dataset.routeData,
-			update:    app.dataset.routeUpdate,
-			benchmark: app.dataset.routeBenchmark,
+			data:         app.dataset.routeData,
+			update:       app.dataset.routeUpdate,
+			benchmark:    app.dataset.routeBenchmark,
+			analysisData: app.dataset.routeAnalysisData,
 		};
 
 		// Range pill clicks: just update _histRange and re-render.

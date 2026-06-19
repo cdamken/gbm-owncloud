@@ -138,6 +138,7 @@ class PageController extends Controller {
 				'export_csv'    => $this->urlGenerator->linkToRoute('gbm_next.api.exportTransactionsCsv'),
 				'export_page'   => $this->urlGenerator->linkToRoute('gbm_next.api.exportPageCsv', ['kind' => '__KIND__']),
 				'benchmark'     => $this->urlGenerator->linkToRoute('gbm_next.api.benchmark', ['symbol' => '__SYMBOL__']),
+				'analysis_data' => $this->urlGenerator->linkToRoute('gbm_next.api.analysisData'),
 			],
 		];
 
