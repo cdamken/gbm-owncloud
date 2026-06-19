@@ -37,8 +37,9 @@ class Application extends App {
 			];
 		});
 
-		// Fase 3: register the background fetch+ingest job. getJobList()->add()
-		// is idempotent, so calling it on every app load is safe.
-		\OC::$server->getJobList()->add(\OCA\GbmNext\BackgroundJob\FetchJob::class);
+		// NO background fetch job: GBM requires the user's TOTP for every fresh
+		// login, so an unattended cron fetch would only error (MFA_REQUIRED) and
+		// add traffic. History accrues instead from each manual "Actualizar"
+		// (ApiController::update ingests + appends the day's snapshot).
 	}
 }

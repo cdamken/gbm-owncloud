@@ -10,7 +10,7 @@
 	</description>
 	<licence>BUSL-1.1</licence>
 	<author>Carlos Damken</author>
-	<version>0.15.1</version>
+	<version>0.15.2</version>
 	<website>https://github.com/cdamken/gbm-owncloud</website>
 	<bugs>https://github.com/cdamken/gbm-owncloud/issues</bugs>
 	<repository type="git">https://github.com/cdamken/gbm-owncloud.git</repository>
