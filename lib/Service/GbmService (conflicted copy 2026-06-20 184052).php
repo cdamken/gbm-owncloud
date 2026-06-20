@@ -250,6 +250,12 @@ class GbmService extends BaseOwnCloudService {
 			'LANG'                  => 'C.UTF-8',
 		];
 
-		return $this->runProcess($cmd, $env, 180);
+		// 280s deadline: a first (full) fetch with several trading accounts
+		// can run long because GBM's GetBlotterOrders is queried day-by-day.
+		// Apache's Timeout is 300s, so stay just under it (PHP's own
+		// max_execution_time is 6000s — not the limiter here). The orders
+		// window is bounded to 200 days by getOrdersDays() so this is headroom,
+		// not a license to pull 10 years.
+		return $this->runProcess($cmd, $env, 280);
 	}
 }

@@ -49,7 +49,7 @@ const MODAL_HTML = (
   '    </div>\n' +
   '    <input type="text" id="totp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6"\n' +
   '           autocomplete="one-time-code"\n' +
-  '           data-lpignore="true" data-1p-ignore data-bwignore placeholder="0000">\n' +
+  '           data-lpignore="true" data-1p-ignore data-bwignore placeholder="000000">\n' +
   '    <div id="totp-error" class="err-msg"></div>\n' +
   '    <label for="totp-full-reload"\n' +
   '           style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;\n' +
