@@ -132,7 +132,7 @@ $routes = $_['routes'];
 					<li><span class="label">Versión de la app</span><span class="value" id="about-app-version">—</span></li>
 					<li><span class="label">Versión de gbm-mx-api</span><span class="value" id="about-api-version">—</span></li>
 					<li><span class="label">Credenciales</span><span class="value">cifradas en oc_preferences (por usuario)</span></li>
-					<li><span class="label">Datos</span><span class="value">{data_dir}/{user}/gbm/</span></li>
+					<li><span class="label">Datos</span><span class="value">{data_dir}/{user}/gbm_next/</span></li>
 					<li><span class="label">Código</span><span class="value">
 						<a href="https://github.com/cdamken/gbm-owncloud" target="_blank">github.com/cdamken/gbm-owncloud</a>
 					</span></li>
