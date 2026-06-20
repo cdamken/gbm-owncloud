@@ -42,12 +42,22 @@ $routes = $_['routes'];
 				</p>
 				<div class="settings-row">
 					<label for="email-input">Email</label>
-					<input type="email" id="email-input" autocomplete="username"
+					<!-- autocomplete="off" + a non-login-like name keeps the browser
+					     password manager from autofilling SAVED credentials (e.g. the
+					     ownCloud login) into the GBM field and from offering to save
+					     these GBM creds. These are GBM credentials, not a site login. -->
+					<input type="email" id="email-input" name="gbm-account-email"
+						autocomplete="off"
 						placeholder="tu-email@dominio.com">
 				</div>
 				<div class="settings-row">
 					<label for="password-input">Contraseña</label>
-					<input type="password" id="password-input" autocomplete="current-password"
+					<!-- "new-password" is the documented lever that stops Chrome
+					     autofilling a stored password here; combined with the AJAX
+					     save (no form submit) it also suppresses the "save password?"
+					     prompt in practice. -->
+					<input type="password" id="password-input" name="gbm-account-pass"
+						autocomplete="new-password"
 						placeholder="••••••••">
 				</div>
 				<div class="flash" id="account-flash"></div>
