@@ -126,17 +126,14 @@ class GbmService extends BaseOwnCloudService {
 	// for faster updates. Old defaults (90/365/365) made XIRR look
 	// broken on accounts older than one year.
 	//
-	// ORDERS IS THE EXCEPTION: GBM's GetBlotterOrders ignores the from/to
-	// range, so the núcleo queries it DAY BY DAY — one HTTP call per day in
-	// the window. A 3650-day default therefore fires ~3,650 sequential calls
-	// PER trading account regardless of how much history exists, which blows
-	// past the 180s subprocess timeout on a first (full) fetch → the fetch is
-	// SIGKILL'd, last_update.date is never written, every retry restarts the
-	// full fetch, and the user sees a perpetual "asks for TOTP / no data" loop.
-	// 200 days bounds it (~200 calls/account); the user can raise it in
-	// Configuración for a one-off deep backfill. Dividends/transactions are
-	// genuinely range-paginated, so their 3650 default is cheap — leave them.
-	public function getOrdersDays(): int       { return $this->getDays('orders_days',       200); }
+	// ORDERS day-by-day window. GBM's GetBlotterOrders ignores from/to, so the
+	// núcleo queries it ONE DAY PER CALL — the window length = number of HTTP
+	// calls. The núcleo now bounds a full backfill to the account's first real
+	// movement (earliest transaction, cached in account_start.date), so this
+	// value is only a SAFETY CAP for the rare case no transactions are found.
+	// Hence 3650 (the cap), NOT a hard truncation — a fixed short window like
+	// 200 would silently drop older order history, which we do not want.
+	public function getOrdersDays(): int       { return $this->getDays('orders_days',       3650); }
 	public function getDividendsDays(): int    { return $this->getDays('dividends_days',    3650); }
 	public function getTransactionsDays(): int { return $this->getDays('transactions_days', 3650); }
 	public function setDays(int $orders, int $dividends, int $transactions): void {
@@ -250,6 +247,6 @@ class GbmService extends BaseOwnCloudService {
 			'LANG'                  => 'C.UTF-8',
 		];
 
-		return $this->runProcess($cmd, $env, 180);
+		return $this->runProcess($cmd, $env, 280);
 	}
 }
