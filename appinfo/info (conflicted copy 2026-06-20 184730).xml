@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<info>
+	<id>gbm_next</id>
+	<name>GBM Portfolio</name>
+	<description>
+		Dashboard privado para tu portafolio de GBM+ (Grupo Bursátil Mexicano).
+		Cada usuario de ownCloud ve solo sus propios datos: las credenciales y
+		la sesión 2FA viven aisladas en el directorio del usuario, y la app
+		descarga posiciones, cuentas y órdenes vía gbm-mx-api. No oficial.
+	</description>
+	<licence>BUSL-1.1</licence>
+	<author>Carlos Damken</author>
+	<version>0.15.7</version>
+	<website>https://github.com/cdamken/gbm-owncloud</website>
+	<bugs>https://github.com/cdamken/gbm-owncloud/issues</bugs>
+	<repository type="git">https://github.com/cdamken/gbm-owncloud.git</repository>
+	<category>tools</category>
+	<summary>Dashboard GBM+ por usuario sobre ownCloud</summary>
+	<namespace>GbmNext</namespace>
+	<dependencies>
+		<owncloud min-version="10" max-version="10"/>
+	</dependencies>
+</info>
