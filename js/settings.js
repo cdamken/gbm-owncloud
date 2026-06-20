@@ -6,6 +6,7 @@
 	'use strict';
 
 	let routes;
+	let configured = false;  // set by loadSessionInfo — are creds already saved?
 	const $ = (id) => document.getElementById(id);
 
 	function csrfHeaders() {
@@ -20,7 +21,11 @@
 		if (!el) return;  // callers pass $(id) which may be null
 		el.textContent = msg;
 		el.className = 'flash show ' + (ok ? 'ok' : 'err');
-		if (ok) setTimeout(() => el.classList.remove('show'), 3500);
+		// Make the feedback impossible to miss: pull it into view (it can sit
+		// below the fold on the long settings page) and let the success banner
+		// linger long enough to read before it auto-hides.
+		try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {}
+		if (ok) setTimeout(() => el.classList.remove('show'), 6000);
 	}
 
 	async function loadAll() {
@@ -50,6 +55,7 @@
 		try {
 			const r = await fetch(routes.config, { cache: 'no-store' });
 			const c = await r.json();
+			configured = !!c.configured;
 			ul.innerHTML = c.configured
 				? '<li><span class="label">Credenciales</span><span class="value green">guardadas (' + c.email + ')</span></li>'
 				+ '<li><span class="label">TOTP</span><span class="value muted">solo cuando expire el refresh token (~30 días)</span></li>'
@@ -66,7 +72,18 @@
 		const btn      = $('save-account-btn');
 
 		if (!email || !email.includes('@')) { flash(flashEl, false, 'Email inválido.'); return; }
-		if (!password || password.length < 4) { flash(flashEl, false, 'Contraseña muy corta.'); return; }
+		if (!password) {
+			// Credenciales ya guardadas + campo de contraseña vacío: por
+			// seguridad nunca rellenamos la contraseña, así que esto NO es un
+			// error — solo no hay nada nuevo que guardar. Explícalo en vez de
+			// gritar "Contraseña muy corta".
+			flash(flashEl, configured,
+				configured
+					? 'Tus credenciales ya están guardadas. Escribe una contraseña solo si quieres cambiarla.'
+					: 'Escribe tu contraseña de GBM+ para guardar.');
+			return;
+		}
+		if (password.length < 4) { flash(flashEl, false, 'Contraseña muy corta (mínimo 4 caracteres).'); return; }
 
 		btn.disabled = true; btn.textContent = 'Guardando…';
 		try {
