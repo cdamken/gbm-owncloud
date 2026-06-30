@@ -151,9 +151,9 @@ $routes = $_['routes'];
 			</p>
 			<div class="modal-error hidden" id="config-error"></div>
 			<label for="config-email">Email</label>
-			<input type="email" class="field" id="config-email" autocomplete="username" placeholder="tu-email@dominio.com">
+			<input type="email" class="field" id="config-email" name="gbm-account-email" autocomplete="off" placeholder="tu-email@dominio.com">
 			<label for="config-password">Contraseña</label>
-			<input type="password" class="field" id="config-password" autocomplete="current-password" placeholder="••••••••">
+			<input type="password" class="field" id="config-password" name="gbm-account-pass" autocomplete="new-password" placeholder="••••••••">
 			<div style="height: 20px;"></div>
 			<div class="modal-btns">
 				<button class="secondary" id="config-cancel">Cancelar</button>
