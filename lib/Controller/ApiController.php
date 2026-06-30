@@ -13,6 +13,7 @@ namespace OCA\Gbm\Controller;
 use OCA\Gbm\Service\AnalysisService;
 use OCA\Gbm\Service\GbmService;
 use OCA\Gbm\Service\IngestService;
+use OCA\Gbm\Service\LotsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -24,12 +25,14 @@ class ApiController extends Controller {
 	private $gbm;
 	private $ingest;
 	private $analysis;
+	private $lots;
 
-	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis) {
+	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis, LotsService $lots) {
 		parent::__construct($appName, $request);
 		$this->gbm = $gbm;
 		$this->ingest = $ingest;
 		$this->analysis = $analysis;
+		$this->lots = $lots;
 	}
 
 	/**
@@ -144,11 +147,14 @@ class ApiController extends Controller {
 
 		$payload = ['status' => $jsonStatus];
 		if ($httpStatus === Http::STATUS_OK) {
-			// Keep the DB in sync with the freshly-written JSON, so a manual
-			// "Actualizar" updates the DB-backed analytics + adds a snapshot —
-			// not just the JSON files. A DB hiccup must NOT fail the fetch.
+			// Keep the DB in sync with the freshly-written JSON: ingest the
+			// new state/events, then recompute FIFO lots + realized P&L so the
+			// analytics are current without a manual `occ gbm:lots`. A DB
+			// hiccup must NOT fail the fetch.
 			try {
-				$this->ingest->ingestForUser($this->gbm->currentUserId());
+				$uid = $this->gbm->currentUserId();
+				$this->ingest->ingestForUser($uid);
+				$this->lots->recompute($uid);
 			} catch (\Throwable $e) {
 				\OC::$server->getLogger()->logException($e, ['app' => 'gbm']);
 			}
