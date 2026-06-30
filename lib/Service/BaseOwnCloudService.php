@@ -26,7 +26,7 @@
  * vendored-twin keeps both repos self-contained.
  */
 
-namespace OCA\GbmNext\Service;
+namespace OCA\Gbm\Service;
 
 use OCP\IConfig;
 use OCP\IUserSession;

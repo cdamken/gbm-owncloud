@@ -1,7 +1,7 @@
 <?php
 /** Dividend event (layer 3). Deduped by (user_id, external_id). */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\Entity;
 

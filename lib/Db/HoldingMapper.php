@@ -1,7 +1,7 @@
 <?php
 /** HoldingMapper — layer 1 state. Scoped by user_id. */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\Mapper;
 use OCP\IDBConnection;

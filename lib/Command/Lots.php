@@ -1,6 +1,6 @@
 <?php
 /**
- * occ gbm_next:lots <user>
+ * occ gbm:lots <user>
  *
  * Recompute FIFO lots from the user's orders, persist open lots to gbm_lots,
  * and print realised P&L + coverage. Coverage matters for GBM: the order
@@ -8,9 +8,9 @@
  * within the captured window.
  */
 
-namespace OCA\GbmNext\Command;
+namespace OCA\Gbm\Command;
 
-use OCA\GbmNext\Service\LotsService;
+use OCA\Gbm\Service\LotsService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,7 +26,7 @@ class Lots extends Command {
 	}
 
 	protected function configure() {
-		$this->setName('gbm_next:lots')
+		$this->setName('gbm:lots')
 			->setDescription('Recompute FIFO lots + realized P&L from orders')
 			->addArgument('user', InputArgument::REQUIRED, 'ownCloud user id');
 	}

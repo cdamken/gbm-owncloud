@@ -1,7 +1,7 @@
 <?php
 /** DividendMapper — layer 3 events. Scoped by user_id, deduped by external_id. */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\Mapper;

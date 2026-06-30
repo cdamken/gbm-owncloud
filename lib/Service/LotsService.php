@@ -8,13 +8,13 @@
  * incomplete — see FifoLots). All math lives in the pure layer.
  */
 
-namespace OCA\GbmNext\Service;
+namespace OCA\Gbm\Service;
 
-use OCA\GbmNext\Analytics\FifoLots;
-use OCA\GbmNext\Db\Lot;
-use OCA\GbmNext\Db\LotMapper;
-use OCA\GbmNext\Db\OrderMapper;
-use OCA\GbmNext\Db\SecurityMapper;
+use OCA\Gbm\Analytics\FifoLots;
+use OCA\Gbm\Db\Lot;
+use OCA\Gbm\Db\LotMapper;
+use OCA\Gbm\Db\OrderMapper;
+use OCA\Gbm\Db\SecurityMapper;
 
 class LotsService {
 	/** @var OrderMapper */

@@ -1,14 +1,14 @@
 <?php
 /**
- * occ gbm_next:ingest <user>
+ * occ gbm:ingest <user>
  *
  * Normalises the user's GBM sync() JSON (data dir) into the gbm_* tables.
  * Idempotent — safe to re-run. Reused by the Fase 3 background job.
  */
 
-namespace OCA\GbmNext\Command;
+namespace OCA\Gbm\Command;
 
-use OCA\GbmNext\Service\IngestService;
+use OCA\Gbm\Service\IngestService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,7 +24,7 @@ class Ingest extends Command {
 	}
 
 	protected function configure() {
-		$this->setName('gbm_next:ingest')
+		$this->setName('gbm:ingest')
 			->setDescription('Ingest GBM sync() JSON into the gbm_* DB tables')
 			->addArgument('user', InputArgument::REQUIRED, 'ownCloud user id to ingest');
 	}

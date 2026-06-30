@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <info>
-	<id>gbm_next</id>
+	<id>gbm</id>
 	<name>GBM Portfolio</name>
 	<description>
 		Dashboard privado para tu portafolio de GBM+ (Grupo Bursátil Mexicano).
@@ -16,7 +16,7 @@
 	<repository type="git">https://github.com/cdamken/gbm-owncloud.git</repository>
 	<category>tools</category>
 	<summary>Dashboard GBM+ por usuario sobre ownCloud</summary>
-	<namespace>GbmNext</namespace>
+	<namespace>Gbm</namespace>
 	<dependencies>
 		<owncloud min-version="10" max-version="10"/>
 	</dependencies>

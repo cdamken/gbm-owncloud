@@ -11,7 +11,7 @@
  * IUserSession (see GbmService::userId()).
  */
 
-namespace OCA\GbmNext;
+namespace OCA\Gbm;
 
 use OCP\AppFramework\App;
 use OCP\INavigationManager;
@@ -19,7 +19,7 @@ use OCP\IURLGenerator;
 
 class Application extends App {
 
-	const APPID = 'gbm_next';
+	const APPID = 'gbm';
 
 	public function __construct(array $urlParams = []) {
 		parent::__construct(self::APPID, $urlParams);
@@ -31,7 +31,7 @@ class Application extends App {
 			return [
 				'id'    => self::APPID,
 				'order' => 80,
-				'href'  => $url->linkToRoute('gbm_next.page.index'),
+				'href'  => $url->linkToRoute('gbm.page.index'),
 				'icon'  => $url->imagePath(self::APPID, 'app.svg'),
 				'name'  => 'GBM Portfolio',
 			];

@@ -14,26 +14,26 @@
  * No OCP\* leaks into the mapping rules themselves — the shape knowledge is
  * plain PHP, so the same logic could back a different host later.
  *
- * Run via `occ gbm_next:ingest <user>` (lib/Command/Ingest.php), reused by the
+ * Run via `occ gbm:ingest <user>` (lib/Command/Ingest.php), reused by the
  * Fase 3 background job.
  */
 
-namespace OCA\GbmNext\Service;
+namespace OCA\Gbm\Service;
 
-use OCA\GbmNext\Db\Account;
-use OCA\GbmNext\Db\AccountMapper;
-use OCA\GbmNext\Db\Dividend;
-use OCA\GbmNext\Db\DividendMapper;
-use OCA\GbmNext\Db\Holding;
-use OCA\GbmNext\Db\HoldingMapper;
-use OCA\GbmNext\Db\Order;
-use OCA\GbmNext\Db\OrderMapper;
-use OCA\GbmNext\Db\PortfolioSnapshot;
-use OCA\GbmNext\Db\PortfolioSnapshotMapper;
-use OCA\GbmNext\Db\Security;
-use OCA\GbmNext\Db\SecurityMapper;
-use OCA\GbmNext\Db\Transaction;
-use OCA\GbmNext\Db\TransactionMapper;
+use OCA\Gbm\Db\Account;
+use OCA\Gbm\Db\AccountMapper;
+use OCA\Gbm\Db\Dividend;
+use OCA\Gbm\Db\DividendMapper;
+use OCA\Gbm\Db\Holding;
+use OCA\Gbm\Db\HoldingMapper;
+use OCA\Gbm\Db\Order;
+use OCA\Gbm\Db\OrderMapper;
+use OCA\Gbm\Db\PortfolioSnapshot;
+use OCA\Gbm\Db\PortfolioSnapshotMapper;
+use OCA\Gbm\Db\Security;
+use OCA\Gbm\Db\SecurityMapper;
+use OCA\Gbm\Db\Transaction;
+use OCA\Gbm\Db\TransactionMapper;
 use OCP\IConfig;
 
 class IngestService {
@@ -88,7 +88,7 @@ class IngestService {
 
 	public function dataDir(string $uid): string {
 		$base = (string) $this->config->getSystemValue('datadirectory', '/var/www/owncloud/data');
-		return rtrim($base, '/') . '/' . $uid . '/gbm_next';
+		return rtrim($base, '/') . '/' . $uid . '/gbm';
 	}
 
 	/**
@@ -99,7 +99,7 @@ class IngestService {
 	public function ingestForUser(string $uid): array {
 		$dir = $this->dataDir($uid);
 		if (!is_dir($dir)) {
-			throw new \RuntimeException("No gbm_next data dir for '$uid': $dir");
+			throw new \RuntimeException("No gbm data dir for '$uid': $dir");
 		}
 		$this->secCache = [];
 

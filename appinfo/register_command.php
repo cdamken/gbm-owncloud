@@ -5,10 +5,10 @@
  * `$application` is provided by ownCloud's console loader.
  */
 
-$app = new \OCA\GbmNext\Application();
+$app = new \OCA\Gbm\Application();
 $container = $app->getContainer();
 
 /** @var \Symfony\Component\Console\Application $application */
-$application->add($container->query(\OCA\GbmNext\Command\Ingest::class));
-$application->add($container->query(\OCA\GbmNext\Command\Analyze::class));
-$application->add($container->query(\OCA\GbmNext\Command\Lots::class));
+$application->add($container->query(\OCA\Gbm\Command\Ingest::class));
+$application->add($container->query(\OCA\Gbm\Command\Analyze::class));
+$application->add($container->query(\OCA\Gbm\Command\Lots::class));

@@ -8,7 +8,7 @@
  * → kept as strings; no addType for them.
  */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\Entity;
 

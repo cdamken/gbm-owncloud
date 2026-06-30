@@ -6,7 +6,7 @@
  * is what isolates one user from another at request time.
  */
 
-namespace OCA\GbmNext\Controller;
+namespace OCA\Gbm\Controller;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -122,23 +122,23 @@ class PageController extends Controller {
 		// Pass route URLs to the JS so it doesn't hardcode paths.
 		$params = [
 			'routes' => [
-				'index'         => $this->urlGenerator->linkToRoute('gbm_next.page.index'),
-				'orders'        => $this->urlGenerator->linkToRoute('gbm_next.page.orders'),
-				'orders_all'    => $this->urlGenerator->linkToRoute('gbm_next.page.ordersAll'),
-				'dividends'     => $this->urlGenerator->linkToRoute('gbm_next.page.dividends'),
-				'transactions'  => $this->urlGenerator->linkToRoute('gbm_next.page.transactions'),
-				'glossary'      => $this->urlGenerator->linkToRoute('gbm_next.page.glossary'),
-				'settings'      => $this->urlGenerator->linkToRoute('gbm_next.page.settings'),
-				'analysis'      => $this->urlGenerator->linkToRoute('gbm_next.page.analysis'),
-				'data'          => $this->urlGenerator->linkToRoute('gbm_next.api.data',      ['type' => '__TYPE__']),
-				'config'        => $this->urlGenerator->linkToRoute('gbm_next.api.getConfig'),
-				'update'        => $this->urlGenerator->linkToRoute('gbm_next.api.update'),
-				'settings_api'  => $this->urlGenerator->linkToRoute('gbm_next.api.settingsGet'),
-				'reset'         => $this->urlGenerator->linkToRoute('gbm_next.api.reset'),
-				'export_csv'    => $this->urlGenerator->linkToRoute('gbm_next.api.exportTransactionsCsv'),
-				'export_page'   => $this->urlGenerator->linkToRoute('gbm_next.api.exportPageCsv', ['kind' => '__KIND__']),
-				'benchmark'     => $this->urlGenerator->linkToRoute('gbm_next.api.benchmark', ['symbol' => '__SYMBOL__']),
-				'analysis_data' => $this->urlGenerator->linkToRoute('gbm_next.api.analysisData'),
+				'index'         => $this->urlGenerator->linkToRoute('gbm.page.index'),
+				'orders'        => $this->urlGenerator->linkToRoute('gbm.page.orders'),
+				'orders_all'    => $this->urlGenerator->linkToRoute('gbm.page.ordersAll'),
+				'dividends'     => $this->urlGenerator->linkToRoute('gbm.page.dividends'),
+				'transactions'  => $this->urlGenerator->linkToRoute('gbm.page.transactions'),
+				'glossary'      => $this->urlGenerator->linkToRoute('gbm.page.glossary'),
+				'settings'      => $this->urlGenerator->linkToRoute('gbm.page.settings'),
+				'analysis'      => $this->urlGenerator->linkToRoute('gbm.page.analysis'),
+				'data'          => $this->urlGenerator->linkToRoute('gbm.api.data',      ['type' => '__TYPE__']),
+				'config'        => $this->urlGenerator->linkToRoute('gbm.api.getConfig'),
+				'update'        => $this->urlGenerator->linkToRoute('gbm.api.update'),
+				'settings_api'  => $this->urlGenerator->linkToRoute('gbm.api.settingsGet'),
+				'reset'         => $this->urlGenerator->linkToRoute('gbm.api.reset'),
+				'export_csv'    => $this->urlGenerator->linkToRoute('gbm.api.exportTransactionsCsv'),
+				'export_page'   => $this->urlGenerator->linkToRoute('gbm.api.exportPageCsv', ['kind' => '__KIND__']),
+				'benchmark'     => $this->urlGenerator->linkToRoute('gbm.api.benchmark', ['symbol' => '__SYMBOL__']),
+				'analysis_data' => $this->urlGenerator->linkToRoute('gbm.api.analysisData'),
 			],
 		];
 

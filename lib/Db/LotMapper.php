@@ -1,7 +1,7 @@
 <?php
 /** LotMapper — layer 5. FIFO lots are derived: replaced wholesale per recompute. */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\Mapper;
 use OCP\IDBConnection;

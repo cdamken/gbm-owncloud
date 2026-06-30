@@ -15,7 +15,7 @@
  * Arrays in, arrays out — no OCP/OC dependency (the portable núcleo).
  */
 
-namespace OCA\GbmNext\Analytics;
+namespace OCA\Gbm\Analytics;
 
 class FifoLots {
 	private const EPS = 1e-9;

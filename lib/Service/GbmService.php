@@ -30,14 +30,14 @@
  * + subprocess gotchas. This class only carries GBM-specific logic.
  */
 
-namespace OCA\GbmNext\Service;
+namespace OCA\Gbm\Service;
 
 class GbmService extends BaseOwnCloudService {
 
-	const APPID = 'gbm_next';
+	const APPID = 'gbm';
 
 	protected function appDirName(): string {
-		return 'gbm_next';
+		return 'gbm';
 	}
 
 	/** Session user id, for callers that need it (e.g. post-fetch ingest). */

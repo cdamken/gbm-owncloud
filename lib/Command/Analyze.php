@@ -1,15 +1,15 @@
 <?php
 /**
- * occ gbm_next:analyze <user>
+ * occ gbm:analyze <user>
  *
  * Prints the per-stock analysis (unrealized P&L, yield-on-cost) + portfolio
  * summary + concentration, computed from the DB. A read-only verification
  * surface for the Fase 5 analytics; the same AnalysisService backs the UI.
  */
 
-namespace OCA\GbmNext\Command;
+namespace OCA\Gbm\Command;
 
-use OCA\GbmNext\Service\AnalysisService;
+use OCA\Gbm\Service\AnalysisService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -25,7 +25,7 @@ class Analyze extends Command {
 	}
 
 	protected function configure() {
-		$this->setName('gbm_next:analyze')
+		$this->setName('gbm:analyze')
 			->setDescription('Per-stock analysis (unrealized P&L, yield-on-cost) from the DB')
 			->addArgument('user', InputArgument::REQUIRED, 'ownCloud user id');
 	}

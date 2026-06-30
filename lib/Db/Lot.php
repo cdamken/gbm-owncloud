@@ -1,7 +1,7 @@
 <?php
 /** FIFO lot (layer 5). Derived from orders; open lots persisted per recompute. */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\Entity;
 

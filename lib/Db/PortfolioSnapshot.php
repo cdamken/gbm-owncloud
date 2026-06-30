@@ -1,7 +1,7 @@
 <?php
 /** Daily portfolio snapshot (layer 2 · history). One per day per user. */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\Entity;
 

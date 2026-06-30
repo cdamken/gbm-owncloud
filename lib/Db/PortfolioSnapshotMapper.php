@@ -1,7 +1,7 @@
 <?php
 /** PortfolioSnapshotMapper — layer 2 history. Scoped by user_id. */
 
-namespace OCA\GbmNext\Db;
+namespace OCA\Gbm\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\Mapper;

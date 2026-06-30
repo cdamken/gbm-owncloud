@@ -8,11 +8,11 @@
  *   POST /api/update     → { totp_code? }        (runs fetch_wrapper.py)
  */
 
-namespace OCA\GbmNext\Controller;
+namespace OCA\Gbm\Controller;
 
-use OCA\GbmNext\Service\AnalysisService;
-use OCA\GbmNext\Service\GbmService;
-use OCA\GbmNext\Service\IngestService;
+use OCA\Gbm\Service\AnalysisService;
+use OCA\Gbm\Service\GbmService;
+use OCA\Gbm\Service\IngestService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -150,7 +150,7 @@ class ApiController extends Controller {
 			try {
 				$this->ingest->ingestForUser($this->gbm->currentUserId());
 			} catch (\Throwable $e) {
-				\OC::$server->getLogger()->logException($e, ['app' => 'gbm_next']);
+				\OC::$server->getLogger()->logException($e, ['app' => 'gbm']);
 			}
 			$payload['output'] = substr($result['stdout'], -2000);
 		} else {
@@ -166,7 +166,7 @@ class ApiController extends Controller {
 	 * @NoCSRFRequired
 	 */
 	public function settingsGet(): JSONResponse {
-		$appInfo = \OC::$server->getAppManager()->getAppInfo('gbm_next');
+		$appInfo = \OC::$server->getAppManager()->getAppInfo('gbm');
 		// Installed gbm-mx-api version via GbmService::libVersion() —
 		// proc_open, not shell_exec, to honor the layering contract.
 		return new JSONResponse([

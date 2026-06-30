@@ -4,18 +4,18 @@
  *
  * Loads a user's holdings / securities / dividends / accounts via the
  * mappers, converts the exact-string money columns to float at this edge,
- * and delegates ALL math to OCA\GbmNext\Analytics\PortfolioAnalytics (which
+ * and delegates ALL math to OCA\Gbm\Analytics\PortfolioAnalytics (which
  * has zero framework dependency). Per-user scoped by construction.
  */
 
-namespace OCA\GbmNext\Service;
+namespace OCA\Gbm\Service;
 
-use OCA\GbmNext\Analytics\PortfolioAnalytics;
-use OCA\GbmNext\Db\AccountMapper;
-use OCA\GbmNext\Db\DividendMapper;
-use OCA\GbmNext\Db\HoldingMapper;
-use OCA\GbmNext\Db\PortfolioSnapshotMapper;
-use OCA\GbmNext\Db\SecurityMapper;
+use OCA\Gbm\Analytics\PortfolioAnalytics;
+use OCA\Gbm\Db\AccountMapper;
+use OCA\Gbm\Db\DividendMapper;
+use OCA\Gbm\Db\HoldingMapper;
+use OCA\Gbm\Db\PortfolioSnapshotMapper;
+use OCA\Gbm\Db\SecurityMapper;
 
 class AnalysisService {
 	/** @var HoldingMapper */
