@@ -55,7 +55,10 @@ ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "cat > /tmp/gbm_cutover.php" <<'PHP'
 <?php
 // One-shot cutover DB cleanup. Deletes only id-bound config rows; never the
 // oc_gbm_* data tables. Prints the datadirectory so the caller can clean dirs.
-$cfg = include '/var/www/owncloud/config/config.php';
+// ownCloud's config.php assigns to a $CONFIG global and does NOT return the
+// array, so `include` yields int(1). Read the global after including.
+require '/var/www/owncloud/config/config.php';
+$cfg = $CONFIG;
 $host = $cfg['dbhost'];
 $port = '';
 if (strpos($host, ':') !== false) { list($host, $port) = explode(':', $host, 2); }
@@ -96,6 +99,13 @@ ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "
   sudo chown -R www-data:www-data ${APPS}/gbm
   sudo -u www-data php ${OCC} upgrade 2>&1 | tail -3 || true
   sudo -u www-data php ${OCC} maintenance:mode --off 2>&1 | tail -1
+  # The oc_gbm_* tables are preserved from gbm_next (history lives there), so
+  # the fresh-install schema path (createDbFromStructure) would fail with
+  # 'table already exists'. Register the app as already installed at its
+  # current version so app:enable adopts the existing tables instead of
+  # recreating them.
+  VER=\$(grep -oE '<version>[^<]+</version>' ${APPS}/gbm/appinfo/info.xml | sed -E 's#</?version>##g')
+  sudo -u www-data php ${OCC} config:app:set gbm installed_version --value=\"\${VER}\"
   sudo -u www-data php ${OCC} app:enable gbm 2>&1 | tail -3
   echo '--- app:list (gbm / gbm_old) ---'
   sudo -u www-data php ${OCC} app:list 2>&1 | grep -E 'gbm|gbm_old' || true
