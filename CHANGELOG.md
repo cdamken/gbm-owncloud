@@ -5,6 +5,20 @@ Todos los cambios notables de este proyecto se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/), y el versioning
 sigue [SemVer](https://semver.org/).
 
+## [0.16.0] — 2026-06-30
+
+**Cutover: this is now the single GBM app, id `gbm`.** The DB-based staging app
+`gbm_next` is promoted to the one and only GBM app, taking the clean id `gbm`.
+The original JSON-based `gbm` app is retired to `gbm_old` (disabled, kept as a
+rollback safety net). Renamed throughout: namespace `OCA\GbmNext` → `OCA\Gbm`,
+route names `gbm_next.*` → `gbm.*`, occ commands `gbm:ingest|analyze|lots`, and
+the per-user data dir `gbm_next/` → `gbm/`. DB tables (`oc_gbm_*`) and the daily
+portfolio-value snapshot history are **unchanged** — the history survives the
+cutover. App icon: dropped the red "X" badge that distinguished `gbm_next`.
+
+Also: the web "Actualizar" now recomputes FIFO lots + realized P&L right after
+ingest, so realized P&L is current without a manual `occ gbm:lots`.
+
 ## [0.14.36] — 2026-06-16
 
 Trading USA positions now show their **USD equivalent** next to the peso
