@@ -4,8 +4,4 @@
   <text x="16" y="20" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif"
         font-size="11" font-weight="800" fill="#ffffff">GBM</text>
   <path d="M6 24 L11 18 L15 21 L21 12 L26 17" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- "next" marker: red badge with a white X (tache) so this in-progress app
-       is instantly distinguishable from the working "anterior" (gbm) icon. -->
-  <circle cx="24.5" cy="7.5" r="6.5" fill="#dc2626" stroke="#ffffff" stroke-width="1.6"/>
-  <path d="M22 5 L27 10 M27 5 L22 10" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
 </svg>
