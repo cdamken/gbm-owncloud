@@ -221,7 +221,7 @@
 		if (table) table.style.display = '';
 
 		const money = (v) => fmtMoney(v, { currency: true, decimals: 0 });
-		const pct = (v) => (v >= 0 ? '+' : '') + Number(v).toFixed(1) + '%';
+		const pct = (v) => (v > 0 ? '+' : '') + Number(v).toFixed(1) + '%';
 		const signClass = (v) => (v > 0 ? 'wl-pos' : (v < 0 ? 'wl-neg' : ''));
 		const numCls = (v) => ('num ' + signClass(v)).trim();
 		const cell = (text, cssClass) => {
