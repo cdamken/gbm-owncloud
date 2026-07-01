@@ -1,6 +1,6 @@
 # RESUME HERE — GBM ownCloud session handoff
 
-**Last updated:** 2026-07-01 (before a laptop OS update + restart)
+**Last updated:** 2026-07-01 (M1 shipped)
 **Read this first** to continue exactly where we left off. Conversation memory
 is lost on restart; this file + the committed spec/plan + git history are the
 source of truth. Companion memory files live in
@@ -10,21 +10,31 @@ source of truth. Companion memory files live in
 
 ## Where we are (one paragraph)
 
-The GBM ownCloud cutover is **done and live** (single app `gbm`, v0.16.1 on
-`cloud.damken.com`, PHP **7.4.3** server, history intact). We finished a
-brainstorming → spec → plan cycle for adding **metrics + fiscal**, then the
-owner **re-prioritized (2026-07-01): metrics FIRST**, and the fiscal report is
-simplified to a **button that writes a CSV into the user's `files/GBM/`** (no
-page, no API, no `occ` user surface). Next concrete action: **write the plan for
-step M1 (Ganadores y perdedores)** — I recommended starting there; owner had not
-yet given the final go on the order when we paused for the restart.
+The GBM ownCloud cutover is **done and live**, and **M1 — Ganadores y
+perdedores is DONE, deployed, and merged to `main`** (app `gbm` **v0.17.0** on
+`cloud.damken.com`, PHP **7.4.3** server, history intact). M1 added a pure
+`PortfolioAnalytics::winnersLosers()` (per-holding total return = unrealized
+price change + dividends, ranked best→worst by %) surfaced as a table on the
+Análisis page, plus a reusable plain-PHP test harness (`tests/php/`) wired into
+the `unittest` gate. Built subagent-driven (plan → 4 tasks → per-task review →
+final whole-branch review, all clean; server PHP tests 11/11 on 7.4.3). Plan:
+`docs/superpowers/plans/2026-07-01-gbm-metrics-m1-winners-losers.md`.
 
 ## Immediate next step
 
-1. Confirm build order with the owner (recommended: **M1 first**).
-2. Use `superpowers:writing-plans` to write a focused plan for **M1** to
-   `docs/superpowers/plans/2026-07-01-gbm-metrics-m1-winners-losers.md`.
-3. Execute (owner leans "paso a paso" → subagent-driven, review between tasks).
+1. **(Owner)** hard-refresh `https://cloud.damken.com/index.php/apps/gbm/analysis`
+   and eyeball the new "Ganadores y perdedores" table (visual render was the one
+   thing not machine-verified).
+2. Next milestone: **M2 — ¿Dónde está mi dinero?** (allocation donut by class/
+   sector/region/currency). Needs an **additive** `sector` field on
+   `gbm_securities` (class/region/currency already present). Same cycle:
+   spec-check → `superpowers:writing-plans` → subagent-driven build.
+
+## Deferred M1 polish (optional, non-blocking)
+
+- USD hint on Trading USA rows in the ranking (port `usdHint()`/`fx.json`
+  treatment from `dashboard.js`) — values are correct pesos today, just no
+  `(≈ $USD)` context. Future iteration.
 
 ## The roadmap (current priority order)
 
