@@ -98,56 +98,62 @@ existing data.
 
 ---
 
-## Phase 1 — Annual Fiscal Report
+## Phase 1 — Annual Fiscal Report (income side)
 
 **Goal:** a per-calendar-year fiscal summary the user can read on-screen and
-export for the annual declaration.
+export for the annual declaration — the **income side only** in v1.
+
+> **Scope decision (2026-07-01):** `gbm_transactions` stores only `amount` (no
+> quantity/price), so realized capital gains cannot be computed from the ledger;
+> they need FIFO lots, which have coverage gaps (fund instruments like GBMDINT
+> are absent from the orders feed). Realized-gain / ISR-on-gains is therefore
+> split into **Phase 1b**, deferred until Carlos confirms the SAT rules with his
+> accountant. Phase 1 ships the exactly-computable income side now.
 
 ### Compute core — `lib/Analytics/FiscalReport.php` (pure)
 
-Inputs (loaded by a thin service from the DB): classified transactions, FIFO
-lots (realized gains with open/close dates), dividends, withholdings, cash flows.
-Output, grouped by `fiscal_year`:
+Inputs (loaded by a thin service from the DB): classified transactions
+(`fiscal_class` + `fiscal_year` + `amount`). Output, grouped by `fiscal_year`:
 
-- **Realized gain/loss** — from closed FIFO lots whose `closed_at` falls in the
-  year (gain = proceeds − cost basis, fees folded in). Sum net per year.
-- **Dividends** — gross, by year, domestic vs foreign split (foreign deferred to
-  Phase 4 for the credit logic; here just reported separately).
-- **Interest** — sum of `interest`-classed transactions per year (repos, money
-  market fund distributions).
+- **Dividends** — sum of `dividend`-classed amounts per year.
+- **Interest** — sum of `interest`-classed amounts per year (repos, money
+  market distributions).
 - **Withholdings** — sum of `withholding`-classed per year.
-- **Estimated ISR** (labelled estimate): 10% of net annual realized gain on BMV
-  shares; 10% on domestic dividends; interest shown with withholding already
-  applied. Estimation rules isolated as named constants with source comments so
-  they are easy to correct.
+- **Net income** — dividends + interest − withholdings, per year.
+
+No ISR figure is asserted in v1 (dividend/interest withholding is largely
+*definitivo* in MX); any future ISR estimate lands in Phase 1b with the
+accountant's rules, as isolated named constants. All amounts are estimates for
+reference; GBM's *constancia fiscal* remains authoritative.
+
+### Phase 1b (deferred — separate spec, after accountant)
+
+Realized capital gains via FIFO (reconciling the orders-feed coverage gap for
+funds) + ISR-on-gains estimate. Not planned here.
 
 ### Surface
 
 - New route `GET /fiscal` (PageController) → `templates/fiscal.php`, plus
   `GET /api/fiscal` (ApiController) returning the per-year JSON.
 - New nav tab "Fiscal" (Spanish UI), after "Libro Diario".
-- Page: year selector; cards (ganancia realizada, dividendos, intereses,
-  retenciones, ISR estimado); a per-instrument realized-gain table.
-- `GET /export/fiscal-{year}.csv` — declarable CSV (year, concept, instrument,
-  gross, withholding, estimated ISR) with the estimate disclaimer in a header
-  comment row.
-- All amounts in MXN; Trading USA/SIC shown with `(≈ $USD)` via `fx.json`
-  (matching existing convention).
+- Page: cards per year (dividendos, intereses, retenciones, ingreso neto);
+  a per-year table.
+- `GET /export/fiscal-{year}.csv` — declarable CSV (año, concepto, monto) with
+  the estimate disclaimer in a header comment row.
+- All amounts in MXN (income transactions are peso-denominated).
 
 ### Error handling
 
 - Years with no data render an empty-state, not an error.
-- Unmatched FIFO sells (GBM's ~limited order window) are **excluded** from
-  realized gain and surfaced as a "coverage" note, reusing the existing
-  `occ gbm:lots` coverage signal — so the report never silently under/over-states.
-- Missing `fx.json` → USD instruments shown in native USD with a warning chip,
-  not a crash.
+- A visible note states the report covers income (dividends/interest/
+  withholding) only; realized capital gains are Phase 1b (pending accountant).
 
 ### Tests
 
 - `FiscalReport` unit tests with a fixture dataset spanning two years: assert
-  per-year realized gain, dividend/interest/withholding totals, and ISR
-  estimates against hand-computed expectations.
+  per-year dividend / interest / withholding / net-income totals against
+  hand-computed expectations. `FiscalClassifier` + `CashFlowExtractor` unit
+  tests cover the classification/extraction rules (Phase 0).
 - `verify_dom_ids.py` / `verify_wiring.py` cover the new page's DOM + JS wiring.
 
 ---
