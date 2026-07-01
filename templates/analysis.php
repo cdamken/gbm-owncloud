@@ -63,6 +63,30 @@ $routes = $_['routes'];
 		</div>
 	</div>
 
+	<!-- ---------- Ganadores y perdedores ---------- -->
+	<div class="section">
+		<span>Ganadores y perdedores</span>
+		<span class="badge muted">retorno total · precio + dividendos</span>
+	</div>
+	<div class="chart-card">
+		<table id="winners-losers-table">
+			<thead>
+				<tr>
+					<th>Posición</th>
+					<th class="num">Valor de mercado</th>
+					<th class="num">P&amp;L de precio</th>
+					<th class="num">Dividendos</th>
+					<th class="num">Retorno total</th>
+					<th class="num">Retorno %</th>
+				</tr>
+			</thead>
+			<tbody id="winners-losers-tbody"></tbody>
+		</table>
+		<div id="winners-losers-empty" class="chart-empty" style="display:none;">
+			Sin posiciones para analizar todavía.
+		</div>
+	</div>
+
 	<!-- ---------- Composición por mercado ---------- -->
 	<div class="section">
 		<span>Composición del portafolio</span>

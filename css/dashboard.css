@@ -795,3 +795,6 @@ body.gbm-app-active #content-wrapper {
 	#gbm-app .top-bar nav { flex: 1 0 100%; justify-content: flex-start; order: 3; }
 	#gbm-app .top-bar .brand-title { display: none; }
 }
+
+#gbm-app.analysis-page .wl-pos { color: var(--green); }
+#gbm-app.analysis-page .wl-neg { color: var(--red); }

@@ -44,7 +44,7 @@ class AnalysisService {
 	}
 
 	/**
-	 * @return array{summary:array,per_stock:array,concentration:array}
+	 * @return array{summary:array,per_stock:array,concentration:array,winners_losers:array,history:array}
 	 */
 	public function perUser(string $uid): array {
 		// security id -> [ext_id, name, asset_class]
@@ -101,10 +101,11 @@ class AnalysisService {
 
 		$perStock = PortfolioAnalytics::perStock($rows, $divBySec);
 		return [
-			'summary'       => PortfolioAnalytics::summary($perStock),
-			'per_stock'     => $perStock,
-			'concentration' => PortfolioAnalytics::concentration($perStock, $cash),
-			'history'       => $history,
+			'summary'        => PortfolioAnalytics::summary($perStock),
+			'per_stock'      => $perStock,
+			'concentration'  => PortfolioAnalytics::concentration($perStock, $cash),
+			'winners_losers' => PortfolioAnalytics::winnersLosers($perStock),
+			'history'        => $history,
 		];
 	}
 

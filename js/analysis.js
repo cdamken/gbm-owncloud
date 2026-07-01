@@ -123,6 +123,7 @@
 			const analysisDb = await safeJson(routes.analysisData);
 			state.history = (analysisDb && analysisDb.history) || [];
 			state.dbSummary = (analysisDb && analysisDb.summary) || null;
+			state.winnersLosers = (analysisDb && analysisDb.winners_losers) || [];
 
 			if (!accounts) {
 				document.getElementById('error-box').innerHTML =
@@ -144,6 +145,7 @@
 
 			renderHeader();
 			renderCapitalStats();
+			renderWinnersLosers();
 			renderAllocationChart();
 			renderNetWorthChart();
 		} catch (err) {
@@ -196,6 +198,51 @@
 		document.getElementById('cap-sells').textContent = m0(sells);
 		document.getElementById('cap-sells-detail').textContent =
 			sellCount + (sellCount === 1 ? ' orden' : ' órdenes') + ' de venta';
+	}
+
+	// Ganadores y perdedores: per-holding total return (unrealized price
+	// change + dividends), ranked best → worst by percent. Computed
+	// server-side by PortfolioAnalytics::winnersLosers. Cells are built via
+	// textContent (no innerHTML) so names never need escaping. Numeric cells
+	// reuse the shared .num class (right-align + tabular-nums); gains/losses
+	// get .wl-pos/.wl-neg (green/red via the theme vars).
+	function renderWinnersLosers() {
+		const rows = state.winnersLosers || [];
+		const tbody = document.getElementById('winners-losers-tbody');
+		const table = document.getElementById('winners-losers-table');
+		const empty = document.getElementById('winners-losers-empty');
+		if (!tbody) return;
+		if (!rows.length) {
+			if (empty) empty.style.display = 'flex';
+			if (table) table.style.display = 'none';
+			return;
+		}
+		if (empty) empty.style.display = 'none';
+		if (table) table.style.display = '';
+
+		const money = (v) => fmtMoney(v, { currency: true, decimals: 0 });
+		const pct = (v) => (v >= 0 ? '+' : '') + Number(v).toFixed(1) + '%';
+		const signClass = (v) => (v > 0 ? 'wl-pos' : (v < 0 ? 'wl-neg' : ''));
+		const numCls = (v) => ('num ' + signClass(v)).trim();
+		const cell = (text, cssClass) => {
+			const td = document.createElement('td');
+			td.textContent = text;
+			if (cssClass) td.className = cssClass;
+			return td;
+		};
+
+		tbody.innerHTML = '';
+		rows.forEach((r) => {
+			const tr = document.createElement('tr');
+			const label = r.name ? (r.ext_id + ' · ' + r.name) : r.ext_id;
+			tr.appendChild(cell(label));
+			tr.appendChild(cell(money(r.market_value), 'num'));
+			tr.appendChild(cell(money(r.unrealized_pl), numCls(r.unrealized_pl)));
+			tr.appendChild(cell(money(r.dividends), 'num'));
+			tr.appendChild(cell(money(r.total_return), numCls(r.total_return)));
+			tr.appendChild(cell(pct(r.total_return_pct), numCls(r.total_return_pct)));
+			tbody.appendChild(tr);
+		});
 	}
 
 	function renderHeader() {
