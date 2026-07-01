@@ -51,6 +51,42 @@ class PortfolioAnalytics {
 	}
 
 	/**
+	 * Ganadores y perdedores: total return per holding (unrealized price
+	 * change + dividends received), ranked best → worst by percent return.
+	 * Pure — derives entirely from perStock() output, no new data. Money is
+	 * already float at this point (parsed at the service edge).
+	 *
+	 *   total_return     = unrealized_pl + dividends            (MXN)
+	 *   total_return_pct = cost_basis>0 ? total_return/cost_basis*100 : 0
+	 *
+	 * @param array<int,array<string,mixed>> $perStock  output of perStock()
+	 * @return array<int,array<string,mixed>> one row per holding, best return% first
+	 */
+	public static function winnersLosers(array $perStock): array {
+		$rows = [];
+		foreach ($perStock as $r) {
+			$cost = (float) $r['cost_basis'];
+			$upl  = (float) $r['unrealized_pl'];
+			$div  = (float) $r['dividends'];
+			$tr   = $upl + $div;
+			$rows[] = [
+				'ext_id'           => (string) $r['ext_id'],
+				'name'             => (string) $r['name'],
+				'cost_basis'       => $cost,
+				'market_value'     => (float) $r['market_value'],
+				'unrealized_pl'    => $upl,
+				'dividends'        => $div,
+				'total_return'     => $tr,
+				'total_return_pct' => $cost > 0.0 ? $tr / $cost * 100.0 : 0.0,
+			];
+		}
+		usort($rows, static function ($a, $b) {
+			return $b['total_return_pct'] <=> $a['total_return_pct'];
+		});
+		return $rows;
+	}
+
+	/**
 	 * Portfolio-level totals + each row's weight in the total market value.
 	 *
 	 * @param array<int,array<string,mixed>> $perStock  output of perStock()
