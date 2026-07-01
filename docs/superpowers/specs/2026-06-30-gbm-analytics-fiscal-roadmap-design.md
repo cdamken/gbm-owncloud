@@ -41,16 +41,28 @@ pipeline (`IngestService` → DB; `LotsService` recompute on web update).
 
 ## Roadmap overview
 
-| Phase | Deliverable | Depends on |
-|-------|-------------|------------|
-| **0** | Data foundation + fiscal classification (additive schema) | — |
-| **1** | Annual Fiscal Report page + declarable export | 0 |
-| **2** | Performance: TWR, period returns, portfolio-vs-benchmark, total return, fees | 0 |
-| **3** | Allocation (class/sector/region/currency) + risk (drawdown, vol, beta) + FX-isolated P&L | 0, 2 |
-| **4** | Forward dividends (projected income, calendar, YoC trend) + foreign-income fiscal credit | 1, 3 |
+> **REVISION 2026-07-01 (owner feedback):** re-prioritized to **metrics first**
+> ("cómo van las acciones" is the top value). The fiscal report is de-scoped
+> from a page+API+CSV-endpoint to a **single button that writes a CSV into the
+> user's ownCloud files at `files/GBM/`** (visible/downloadable in the Files
+> app) — no dedicated page, no JSON API, no `occ` user surface (that's
+> overengineering for 2–3 users once a year). Metrics reuse the existing
+> `/api/analysis` endpoint + Análisis page (already the established pattern).
+> Owner wants all four metric views. New build order below; each is a small
+> step (owner: "vamos paso a paso"). The earlier "Phase 0+1 (fiscal)" plan is
+> superseded by this ordering.
 
-Phases 2–4 each get their own spec→plan cycle later. **This spec details Phase
-0+1**, which are built together (Phase 0 is the non-visible enabler for Phase 1).
+| Step | Deliverable | Notes / depends on |
+|------|-------------|--------------------|
+| **M1** | **Ganadores y perdedores** — per-stock total return (price + dividends), ranked best→worst, winners/losers | Data already in DB (`AnalysisService::perStock` has dividends); mostly display enrichment. Quick first win. |
+| **M2** | **¿Dónde está mi dinero?** — allocation by asset class / sector / region / currency (donut) | Needs additive `sector` field on `gbm_securities`; class/region/currency already present. |
+| **M3** | **¿Le gano al mercado?** — TWR + period returns (1M/YTD/1Y/inception) + portfolio vs IPC/S&P | Needs additive `gbm_cash_flows` (deposits/withdrawals) for TWR; benchmark replay already exists. |
+| **M4** | **Riesgo** — max drawdown, volatility (from snapshots) | Best last: needs accumulated daily snapshot history to be meaningful (only ~7 rows today; grows per Actualizar). |
+| **F** | **Fiscal** — button → CSV written to `files/GBM/` (dividends/interest/withholding by year) | Simplified per owner. Realized gains / ISR = deferred (Phase 1b, pending accountant). |
+
+Each step gets its own focused spec→plan→build cycle. **Next up: M1.** Minimal
+additive schema lands just-in-time per step (M2 → `sector`; M3 → `gbm_cash_flows`)
+so accumulating data starts early, never lost.
 
 ---
 
