@@ -129,6 +129,9 @@ class PortfolioAnalytics {
 			$rg = ((string) $h['region']) === 'foreign' ? 'foreign' : 'mx';
 			$region[$rg] = ($region[$rg] ?? 0.0) + $v;
 		}
+		// Negative cash (legitimate during T+2 buy settlement — see
+		// IngestService::accountTotals) can't be a doughnut slice, so it is
+		// intentionally not folded into any bucket. Locked by test_allocation.
 		if ($cashValue > 0.0) {
 			$market['efectivo'] = ($market['efectivo'] ?? 0.0) + $cashValue;
 			$class['efectivo'] = ($class['efectivo'] ?? 0.0) + $cashValue;

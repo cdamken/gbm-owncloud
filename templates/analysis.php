@@ -87,10 +87,10 @@ $routes = $_['routes'];
 		</div>
 	</div>
 
-	<!-- ---------- Composición por mercado ---------- -->
+	<!-- ---------- Composición del portafolio (Mercado/Clase/Región) ---------- -->
 	<div class="section">
 		<span>Composición del portafolio</span>
-		<span class="badge muted" id="alloc-badge">por mercado</span>
+		<span class="badge muted" id="alloc-badge">—</span>
 	</div>
 	<div class="range-pills" id="alloc-dim-pills">
 		<button data-dim="market" class="active">Mercado</button>

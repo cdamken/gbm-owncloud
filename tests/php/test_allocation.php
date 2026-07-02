@@ -72,3 +72,14 @@ $cashOnly = PortfolioAnalytics::allocation([], 5.0);
 assert_eq(1, count($cashOnly['market']), 'cash-only market = 1 bucket');
 assert_eq('efectivo', $cashOnly['market'][0]['key'], 'cash-only market efectivo');
 assert_eq('mx', $cashOnly['region'][0]['key'], 'cash-only region mx');
+
+// Negative cash is a legitimate transient state (T+2 buy settlement). A doughnut
+// cannot show a negative slice, so negative cash is intentionally omitted from
+// every dimension — this test locks that decision.
+$negCash = PortfolioAnalytics::allocation([
+    ['asset_class' => 'equity', 'region' => 'MX', 'market_value' => 100.0],
+], -25.0);
+$negMk = $asMap($negCash['market']);
+assert_true(!isset($negMk['efectivo']), 'negative cash -> no efectivo market bucket');
+assert_close(100.0, $sum($negCash['market']), 'negative cash not added to market total');
+assert_eq(1, count($negCash['region']), 'negative cash adds no region bucket (MX holding only)');

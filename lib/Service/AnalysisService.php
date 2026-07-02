@@ -47,7 +47,7 @@ class AnalysisService {
 	 * @return array{summary:array,per_stock:array,concentration:array,winners_losers:array,allocation:array,history:array}
 	 */
 	public function perUser(string $uid): array {
-		// security id -> [ext_id, name, asset_class]
+		// security id -> [ext_id, name, asset_class, region]
 		$secById = [];
 		foreach ($this->securities->findByUser($uid) as $s) {
 			$secById[(int) $s->getId()] = [
