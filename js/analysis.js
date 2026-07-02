@@ -12,14 +12,6 @@
 (function () {
 	'use strict';
 
-	const INVEST_SECTIONS = [
-		'mercados_globales_sic',
-		'mercado_capitales',
-		'sociedades_inversion_deuda',
-		'sociedades_inversion_comun',
-		'mercado_extranjero',
-	];
-
 	let routes;
 	const dataUrl = (type) => routes.data.replace('__TYPE__', type);
 	const benchmarkUrl = (symbol) => routes.benchmark.replace('__SYMBOL__', encodeURIComponent(symbol));
@@ -60,30 +52,11 @@
 
 	const state = {
 		accounts: [],
-		positionsByAccount: {},
-		positionsFlat: [],
 		dividends: null,
 		transactions: null,
 		benchmarks: [null, null],
 		lastUpdate: null,
 	};
-
-	function flattenPositions(posData, account) {
-		if (!posData) return [];
-		const all = [];
-		for (const key of INVEST_SECTIONS) {
-			const section = posData[key] || [];
-			for (const p of section) {
-				if (p.issue_id === 'Subtotal') continue;
-				all.push(Object.assign({}, p, {
-					_market_key: key,
-					_account_legacy_id: account ? account.legacy_contract_id : null,
-					_account_name: account ? account.name : null,
-				}));
-			}
-		}
-		return all;
-	}
 
 	async function load() {
 		try {
@@ -93,9 +66,8 @@
 			const safeText = (url) =>
 				fetch(url, opts).then(r => (r.ok ? r.text() : '')).catch(() => '');
 
-			const [accounts, positionsByAccount, dividends, transactions, lastUpdate] = await Promise.all([
+			const [accounts, dividends, transactions, lastUpdate] = await Promise.all([
 				safeJson(dataUrl('accounts')),
-				safeJson(dataUrl('positions')),
 				safeJson(dataUrl('dividends')),
 				safeJson(dataUrl('transactions')),
 				safeText(dataUrl('last_update')),
@@ -124,6 +96,7 @@
 			state.history = (analysisDb && analysisDb.history) || [];
 			state.dbSummary = (analysisDb && analysisDb.summary) || null;
 			state.winnersLosers = (analysisDb && analysisDb.winners_losers) || [];
+			state.allocation = (analysisDb && analysisDb.allocation) || null;
 
 			if (!accounts) {
 				document.getElementById('error-box').innerHTML =
@@ -136,12 +109,6 @@
 			}
 
 			state.accounts = accounts;
-			state.positionsByAccount = positionsByAccount || {};
-			state.positionsFlat = [];
-			for (const a of accounts) {
-				const flat = flattenPositions(positionsByAccount[a.legacy_contract_id], a);
-				state.positionsFlat.push.apply(state.positionsFlat, flat);
-			}
 
 			renderHeader();
 			renderCapitalStats();
@@ -262,47 +229,57 @@
 	}
 
 	// ----------------------------------------------------------------------
-	// Allocation ring chart — composition by GBM market bucket.
+	// Allocation ring chart — composition by dimension (market/class/region).
+	// Data computed server-side by PortfolioAnalytics::allocation; this only
+	// picks the active dimension and maps each server key -> {label, color}.
 	// ----------------------------------------------------------------------
+	const ALLOC_DIMS = {
+		market: {
+			noun: 'mercados',
+			labels: {
+				mercado_capitales: 'BMV', mercados_globales_sic: 'SIC',
+				mercado_extranjero: 'Extranjero', sociedades_inversion_comun: 'F. Común',
+				sociedades_inversion_deuda: 'F. Deuda', efectivo: 'Efectivo',
+			},
+			colors: {
+				mercado_capitales: '#60a5fa', mercados_globales_sic: '#c084fc',
+				mercado_extranjero: '#4ade80', sociedades_inversion_comun: '#fbbf24',
+				sociedades_inversion_deuda: '#f59e0b', efectivo: '#7a8599',
+			},
+		},
+		class: {
+			noun: 'clases',
+			labels: { renta_variable: 'Renta variable', renta_fija: 'Renta fija', efectivo: 'Efectivo' },
+			colors: { renta_variable: '#60a5fa', renta_fija: '#f59e0b', efectivo: '#7a8599' },
+		},
+		region: {
+			noun: 'regiones',
+			labels: { mx: 'México', foreign: 'Extranjero' },
+			colors: { mx: '#60a5fa', foreign: '#4ade80' },
+		},
+	};
+
 	let _allocChart = null;
+	let _allocDim = 'market';
 	function renderAllocationChart() {
 		if (typeof window.Chart !== 'function') return;
 		const canvas = document.getElementById('allocation-chart');
 		const emptyEl = document.getElementById('allocation-empty');
 		if (!canvas) return;
 
-		const buckets = {};
-		for (const p of state.positionsFlat) {
-			if (p.issue_id === 'Subtotal') continue;
-			const v = Number(p.market_value) || 0;
-			if (v <= 0) continue;
-			const k = p._market_key || 'otro';
-			buckets[k] = (buckets[k] || 0) + v;
-		}
+		const dim = ALLOC_DIMS[_allocDim] ? _allocDim : 'market';
+		const spec = ALLOC_DIMS[dim];
+		const rows = (state.allocation && state.allocation[dim]) || [];
 
-		const ORDER = [
-			{ key: 'mercado_capitales',           label: 'BMV',         color: '#60a5fa' },
-			{ key: 'mercados_globales_sic',       label: 'SIC',         color: '#c084fc' },
-			{ key: 'mercado_extranjero',          label: 'Extranjero',  color: '#4ade80' },
-			{ key: 'sociedades_inversion_comun',  label: 'F. Común',    color: '#fbbf24' },
-			{ key: 'sociedades_inversion_deuda',  label: 'F. Deuda',    color: '#f59e0b' },
-			{ key: 'efectivo',                    label: 'Efectivo',    color: '#7a8599' },
-		];
 		const labels = [];
 		const data = [];
 		const colors = [];
-		for (const slot of ORDER) {
-			const v = buckets[slot.key];
-			if (!v) continue;
-			labels.push(slot.label);
+		for (const b of rows) {
+			const v = Number(b.value) || 0;
+			if (v <= 0) continue;
+			labels.push(spec.labels[b.key] || b.key);
 			data.push(v);
-			colors.push(slot.color);
-		}
-		for (const k of Object.keys(buckets)) {
-			if (ORDER.some(s => s.key === k)) continue;
-			labels.push(k);
-			data.push(buckets[k]);
-			colors.push('#6b7280');
+			colors.push(spec.colors[b.key] || '#6b7280');
 		}
 
 		if (data.length === 0) {
@@ -316,7 +293,7 @@
 
 		const total = data.reduce((s, v) => s + v, 0);
 		document.getElementById('alloc-badge').textContent =
-			data.length + ' mercados · ' + fmtMoney(total, { currency: true, decimals: 0 });
+			data.length + ' ' + spec.noun + ' · ' + fmtMoney(total, { currency: true, decimals: 0 });
 
 		if (_allocChart) _allocChart.destroy();
 		_allocChart = new window.Chart(canvas, {
@@ -678,6 +655,20 @@
 					b.classList.toggle('active', b.dataset.range === _histRange)
 				);
 				renderNetWorthChart();
+			});
+		}
+
+		// Allocation dimension pill clicks: switch dimension and re-render.
+		const allocPills = document.getElementById('alloc-dim-pills');
+		if (allocPills) {
+			allocPills.addEventListener('click', (e) => {
+				const btn = e.target.closest('button[data-dim]');
+				if (!btn) return;
+				_allocDim = btn.dataset.dim;
+				document.querySelectorAll('#alloc-dim-pills button').forEach(b =>
+					b.classList.toggle('active', b.dataset.dim === _allocDim)
+				);
+				renderAllocationChart();
 			});
 		}
 

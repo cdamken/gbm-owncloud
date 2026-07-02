@@ -92,6 +92,11 @@ $routes = $_['routes'];
 		<span>Composición del portafolio</span>
 		<span class="badge muted" id="alloc-badge">por mercado</span>
 	</div>
+	<div class="range-pills" id="alloc-dim-pills">
+		<button data-dim="market" class="active">Mercado</button>
+		<button data-dim="class">Clase</button>
+		<button data-dim="region">Región</button>
+	</div>
 	<div class="chart-card">
 		<div class="chart-container">
 			<canvas id="allocation-chart"></canvas>
