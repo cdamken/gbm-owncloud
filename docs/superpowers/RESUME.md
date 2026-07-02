@@ -1,6 +1,6 @@
 # RESUME HERE — GBM ownCloud session handoff
 
-**Last updated:** 2026-07-01 (M1 shipped)
+**Last updated:** 2026-07-02 (M2 shipped)
 **Read this first** to continue exactly where we left off. Conversation memory
 is lost on restart; this file + the committed spec/plan + git history are the
 source of truth. Companion memory files live in
@@ -10,31 +10,43 @@ source of truth. Companion memory files live in
 
 ## Where we are (one paragraph)
 
-The GBM ownCloud cutover is **done and live**, and **M1 — Ganadores y
-perdedores is DONE, deployed, and merged to `main`** (app `gbm` **v0.17.0** on
-`cloud.damken.com`, PHP **7.4.3** server, history intact). M1 added a pure
-`PortfolioAnalytics::winnersLosers()` (per-holding total return = unrealized
-price change + dividends, ranked best→worst by %) surfaced as a table on the
-Análisis page, plus a reusable plain-PHP test harness (`tests/php/`) wired into
-the `unittest` gate. Built subagent-driven (plan → 4 tasks → per-task review →
-final whole-branch review, all clean; server PHP tests 11/11 on 7.4.3). Plan:
-`docs/superpowers/plans/2026-07-01-gbm-metrics-m1-winners-losers.md`.
+The GBM ownCloud cutover is done and live; **M1 (Ganadores y perdedores) and M2
+(¿Dónde está mi dinero? — allocation toggle) are both DONE, deployed, and merged
+to `main`** (app `gbm` **v0.18.0** on `cloud.damken.com`, PHP **7.4.3**, history
+intact). M1 = pure `winnersLosers()` (total return ranking) as a table on
+Análisis. M2 = pure `PortfolioAnalytics::allocation()` (market/class/region
+buckets from `asset_class`+`region`, no schema change) driving a **Mercado ·
+Clase · Región** pill toggle on the existing Análisis donut; the donut's data
+source moved from the client-side positions JSON to the DB and the dead
+client-side aggregation was removed. Both built subagent-driven (per-task +
+final whole-branch review; server PHP tests **39/39** on 7.4.3). Plans in
+`docs/superpowers/plans/2026-07-0{1,2}-gbm-metrics-m{1,2}-*.md`.
 
 ## Immediate next step
 
 1. **(Owner)** hard-refresh `https://cloud.damken.com/index.php/apps/gbm/analysis`
-   and eyeball the new "Ganadores y perdedores" table (visual render was the one
-   thing not machine-verified).
-2. Next milestone: **M2 — ¿Dónde está mi dinero?** (allocation donut by class/
-   sector/region/currency). Needs an **additive** `sector` field on
-   `gbm_securities` (class/region/currency already present). Same cycle:
-   spec-check → `superpowers:writing-plans` → subagent-driven build.
+   and eyeball: (a) the "Ganadores y perdedores" table (M1) and (b) the new
+   **Mercado · Clase · Región** pills switching the donut (M2). Visual render is
+   the one thing not machine-verified.
+2. Next milestone: **M3 — ¿Le gano al mercado?** (TWR + period returns
+   1M/YTD/1Y/inception + portfolio vs IPC/S&P). Needs an **additive**
+   `gbm_cash_flows` table (deposits/withdrawals) for TWR; benchmark replay
+   already exists. The superseded fiscal plan
+   (`.../2026-07-01-gbm-analytics-fiscal-phase0-1.md`) already contains a
+   reusable `gbm_cash_flows` schema + `CashFlowExtractor` design. Same cycle:
+   brainstorm/spec-check → `superpowers:writing-plans` → subagent-driven build.
 
-## Deferred M1 polish (optional, non-blocking)
+## Deferred polish (optional, non-blocking)
 
-- USD hint on Trading USA rows in the ranking (port `usdHint()`/`fx.json`
-  treatment from `dashboard.js`) — values are correct pesos today, just no
-  `(≈ $USD)` context. Future iteration.
+- **M2 negative cash**: cash < 0 (legitimate during T+2 buy settlement) is
+  intentionally omitted from the donut (a doughnut can't draw a negative slice);
+  behavior is locked by a test. Optional future nicety: a small UI note
+  ("Efectivo: −$X no mostrado") so the donut total visibly reconciles with the
+  net-worth figure during settlement windows.
+- **M1 USD hint**: Trading USA rows in the ranking show correct pesos but no
+  `(≈ $USD)` context (port `usdHint()`/`fx.json` from `dashboard.js`).
+- **Region accuracy**: the M2 región dimension reads `gbm_securities.region`,
+  populated by `IngestService` at fetch — accurate after the next 🔄 Actualizar.
 
 ## The roadmap (current priority order)
 
