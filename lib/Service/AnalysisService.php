@@ -44,7 +44,7 @@ class AnalysisService {
 	}
 
 	/**
-	 * @return array{summary:array,per_stock:array,concentration:array,winners_losers:array,history:array}
+	 * @return array{summary:array,per_stock:array,concentration:array,winners_losers:array,allocation:array,history:array}
 	 */
 	public function perUser(string $uid): array {
 		// security id -> [ext_id, name, asset_class]
@@ -54,6 +54,7 @@ class AnalysisService {
 				'ext_id'      => (string) $s->getExtId(),
 				'name'        => (string) $s->getName(),
 				'asset_class' => (string) $s->getAssetClass(),
+				'region'      => (string) $s->getRegion(),
 			];
 		}
 
@@ -72,12 +73,13 @@ class AnalysisService {
 		$rows = [];
 		foreach ($this->holdings->findByUser($uid) as $h) {
 			$sid = (int) $h->getSecurityId();
-			$sec = $secById[$sid] ?? ['ext_id' => (string) $sid, 'name' => '', 'asset_class' => ''];
+			$sec = $secById[$sid] ?? ['ext_id' => (string) $sid, 'name' => '', 'asset_class' => '', 'region' => ''];
 			$rows[] = [
 				'securityId'   => $sid,
 				'extId'        => $sec['ext_id'],
 				'name'         => $sec['name'],
 				'assetClass'   => $sec['asset_class'],
+				'region'       => $sec['region'],
 				'qty'          => $this->f($h->getQuantity()),
 				'avgCost'      => $this->f($h->getAvgCost()),
 				'marketValue'  => $this->f($h->getMarketValue()),
@@ -100,11 +102,23 @@ class AnalysisService {
 		}
 
 		$perStock = PortfolioAnalytics::perStock($rows, $divBySec);
+
+		// Allocation input: asset_class + region + market_value per holding.
+		$allocInput = [];
+		foreach ($rows as $r) {
+			$allocInput[] = [
+				'asset_class'  => $r['assetClass'],
+				'region'       => $r['region'],
+				'market_value' => $r['marketValue'],
+			];
+		}
+
 		return [
 			'summary'        => PortfolioAnalytics::summary($perStock),
 			'per_stock'      => $perStock,
 			'concentration'  => PortfolioAnalytics::concentration($perStock, $cash),
 			'winners_losers' => PortfolioAnalytics::winnersLosers($perStock),
+			'allocation'     => PortfolioAnalytics::allocation($allocInput, $cash),
 			'history'        => $history,
 		];
 	}
