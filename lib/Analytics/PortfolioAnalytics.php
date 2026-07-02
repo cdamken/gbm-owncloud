@@ -87,6 +87,79 @@ class PortfolioAnalytics {
 	}
 
 	/**
+	 * ¿Dónde está mi dinero? — portfolio allocation grouped three ways:
+	 *   - market: the GBM section (relabel of asset_class)
+	 *   - class:  economic class (renta variable / renta fija / efectivo)
+	 *   - region: mx / foreign
+	 * Cash is folded in as its own bucket (efectivo / mx). Pure, PHP 7.4.
+	 *
+	 * The three dimensions always sum to the same grand total: a holding with an
+	 * unrecognized asset_class is a data bug and is dropped from ALL dimensions
+	 * (never bucketed as "otro"), so totals stay equal.
+	 *
+	 * @param array $holdings list of ['asset_class'=>string,'region'=>string,'market_value'=>float]
+	 * @param float $cashValue total cash (MXN)
+	 * @return array{market:array,class:array,region:array} each a list of
+	 *   ['key'=>string,'value'=>float] sorted by value descending
+	 */
+	public static function allocation(array $holdings, float $cashValue): array {
+		$marketByClass = [
+			'equity'         => 'mercado_capitales',
+			'equity_sic'     => 'mercados_globales_sic',
+			'equity_foreign' => 'mercado_extranjero',
+			'equity_fund'    => 'sociedades_inversion_comun',
+			'debt_fund'      => 'sociedades_inversion_deuda',
+		];
+		$market = [];
+		$class = [];
+		$region = [];
+		foreach ($holdings as $h) {
+			$v = (float) $h['market_value'];
+			if ($v <= 0.0) {
+				continue;
+			}
+			$ac = (string) $h['asset_class'];
+			if (!isset($marketByClass[$ac])) {
+				continue; // unrecognized class -> dropped from every dimension
+			}
+			$mk = $marketByClass[$ac];
+			$market[$mk] = ($market[$mk] ?? 0.0) + $v;
+			$ck = $ac === 'debt_fund' ? 'renta_fija' : 'renta_variable';
+			$class[$ck] = ($class[$ck] ?? 0.0) + $v;
+			$rg = ((string) $h['region']) === 'foreign' ? 'foreign' : 'mx';
+			$region[$rg] = ($region[$rg] ?? 0.0) + $v;
+		}
+		if ($cashValue > 0.0) {
+			$market['efectivo'] = ($market['efectivo'] ?? 0.0) + $cashValue;
+			$class['efectivo'] = ($class['efectivo'] ?? 0.0) + $cashValue;
+			$region['mx'] = ($region['mx'] ?? 0.0) + $cashValue;
+		}
+		return [
+			'market' => self::bucketsToSortedList($market),
+			'class'  => self::bucketsToSortedList($class),
+			'region' => self::bucketsToSortedList($region),
+		];
+	}
+
+	/**
+	 * Turn a key=>value bucket map into a list of ['key','value'] sorted by
+	 * value descending. Pure helper for allocation().
+	 *
+	 * @param array<string,float> $buckets
+	 * @return array<int,array{key:string,value:float}>
+	 */
+	private static function bucketsToSortedList(array $buckets): array {
+		$out = [];
+		foreach ($buckets as $key => $value) {
+			$out[] = ['key' => (string) $key, 'value' => (float) $value];
+		}
+		usort($out, static function ($a, $b) {
+			return $b['value'] <=> $a['value'];
+		});
+		return $out;
+	}
+
+	/**
 	 * Portfolio-level totals + each row's weight in the total market value.
 	 *
 	 * @param array<int,array<string,mixed>> $perStock  output of perStock()
