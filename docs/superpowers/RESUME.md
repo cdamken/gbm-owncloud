@@ -1,6 +1,6 @@
 # RESUME HERE — GBM ownCloud session handoff
 
-**Last updated:** 2026-07-03 (M3 shipped)
+**Last updated:** 2026-07-03 (F — fiscal report — shipped)
 **Read this first** to continue exactly where we left off. Conversation memory
 is lost on restart; this file + the committed spec/plan + git history are the
 source of truth. Companion memory files live in
@@ -10,33 +10,31 @@ source of truth. Companion memory files live in
 
 ## Where we are (one paragraph)
 
-The GBM ownCloud cutover is done and live; **M1, M2, and M3 are all DONE,
-deployed, and merged to `main`** (app `gbm` **v0.19.0** on `cloud.damken.com`,
-PHP **7.4.3**, history intact). M1 = pure `winnersLosers()` (total return
-ranking) table on Análisis. M2 = pure `allocation()` (market/class/region
-buckets, no schema change) driving a Mercado·Clase·Región donut toggle. M3 =
-JS-only **"¿Le gano al mercado?" numeric headline** above the net-worth chart:
-`renderMarketCompare()` reads the series the chart already builds and shows the
-portfolio's % return vs NAFTRAC/S&P over the shown window + the delta in points,
-updating with the range pills. All built subagent-driven; server PHP tests
-**39/39** on 7.4.3. Plans in `docs/superpowers/plans/2026-07-0{1,2,3}-gbm-metrics-*.md`.
+The GBM ownCloud cutover is done and live; **M1, M2, M3, and F are all DONE,
+deployed, and merged to `main`** (app `gbm` **v0.20.0** on `cloud.damken.com`,
+PHP **7.4.3**, history intact). M1 = `winnersLosers()` total-return ranking. M2 =
+`allocation()` Mercado·Clase·Región donut toggle. M3 = JS `renderMarketCompare()`
+"¿Le gano al mercado?" numeric headline. **F = fiscal report**: a "Generar
+reporte fiscal" button (Settings→Datos) → `POST /api/fiscal/generate` classifies
+transactions on the fly (`FiscalClassifier`+`FiscalReport`, no schema change) and
+writes `GBM/reporte-fiscal-resumen.csv` + `…-detalle.csv` into the user's Files
+via `IRootFolder` (the repo's first `getUserFolder` writer). Income side only;
+disclaimer in each CSV. All built subagent-driven; server PHP tests **56/56** on
+7.4.3. Issues tracked on GitHub (epic #15; #12 closed by F).
 
 ## Immediate next step
 
-1. **(Owner)** hard-refresh `https://cloud.damken.com/index.php/apps/gbm/analysis`
-   and eyeball: (a) the "Ganadores y perdedores" table (M1), (b) the
-   Mercado·Clase·Región donut pills (M2), (c) the "¿Le gano al mercado?" headline
-   above the value chart (M3) — check it updates with the range pills. Visual
-   render is the one thing not machine-verified.
-2. Next milestone options (owner's call — both partly data-gated):
-   - **F — Fiscal** button → CSV (dividendos/intereses/retenciones por año). Has
-     complete data TODAY (not gated). ISR pending Carlos's accountant. The
-     superseded fiscal plan (`.../2026-07-01-gbm-analytics-fiscal-phase0-1.md`)
-     has reusable `FiscalClassifier` + `FiscalReport` code.
-   - **M4 — Riesgo** (drawdown, volatility) + the **deferred M3 TWR/period-returns
-     (1M/YTD/1Y/inception) + `gbm_cash_flows`** — both need accumulated daily
-     snapshot history to be meaningful (~a few weeks today; grows per Actualizar).
-     Best revisited in a few months.
+1. **(Owner) — most important for F:** open Settings → Datos, click **📄 Generar
+   reporte fiscal**, confirm the success flash, then open the ownCloud **Files**
+   app and check `GBM/reporte-fiscal-resumen.csv` + `…-detalle.csv` exist with
+   correct per-year totals + itemized rows. Click twice → confirm it overwrites
+   (no duplicates). This is the one path no machine test covers (the IRootFolder
+   writer). If it errors, tell me the flash message — quick to fix.
+2. Also eyeball M1 table / M2 donut pills / M3 headline on the Análisis page.
+3. Remaining roadmap (both data-gated; GitHub #13): **M4 — Riesgo** + **deferred
+   M3 TWR/period-returns + `gbm_cash_flows`** — need accumulated daily-snapshot
+   history (grows per 🔄 Actualizar). Best revisited in a few months. Optional
+   polish in #14 (M2 negative-cash note, M1 USD hint).
 
 ## Deferred polish (optional, non-blocking)
 
