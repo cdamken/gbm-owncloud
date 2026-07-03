@@ -68,7 +68,9 @@ class ApiController extends Controller {
 			$uid = $this->gbm->currentUserId();
 			$data = $this->fiscal->perUser($uid);
 
-			$disc = '# Estimacion informativa (solo ingresos) - la constancia fiscal de GBM es la fuente oficial';
+			$genAt = (new \DateTime('now', new \DateTimeZone('America/Mexico_City')))->format('Y-m-d H:i');
+			$disc = '# GBM - reporte fiscal - generado ' . $genAt . ' CDMX' . "\n"
+				. '# Estimacion informativa (solo ingresos) - la constancia fiscal de GBM es la fuente oficial';
 			$labels = ['dividend' => 'Dividendo', 'interest' => 'Interes', 'withholding' => 'Retencion ISR'];
 
 			$resumen = $disc . "\n" . self::csvRow(['anio', 'dividendos', 'intereses', 'retenciones', 'ingreso_neto']) . "\n";
