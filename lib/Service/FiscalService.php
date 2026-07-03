@@ -58,9 +58,12 @@ class FiscalService {
 				'year'     => $year,
 				'class'    => $class,
 				'security' => $nameById[(int) $t->getSecurityId()] ?? '',
-				'amount'   => $amount,
+				'amount'   => $class === 'withholding' ? abs($amount) : $amount,
 			];
 		}
+		usort($detail, function ($a, $b) {
+			return strcmp((string) $a['date'], (string) $b['date']);
+		});
 		return [
 			'summary' => FiscalReport::build($rows),
 			'detail'  => $detail,

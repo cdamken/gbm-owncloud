@@ -10,6 +10,7 @@
 
 namespace OCA\Gbm\Service;
 
+use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 
@@ -29,6 +30,9 @@ class FiscalFileService {
 		$userFolder = $this->rootFolder->getUserFolder($uid);
 		try {
 			$folder = $userFolder->get('GBM');
+			if (!($folder instanceof Folder)) {
+				throw new \RuntimeException('Existe un archivo llamado "GBM" en tus archivos; renombralo o muevelo para poder generar el reporte.');
+			}
 		} catch (NotFoundException $e) {
 			$folder = $userFolder->newFolder('GBM');
 		}
