@@ -37,5 +37,6 @@ return [
 		['name' => 'api#getConfig',     'url' => '/api/config',    'verb' => 'GET'],
 		['name' => 'api#setConfig',     'url' => '/api/config',    'verb' => 'POST'],
 		['name' => 'api#update',        'url' => '/api/update',    'verb' => 'POST'],
+		['name' => 'api#generateFiscal', 'url' => '/api/fiscal/generate', 'verb' => 'POST'],
 	],
 ];

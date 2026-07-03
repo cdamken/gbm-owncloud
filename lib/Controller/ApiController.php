@@ -11,6 +11,8 @@
 namespace OCA\Gbm\Controller;
 
 use OCA\Gbm\Service\AnalysisService;
+use OCA\Gbm\Service\FiscalFileService;
+use OCA\Gbm\Service\FiscalService;
 use OCA\Gbm\Service\GbmService;
 use OCA\Gbm\Service\IngestService;
 use OCA\Gbm\Service\LotsService;
@@ -26,13 +28,17 @@ class ApiController extends Controller {
 	private $ingest;
 	private $analysis;
 	private $lots;
+	private $fiscal;
+	private $fiscalFile;
 
-	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis, LotsService $lots) {
+	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis, LotsService $lots, FiscalService $fiscal, FiscalFileService $fiscalFile) {
 		parent::__construct($appName, $request);
 		$this->gbm = $gbm;
 		$this->ingest = $ingest;
 		$this->analysis = $analysis;
 		$this->lots = $lots;
+		$this->fiscal = $fiscal;
+		$this->fiscalFile = $fiscalFile;
 	}
 
 	/**
@@ -47,6 +53,53 @@ class ApiController extends Controller {
 			return new JSONResponse($this->analysis->perUser($this->gbm->currentUserId()));
 		} catch (\Throwable $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * Generate the income-side fiscal report and write it as CSV files into the
+	 * user's Files area (GBM/). Overwrites in place. Per-session user; POST,
+	 * CSRF-protected (our settings JS sends requesttoken).
+	 *
+	 * @NoAdminRequired
+	 */
+	public function generateFiscal(): JSONResponse {
+		try {
+			$uid = $this->gbm->currentUserId();
+			$data = $this->fiscal->perUser($uid);
+
+			$disc = '# Estimacion informativa (solo ingresos) - la constancia fiscal de GBM es la fuente oficial';
+			$labels = ['dividend' => 'Dividendo', 'interest' => 'Interes', 'withholding' => 'Retencion ISR'];
+
+			$resumen = $disc . "\n" . self::csvRow(['anio', 'dividendos', 'intereses', 'retenciones', 'ingreso_neto']) . "\n";
+			foreach ($data['summary'] as $y) {
+				$resumen .= self::csvRow([
+					$y['year'],
+					number_format($y['dividends'], 2, '.', ''),
+					number_format($y['interest'], 2, '.', ''),
+					number_format($y['withholding'], 2, '.', ''),
+					number_format($y['net'], 2, '.', ''),
+				]) . "\n";
+			}
+
+			$detalle = $disc . "\n" . self::csvRow(['fecha', 'anio', 'concepto', 'emisora', 'monto']) . "\n";
+			foreach ($data['detail'] as $d) {
+				$detalle .= self::csvRow([
+					$d['date'],
+					$d['year'],
+					isset($labels[$d['class']]) ? $labels[$d['class']] : $d['class'],
+					$d['security'],
+					number_format($d['amount'], 2, '.', ''),
+				]) . "\n";
+			}
+
+			$written = $this->fiscalFile->writeFiles($uid, [
+				'reporte-fiscal-resumen.csv' => $resumen,
+				'reporte-fiscal-detalle.csv' => $detalle,
+			]);
+			return new JSONResponse(['status' => 'ok', 'folder' => 'GBM', 'files' => $written]);
+		} catch (\Throwable $e) {
+			return new JSONResponse(['status' => 'error', 'detail' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
 
