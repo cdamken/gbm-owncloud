@@ -1,6 +1,6 @@
 # RESUME HERE — GBM ownCloud session handoff
 
-**Last updated:** 2026-07-02 (M2 shipped)
+**Last updated:** 2026-07-03 (M3 shipped)
 **Read this first** to continue exactly where we left off. Conversation memory
 is lost on restart; this file + the committed spec/plan + git history are the
 source of truth. Companion memory files live in
@@ -10,31 +10,33 @@ source of truth. Companion memory files live in
 
 ## Where we are (one paragraph)
 
-The GBM ownCloud cutover is done and live; **M1 (Ganadores y perdedores) and M2
-(¿Dónde está mi dinero? — allocation toggle) are both DONE, deployed, and merged
-to `main`** (app `gbm` **v0.18.0** on `cloud.damken.com`, PHP **7.4.3**, history
-intact). M1 = pure `winnersLosers()` (total return ranking) as a table on
-Análisis. M2 = pure `PortfolioAnalytics::allocation()` (market/class/region
-buckets from `asset_class`+`region`, no schema change) driving a **Mercado ·
-Clase · Región** pill toggle on the existing Análisis donut; the donut's data
-source moved from the client-side positions JSON to the DB and the dead
-client-side aggregation was removed. Both built subagent-driven (per-task +
-final whole-branch review; server PHP tests **39/39** on 7.4.3). Plans in
-`docs/superpowers/plans/2026-07-0{1,2}-gbm-metrics-m{1,2}-*.md`.
+The GBM ownCloud cutover is done and live; **M1, M2, and M3 are all DONE,
+deployed, and merged to `main`** (app `gbm` **v0.19.0** on `cloud.damken.com`,
+PHP **7.4.3**, history intact). M1 = pure `winnersLosers()` (total return
+ranking) table on Análisis. M2 = pure `allocation()` (market/class/region
+buckets, no schema change) driving a Mercado·Clase·Región donut toggle. M3 =
+JS-only **"¿Le gano al mercado?" numeric headline** above the net-worth chart:
+`renderMarketCompare()` reads the series the chart already builds and shows the
+portfolio's % return vs NAFTRAC/S&P over the shown window + the delta in points,
+updating with the range pills. All built subagent-driven; server PHP tests
+**39/39** on 7.4.3. Plans in `docs/superpowers/plans/2026-07-0{1,2,3}-gbm-metrics-*.md`.
 
 ## Immediate next step
 
 1. **(Owner)** hard-refresh `https://cloud.damken.com/index.php/apps/gbm/analysis`
-   and eyeball: (a) the "Ganadores y perdedores" table (M1) and (b) the new
-   **Mercado · Clase · Región** pills switching the donut (M2). Visual render is
-   the one thing not machine-verified.
-2. Next milestone: **M3 — ¿Le gano al mercado?** (TWR + period returns
-   1M/YTD/1Y/inception + portfolio vs IPC/S&P). Needs an **additive**
-   `gbm_cash_flows` table (deposits/withdrawals) for TWR; benchmark replay
-   already exists. The superseded fiscal plan
-   (`.../2026-07-01-gbm-analytics-fiscal-phase0-1.md`) already contains a
-   reusable `gbm_cash_flows` schema + `CashFlowExtractor` design. Same cycle:
-   brainstorm/spec-check → `superpowers:writing-plans` → subagent-driven build.
+   and eyeball: (a) the "Ganadores y perdedores" table (M1), (b) the
+   Mercado·Clase·Región donut pills (M2), (c) the "¿Le gano al mercado?" headline
+   above the value chart (M3) — check it updates with the range pills. Visual
+   render is the one thing not machine-verified.
+2. Next milestone options (owner's call — both partly data-gated):
+   - **F — Fiscal** button → CSV (dividendos/intereses/retenciones por año). Has
+     complete data TODAY (not gated). ISR pending Carlos's accountant. The
+     superseded fiscal plan (`.../2026-07-01-gbm-analytics-fiscal-phase0-1.md`)
+     has reusable `FiscalClassifier` + `FiscalReport` code.
+   - **M4 — Riesgo** (drawdown, volatility) + the **deferred M3 TWR/period-returns
+     (1M/YTD/1Y/inception) + `gbm_cash_flows`** — both need accumulated daily
+     snapshot history to be meaningful (~a few weeks today; grows per Actualizar).
+     Best revisited in a few months.
 
 ## Deferred polish (optional, non-blocking)
 
