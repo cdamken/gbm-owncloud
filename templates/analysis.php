@@ -121,6 +121,28 @@ $routes = $_['routes'];
 		<button data-range="1Y">1Y</button>
 		<button data-range="ALL" class="active">All</button>
 	</div>
+
+	<div class="section">
+		<span>¿Le gano al mercado?</span>
+		<span class="badge muted">periodo mostrado · mismo ritmo de aportes que tú</span>
+	</div>
+	<div class="stat-row" id="market-compare" style="display:none;">
+		<div>
+			<div class="stat-label">Tu portafolio</div>
+			<div class="stat-value" id="mkt-port-pct">—</div>
+		</div>
+		<div>
+			<div class="stat-label">NAFTRAC (IPC)</div>
+			<div class="stat-value" id="mkt-naftrac-pct">—</div>
+			<div class="stat-detail" id="mkt-naftrac-delta"></div>
+		</div>
+		<div>
+			<div class="stat-label">S&amp;P 500 TR</div>
+			<div class="stat-value" id="mkt-sp-pct">—</div>
+			<div class="stat-detail" id="mkt-sp-delta"></div>
+		</div>
+	</div>
+
 	<div class="chart-card">
 		<div class="chart-container">
 			<canvas id="history-chart"></canvas>

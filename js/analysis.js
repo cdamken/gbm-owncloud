@@ -558,6 +558,62 @@
 		};
 	}
 
+	// ¿Le gano al mercado? — numeric headline over the shown window. Reads the
+	// same window-aligned series the net-worth chart plots: `values` (portfolio
+	// market value from snapshots) and the rebased benchmark replays. Because
+	// each benchmark is rebased to the portfolio's value at the first common
+	// index, the three %s share a denominator and the delta is genuine
+	// out/under-performance (contributions move all three equally).
+	function renderMarketCompare(values, naftracValues, sp500Values) {
+		const box = document.getElementById('market-compare');
+		if (!box) return;
+
+		// % change of a window-aligned series from its first index where BOTH
+		// the portfolio and the series are non-null, to its last non-null value.
+		const ret = (series) => {
+			if (!series) return null;
+			let i = 0;
+			while (i < series.length && (series[i] == null || values[i] == null)) i++;
+			let j = series.length - 1;
+			while (j >= 0 && series[j] == null) j--;
+			if (i >= j) return null;
+			const start = series[i];
+			if (!start) return null;
+			return (series[j] - start) / start * 100;
+		};
+
+		const portR = ret(values);
+		const nafR = ret(naftracValues);
+		const spR = ret(sp500Values);
+
+		const fmtPct = (v) => v === null ? '—' : (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+		const setPct = (id, v) => {
+			const el = document.getElementById(id);
+			if (!el) return;
+			el.textContent = fmtPct(v);
+			el.classList.remove('green', 'red');
+			if (v !== null && v > 0) el.classList.add('green');
+			else if (v !== null && v < 0) el.classList.add('red');
+		};
+		const setDelta = (id, port, bench) => {
+			const el = document.getElementById(id);
+			if (!el) return;
+			el.classList.remove('green', 'red');
+			if (port === null || bench === null) { el.textContent = ''; return; }
+			const d = port - bench;
+			el.textContent = (d > 0 ? '▲ +' : (d < 0 ? '▼ ' : '')) + d.toFixed(1) + ' pts';
+			if (d > 0) el.classList.add('green');
+			else if (d < 0) el.classList.add('red');
+		};
+
+		setPct('mkt-port-pct', portR);
+		setPct('mkt-naftrac-pct', nafR);
+		setPct('mkt-sp-pct', spR);
+		setDelta('mkt-naftrac-delta', portR, nafR);
+		setDelta('mkt-sp-delta', portR, spR);
+		box.style.display = '';
+	}
+
 	function renderNetWorthChart() {
 		if (typeof window.Chart !== 'function') return;
 		const canvas = document.getElementById('history-chart');
@@ -568,6 +624,8 @@
 			if (_histChart) { _histChart.destroy(); _histChart = null; }
 			canvas.style.display = 'none';
 			emptyEl.style.display = 'flex';
+			const mc = document.getElementById('market-compare');
+			if (mc) mc.style.display = 'none';
 		};
 
 		// Real portfolio value over time, straight from the DB snapshots.
@@ -613,6 +671,8 @@
 		};
 		const naftracValues = rebaseToStart(alignBench(_replayBenchmark(state.benchmarks[0], dailyMap)));
 		const sp500Values   = rebaseToStart(alignBench(_replayBenchmark(state.benchmarks[1], dailyMap)));
+
+		renderMarketCompare(values, naftracValues, sp500Values);
 
 		const datasets = [
 			_netWorthDataset('Valor del portafolio', values, '#60a5fa', true),
