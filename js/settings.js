@@ -141,6 +141,28 @@
 		}
 	}
 
+	async function generateFiscal() {
+		const flashEl = $('data-flash');
+		const btn = $('generate-fiscal-btn');
+		btn.disabled = true; btn.textContent = 'Generando…';
+		try {
+			const r = await fetch(routes.generateFiscal, {
+				method: 'POST',
+				headers: csrfHeaders(),
+			});
+			const p = await r.json();
+			if (r.ok && p.status === 'ok') {
+				flash(flashEl, true, 'Reporte generado en tu carpeta ' + (p.folder || 'GBM') + '/.');
+			} else {
+				flash(flashEl, false, (p && p.detail) || 'No se pudo generar el reporte.');
+			}
+		} catch (e) {
+			flash(flashEl, false, 'Error de conexión: ' + e.message);
+		} finally {
+			btn.disabled = false; btn.textContent = '📄 Generar reporte fiscal';
+		}
+	}
+
 	async function revokeSession() {
 		if (!confirm('Esto borra la sesión local y todos los datos descargados. El próximo ⟳ Actualizar pedirá TOTP.\n\n¿Continuar?')) return;
 		const flashEl = $('session-flash');
@@ -196,15 +218,17 @@
 		const root = $('gbm-app');
 		document.body.classList.add('gbm-app-active');
 		routes = {
-			config:      root.dataset.routeConfig,
-			settingsApi: root.dataset.routeSettingsApi,
-			reset:       root.dataset.routeReset,
+			config:         root.dataset.routeConfig,
+			settingsApi:    root.dataset.routeSettingsApi,
+			reset:          root.dataset.routeReset,
+			generateFiscal: root.dataset.routeGenerateFiscal,
 		};
 
 		$('save-account-btn').addEventListener('click', saveAccount);
 		$('switch-account-btn').addEventListener('click', switchAccount);
 		$('save-data-btn').addEventListener('click', saveData);
 		$('revoke-session-btn').addEventListener('click', revokeSession);
+		$('generate-fiscal-btn').addEventListener('click', generateFiscal);
 		$('password-input').addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') saveAccount();
 		});

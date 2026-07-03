@@ -16,7 +16,8 @@ $routes = $_['routes'];
 	data-route-settings-api="<?php p($routes['settings_api']); ?>"
 	data-route-reset="<?php p($routes['reset']); ?>"
 	data-route-export-csv="<?php p($routes['export_csv']); ?>"
-	data-route-update="<?php p($routes['update']); ?>">
+	data-route-update="<?php p($routes['update']); ?>"
+	data-route-generate-fiscal="<?php p($routes['generate_fiscal']); ?>">
 
 	<div class="subtitle">
 		Credenciales, rangos de descarga, e información de la sesión.
@@ -105,6 +106,10 @@ $routes = $_['routes'];
 					   title="Descarga un CSV en español listo para pasar al contador o importar a Excel.">
 						📥 Exportar CSV para SAT
 					</a>
+					<button class="primary" id="generate-fiscal-btn" type="button"
+						title="Genera CSVs de dividendos/intereses/retención por año en tu carpeta GBM/. Estimación informativa; la constancia fiscal de GBM es la oficial.">
+						📄 Generar reporte fiscal
+					</button>
 				</div>
 			</section>
 
