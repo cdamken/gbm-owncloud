@@ -5,54 +5,46 @@
 
 ## What this is
 
-ownCloud 10 app that wraps the local [`gbm-dashboard`](https://github.com/cdamken/gbm-dashboard)
-for multi-user use. Each ownCloud user gets their own per-user data
-directory and per-user GBM+ Cognito session. Built on
-[`gbm-mx-api`](https://github.com/cdamken/gbm-mx-api).
+ownCloud 10 app for tracking a GBM+ México portfolio, multi-user. Each
+ownCloud user gets their own per-user data directory and per-user GBM+
+Cognito session. Built on [`gbm-mx-api`](https://github.com/cdamken/gbm-mx-api)
+(Python data layer). PHP + vanilla JS.
 
-## Position in the trio
+## Status: primary app (trio dissolved 2026-07-06)
 
-```
-   gbm-mx-api (library)  ──┐
-                           ├──► gbm-dashboard   (upstream, local single-user)
-                           │      │
-                           │      ▼ verbatim port + minimal ownCloud patches
-                           └──► gbm-owncloud   (this repo — downstream)
-```
+**As of 2026-07-06, `gbm-owncloud` is the PRIMARY, go-forward app.** The owner
+**froze [`gbm-dashboard`](https://github.com/cdamken/gbm-dashboard)** (the
+original local single-user project). It stays on GitHub for anyone who wants
+to pick it up, but it is **no longer upstream and no longer a source of
+truth.** Features, bug fixes, and UX changes now **originate HERE, in PHP** —
+they are NOT ported from `gbm-dashboard`.
 
-**This repo is DOWNSTREAM.** It does NOT originate features. Bug
-fixes and UI changes land in `gbm-dashboard` first; this repo copies
-them.
+Active repos going forward:
+- **`gbm-mx-api`** (Python library) — the data layer; still maintained.
+- **`gbm-owncloud`** (this repo) — the app.
 
-The only changes that originate here are forced by the multi-user
-ownCloud context — per-user paths, env-injected credentials, CSP
-adaptations, etc. If you find yourself adding a new feature HERE
-first, stop and rethink — it probably belongs upstream.
+**Compute in PHP.** New analytics/logic land as pure, unit-tested PHP in
+`lib/Analytics/*` (the `PortfolioAnalytics` / M1–M3 / fiscal pattern), not in
+browser JS. Where legacy client-side logic exists (e.g. the KPI math in
+`js/dashboard.js`, inherited from the old port), **migrating it server-side is
+the preferred direction**, not a violation. See the audit/roadmap:
+`docs/superpowers/specs/2026-07-03-gbm-app-audit-and-redesign-roadmap.md`.
 
-The orchestrator lives in `~/damkencloud/Claude/Portfolio-Master/`,
-with `WORKFLOW.md` as canonical cross-repo flow and `TRIO-PLAYBOOK.md`
-documenting the shared 3-part structure across all trios. (Renamed
-from the old per-trio `GBM-Master` on 2026-06-11.)
+### Historical note (retired rule — kept so old commits make sense)
 
-## The cardinal rule: copy verbatim, patch minimally
+This app began as a verbatim ownCloud port of `gbm-dashboard` ("copy
+line-for-line, patch minimally, changes originate upstream"). **That trio
+rule is retired.** The ownCloud-specific transformations that used to be the
+only "allowed patches" are now simply how the app works:
 
-When porting from `gbm-dashboard`, copy line-for-line. The only
-allowed patches without UPSTREAM justification:
-
-- **Fetch URLs**: read from `data-route-*` attrs on `#gbm-app`
-  (template injects them via `PageController`). Replaces hardcoded
-  `/update`, `/DATA/positions.json`, etc.
+- **Fetch URLs** read from `data-route-*` attrs on `#gbm-app` (template
+  injects them via `PageController`).
 - **CSRF**: `requesttoken: OC.requestToken` header on every POST.
-- **Inline `on*=` handlers**: stripped from HTML, re-wired via
-  `addEventListener` in external JS (ownCloud CSP forbids inline
-  scripts).
-- **Credentials path**: `~/.gbm-mx/credentials` → ownCloud DB
-  (`oc_preferences`, password encrypted with `ICrypto`).
-- **Data dir**: `PROJECT_DIR/DATA/` → `{datadir}/<uid>/gbm/`.
-- **CSS scoping**: every selector prefixed `#gbm-app` to beat
-  ownCloud's `core.css` specificity.
-
-Anything else MUST land upstream first.
+- **No inline `on*=` handlers / `<script>`** — wired via `addEventListener`
+  in external JS (ownCloud CSP).
+- **Credentials** in the ownCloud DB (`oc_preferences`, encrypted with `ICrypto`).
+- **Data dir**: `{datadir}/<uid>/gbm/`.
+- **CSS scoping**: every selector prefixed `#gbm-app` to beat `core.css`.
 
 ## Deployment topology
 
@@ -168,9 +160,11 @@ cross-user data access.
 
 ## Workflow rules (read before changing code)
 
-1. **Check upstream first.** If you're about to fix a bug in
-   `python/fetch_wrapper.py`, the same change probably belongs in
-   `gbm-dashboard/app/fetch_data.py`. Do that first.
+1. **Originate here, in PHP.** (Trio retired 2026-07-06 — no more
+   "upstream first".) New features/fixes land in this repo. Prefer pure,
+   unit-tested PHP in `lib/Analytics/*` over browser JS. A `gbm-mx-api`
+   data-layer fix still belongs in that Python repo — deploy it via
+   `./scripts/deploy.sh --lib`.
 2. **CSP is strict.** No inline `<script>` blocks. No `on*=`
    attributes. Inline `style="..."` is OK because `PageController`
    calls `$csp->allowInlineStyle(true)`.

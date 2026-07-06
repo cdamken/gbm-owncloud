@@ -21,7 +21,7 @@ Unrealized P&L is *blind* to withdrawals, realized results, and reinvested divid
 
 ## Dimension 1 — Confianza (numbers must reconcile) — HIGHEST PRIORITY
 
-All three live in the **upstream** `gbm-dashboard` (verbatim-ported `js/dashboard.js` + `templates/main.php`). Per the trio rule, fixes land upstream first, then port here.
+All three currently live in `js/dashboard.js` + `templates/main.php` (client-side KPI math inherited from the original port). **Update 2026-07-06: the trio is dissolved — `gbm-dashboard` is frozen and no longer upstream. These fixes now originate HERE, in PHP** (migrate the KPI math server-side into `lib/Analytics/*`, the M1–M3 pattern). No upstream detour.
 
 | # | Symptom (from real screenshot) | Verdict | Root (file:line) |
 |---|---|---|---|
@@ -83,7 +83,7 @@ High-impact findings (full per-page audit in the session record):
 Each item becomes its own brainstorm→spec→plan→build cycle (like M1–F).
 
 ### P0 — Confianza (do first)
-Redesign the Portafolio KPIs around the reconciling money model: seven labeled money lines; separate cash; P&L% over current cost basis; **unify per-account P&L to one source**; fix the header/cards $664 split; fix the XIRR label. **Upstream in `gbm-dashboard` first, then port.** This is the single highest-impact change — if the landing number contradicts itself, nothing else matters.
+Redesign the Portafolio KPIs around the reconciling money model: seven labeled money lines; separate cash; P&L% over current cost basis; **unify per-account P&L to one source**; fix the header/cards $664 split; fix the XIRR label. **Built HERE in PHP** — migrate the KPI math out of `js/dashboard.js` into pure, unit-tested `lib/Analytics/*` (M1–M3 pattern), served to the template. This is the single highest-impact change — if the landing number contradicts itself, nothing else matters.
 
 ### P1 — Claridad
 Lighter landing (one hero + reconciliation, progressive disclosure); consolidate "top movers" to one source; rename/group navigation; staleness chip + consistent empty states everywhere; surface fiscal (per-year aggregation on Dividendos, button more discoverable). Mixed upstream/here.
@@ -93,11 +93,11 @@ Per-holding drill-down; three-way return (capital/dividend/FX); allocation by cu
 
 ## Inherited constraints
 
-- **Trio rule:** trust/dashboard fixes originate **upstream** (`gbm-dashboard`), then port verbatim here. Only multi-user-forced changes originate here.
+- **Trio dissolved (2026-07-06):** `gbm-dashboard` is frozen; this repo is the primary app. Features/fixes originate **here, in PHP** (prefer pure `lib/Analytics/*` over browser JS). `gbm-mx-api` (Python) remains the data layer.
 - **PHP 7.4.3** on the server; **additive schema only**; **CSP strict**; **per-user isolation**; UI Spanish / code English; every change committed + pushed + deployed via `scripts/deploy.sh`.
 - **Data-gated:** TWR / period returns / risk need accumulated daily-snapshot history (grows per 🔄 Actualizar) — GitHub #13.
 - Fiscal figures are estimates; GBM's *constancia fiscal* is authoritative.
 
 ## Next step
 
-Recommended: start P0 with a focused brainstorm→spec of the **reconciling money model** for the Portafolio landing (the seven money lines + return naming), authored **upstream in `gbm-dashboard`** and then ported. Everything else hangs off getting the numbers to reconcile first.
+Recommended: start P0 with a focused brainstorm→spec of the **reconciling money model** for the Portafolio landing (the seven money lines + return naming), built **here in PHP** (pure `lib/Analytics/*`, migrating the KPI math out of `js/dashboard.js`). Everything else hangs off getting the numbers to reconcile first.
