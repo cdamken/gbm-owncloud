@@ -432,20 +432,38 @@ class ApiController extends Controller {
 				if ($spec['list_key']) {
 					$items = (array) ($data[$spec['list_key']] ?? []);
 				} else {
-					// positions.json: flatten accounts → positions w/ _account_name
-					$items = [];
-					$accountsMap = (array) ($data['accounts'] ?? []);
-					foreach ($accountsMap as $acc) {
-						if (!is_array($acc)) continue;
-						$accName = $acc['name'] ?? '';
-						foreach ((array) ($acc['positions'] ?? []) as $pos) {
-							if (!is_array($pos)) continue;
-							$pos['_account_name'] = $accName;
-							$items[] = $pos;
+					// positions.json shape: { <legacy_contract_id>: { <section>: [pos,...] } }.
+					// Account names live in accounts.json, joined by contract id.
+					$sections = [
+						'mercado_capitales', 'mercados_globales_sic', 'mercado_extranjero',
+						'sociedades_inversion_comun', 'sociedades_inversion_deuda',
+					];
+					$nameByContract = [];
+					$accPath = $this->gbm->dataPath('accounts.json');
+					if (is_file($accPath)) {
+						$accData = json_decode((string) @file_get_contents($accPath), true);
+						$accList = isset($accData['accounts']) && is_array($accData['accounts'])
+							? $accData['accounts']
+							: (is_array($accData) ? $accData : []);
+						foreach ($accList as $acc) {
+							if (is_array($acc) && isset($acc['legacy_contract_id'])) {
+								$nameByContract[(string) $acc['legacy_contract_id']] = (string) ($acc['name'] ?? '');
+							}
 						}
 					}
-					if (!$items && isset($data['positions']) && is_array($data['positions'])) {
-						$items = $data['positions'];
+					$items = [];
+					foreach ($data as $contractId => $sectionsMap) {
+						if (!is_array($sectionsMap)) continue;
+						$accName = $nameByContract[(string) $contractId] ?? (string) $contractId;
+						foreach ($sections as $section) {
+							foreach ((array) ($sectionsMap[$section] ?? []) as $pos) {
+								if (!is_array($pos)) continue;
+								$ext = (string) ($pos['issue_id'] ?? $pos['security_id'] ?? '');
+								if ($ext === '' || strcasecmp($ext, 'Subtotal') === 0) continue;
+								$pos['_account_name'] = $accName;
+								$items[] = $pos;
+							}
+						}
 					}
 				}
 				foreach ($items as $item) {
