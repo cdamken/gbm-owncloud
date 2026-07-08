@@ -13,6 +13,7 @@
 
 	// Shared formatter — single source of truth in js/_shared.js (v0.14.18).
 	const fmtMoney = window.fmtMoney;
+	const esc = window.esc;
 	const formatDate = (iso) => {
 		if (!iso) return '—';
 		const d = new Date(iso);
@@ -105,7 +106,7 @@
 			renderDividendsChart();
 			renderTable();
 		} catch (err) {
-			$('error-box').innerHTML = '<div class="error"><b>Error cargando datos.</b><br>' + err.message + '</div>';
+			$('error-box').innerHTML = '<div class="error"><b>Error cargando datos.</b><br>' + esc(err.message) + '</div>';
 		}
 	}
 
@@ -321,18 +322,18 @@
 
 		$('rows-count').textContent = rows.length + ' / ' + state.rows.length;
 		$('dividends-tbody').innerHTML = rows.map(d => {
-			const desc = d.description || '—';
+			const desc = esc(d.description || '—');
 			const security = d.security_name && d.security_name.length > 0
-				? '<div class="muted" style="font-size: 11px;">' + d.security_name + '</div>' : '';
+				? '<div class="muted" style="font-size: 11px;">' + esc(d.security_name) + '</div>' : '';
 			return '<tr>' +
 				'<td>' + formatDate(d.process_date) + '</td>' +
-				'<td class="ticker">' + d.security_id + security + '</td>' +
+				'<td class="ticker">' + esc(d.security_id) + security + '</td>' +
 				'<td style="font-size: 12px;">' + desc + '</td>' +
-				'<td style="color: var(--muted); font-size: 12px;">' + (d.account_name || '—') + '</td>' +
+				'<td style="color: var(--muted); font-size: 12px;">' + esc(d.account_name || '—') + '</td>' +
 				'<td>' + kindPill(d) + '</td>' +
 				'<td class="num">' + fmtMoney(d.amount, { currency: true }) + '</td>' +
 				'<td class="num">' + fmtMoney(d.net_amount, { currency: true }) + '</td>' +
-				'<td class="tx-id">' + d.transaction_id + '</td>' +
+				'<td class="tx-id">' + esc(d.transaction_id) + '</td>' +
 			'</tr>';
 		}).join('') || '<tr><td colspan="8" class="empty">Sin movimientos que coincidan con los filtros</td></tr>';
 	}
