@@ -82,6 +82,7 @@
 	];
 
 	const state = {
+		summary: null,
 		accounts: [],
 		positionsByAccount: {},
 		positionsFlat: [],
@@ -100,26 +101,23 @@
 			const opts = { cache: 'no-store', headers: { Accept: 'application/json' } };
 			// last_update is text/plain, JSON files are JSON. Each fetch silently
 			// falls back to empty on 404 so a fresh install renders correctly.
-			const [accountsRes, positionsRes, igRes, txRes, fxRes, lastUpdateRes] = await Promise.all([
+			const [summaryRes, accountsRes, positionsRes, fxRes, lastUpdateRes] = await Promise.all([
+				fetch(routes.summary, opts),
 				fetch(dataUrl('accounts'), opts),
 				fetch(dataUrl('positions'), opts),
-				fetch(dataUrl('investments_groups'), opts),
-				fetch(dataUrl('transactions'), opts),
 				fetch(dataUrl('fx'), opts),
 				fetch(dataUrl('last_update'), opts),
 			]);
+			const summary = summaryRes.ok ? await summaryRes.json() : null;
 			const accounts = accountsRes.ok ? await accountsRes.json() : [];
 			const positionsByAccount = positionsRes.ok ? await positionsRes.json() : {};
-			const investmentsGroups = igRes.ok ? await igRes.json() : null;
-			const transactions = txRes.ok ? await txRes.json() : null;
 			const fx = fxRes.ok ? await fxRes.json() : null;
 			usdMxnRate = fx && Number(fx.usdmxn) > 0 ? Number(fx.usdmxn) : null;
 			const lastUpdate = lastUpdateRes.ok ? await lastUpdateRes.text() : '';
 
+			state.summary = summary;
 			state.accounts = sortAccounts(accounts);
 			state.positionsByAccount = positionsByAccount;
-			state.investmentsGroups = investmentsGroups;
-			state.transactions = transactions;
 			state.lastUpdate = lastUpdate.trim();
 
 			state.positionsFlat = [];
@@ -183,97 +181,6 @@
 		return (account.position && account.position.amount) || 0;
 	}
 
-	// Per-account P&L computed from positions (historical, not intraday).
-	// Falls back to accounts.plus_minus when no positions (e.g. Smart Cash
-	// at zero, or before first fetch). Ports gbm-dashboard@3eccda2 (v0.5.1).
-	function accountPnL(account) {
-		const positions = state.positionsFlat.filter(p => p._account_legacy_id === account.legacy_contract_id);
-		if (positions.length === 0) {
-			return {
-				amount:     (account.plus_minus && account.plus_minus.amount) != null ? account.plus_minus.amount : null,
-				percentage: account.plus_minus_percentage != null ? account.plus_minus_percentage : null,
-			};
-		}
-		const yieldSum = positions.reduce((s, p) => s + (Number(p.yield_value) || 0), 0);
-		const costSum  = positions.reduce((s, p) => s + (Number(p.average_cost) || 0), 0);
-		return {
-			amount:     yieldSum,
-			percentage: costSum > 0 ? yieldSum / costSum : null,
-		};
-	}
-
-	// ----------------------------------------------------------------------
-	// XIRR — annualized money-weighted return.
-	// Ported from gbm-dashboard@v0.13.0. Newton-Raphson + bisection fallback.
-	// Limitation: only sees the last GBM_TRANSACTIONS_DAYS of flows; deposits
-	// before that window can't be reconciled → result is biased.
-	// ----------------------------------------------------------------------
-	function _xirrNpv(rate, days, amounts) {
-		let s = 0;
-		for (let i = 0; i < amounts.length; i++) {
-			s += amounts[i] / Math.pow(1 + rate, days[i] / 365.0);
-		}
-		return s;
-	}
-	function xirr(cashFlows, tol = 1e-7) {
-		if (!cashFlows || cashFlows.length < 2) return null;
-		const sorted = cashFlows.slice().sort((a, b) => a.date - b.date);
-		const t0 = sorted[0].date;
-		const days = sorted.map(cf => Math.floor((cf.date - t0) / (1000 * 60 * 60 * 24)));
-		const amounts = sorted.map(cf => Number(cf.amount));
-		if (amounts.every(a => a >= 0) || amounts.every(a => a <= 0)) return null;
-		for (const guess of [0.10, 0.0, -0.10, 0.30, -0.30, 0.50]) {
-			let rate = guess;
-			let ok = true;
-			for (let it = 0; it < 80; it++) {
-				const npv = _xirrNpv(rate, days, amounts);
-				let dnpv = 0;
-				for (let i = 0; i < amounts.length; i++) {
-					const d = days[i];
-					dnpv += (-d / 365.0) * amounts[i] / Math.pow(1 + rate, d / 365.0 + 1);
-				}
-				if (!isFinite(npv) || !isFinite(dnpv) || Math.abs(dnpv) < 1e-12) { ok = false; break; }
-				let newRate = rate - npv / dnpv;
-				if (newRate <= -0.999) newRate = -0.99;
-				if (Math.abs(newRate - rate) < tol) return newRate;
-				rate = newRate;
-			}
-			if (ok) continue;
-		}
-		let lo = -0.95, hi = 10.0;
-		let fLo = _xirrNpv(lo, days, amounts);
-		let fHi = _xirrNpv(hi, days, amounts);
-		if (!isFinite(fLo) || !isFinite(fHi) || fLo * fHi > 0) return null;
-		for (let it = 0; it < 120; it++) {
-			const mid = (lo + hi) / 2;
-			const fMid = _xirrNpv(mid, days, amounts);
-			if (!isFinite(fMid)) return null;
-			if (Math.abs(fMid) < tol || Math.abs(hi - lo) < tol) return mid;
-			if (fLo * fMid < 0) { hi = mid; fHi = fMid; }
-			else                { lo = mid; fLo = fMid; }
-		}
-		return (lo + hi) / 2;
-	}
-	function buildXirrCashflows(totalValue) {
-		if (!state.transactions || !state.transactions.transactions) return null;
-		const txs = state.transactions.transactions;
-		const flows = [];
-		for (const t of txs) {
-			const cat = t.category;
-			if (cat !== 'external_deposit' && cat !== 'external_withdrawal') continue;
-			const d = new Date(t.process_date);
-			if (isNaN(d.getTime())) continue;
-			const amt = Math.abs(Number(t.amount) || 0);
-			if (amt === 0) continue;
-			const signed = cat === 'external_deposit' ? -amt : +amt;
-			flows.push({ date: d, amount: signed });
-		}
-		if (flows.length === 0) return null;
-		if (totalValue <= 0) return null;
-		flows.push({ date: new Date(), amount: totalValue });
-		return flows;
-	}
-
 	// ----------------------------------------------------------------------
 	// Concentration warning — single-name or top-5 risk.
 	// Heuristic: red if >50% / >85% top-5; amber if >30% / >70% top-5.
@@ -328,38 +235,6 @@
 		box.innerHTML = '<div class="' + cls + '">' + headline + '<div class="detail">' + detail + '</div></div>';
 	}
 
-	function aggregates() {
-		// Prefer the v3 dashboard total when available — matches GBM mobile.
-		let totalValueFromIG = null;
-		const igTotal = state.investmentsGroups && state.investmentsGroups.total_position && state.investmentsGroups.total_position.amount;
-		if (igTotal != null && igTotal !== 0) {
-			totalValueFromIG = Number(igTotal);
-		}
-		// Total value: sum each account's value via accountValue() (uses
-		// sum(market_value) where available — matches GBM web).
-		const totalValue = totalValueFromIG != null
-			? totalValueFromIG
-			: state.accounts.reduce((s, a) => s + accountValue(a), 0);
-		// P&L: historical yield from positions (NOT accounts.plus_minus
-		// which is intraday-only and reports 0 when markets are closed).
-		const totalPnL = state.positionsFlat.reduce((s, p) => s + (Number(p.yield_value) || 0), 0);
-		const totalCost = state.positionsFlat.reduce((s, p) => s + (Number(p.average_cost) || 0), 0);
-		const totalPnLPct = totalCost > 0 ? totalPnL / totalCost : 0;
-		const numPositions = new Set(state.positionsFlat.map(p => p.issue_id)).size;
-		// Available cash = sum of Smart Cash account balances. GBM
-		// auto-sweeps idle cash into Smart Cash, so this is "money sitting
-		// around not yet reinvested". Matches TR's "Available Cash" KPI
-		// semantically. Typically $0 unless the user just sold something.
-		const availableCash = state.accounts.reduce((s, a) => {
-			const t = a.management_type_template || '';
-			if (t === 'smart_cash' || t === 'wealth') {
-				return s + Number((a.position || {}).amount || 0);
-			}
-			return s;
-		}, 0);
-		return { totalValue, totalPnL, totalPnLPct, numPositions, investmentCost: totalCost, availableCash };
-	}
-
 	// ----------------------------------------------------------------------
 	// Renderers
 	// ----------------------------------------------------------------------
@@ -406,70 +281,45 @@
 	}
 
 	function renderCards() {
-		const { totalValue, totalPnL, totalPnLPct, numPositions, investmentCost, availableCash } = aggregates();
-		$('total-value').textContent = fmtMoney(totalValue, { currency: true });
-		// Investment Cost — sum of cost basis across positions.
-		$('investment-cost').textContent = fmtMoney(investmentCost, { currency: true });
+		const s = state.summary;
+		if (!s) return;
+		$('total-value').textContent = fmtMoney(s.total_value, { currency: true });
+		$('investment-cost').textContent = fmtMoney(s.cost_basis, { currency: true });
 		const pnlEl = $('total-pnl');
-		pnlEl.textContent = fmtMoney(totalPnL, { sign: true, currency: true });
-		pnlEl.className = 'value ' + pnlClass(totalPnL);
+		pnlEl.textContent = fmtMoney(s.unrealized_pl, { sign: true, currency: true });
+		pnlEl.className = 'value ' + pnlClass(s.unrealized_pl);
 		const pctEl = $('total-pnl-pct');
-		pctEl.textContent = fmtPct(totalPnLPct);
-		pctEl.className = 'delta ' + pnlClass(totalPnL);
-		// Available Cash — Smart Cash account balances (idle pesos/dollars).
-		$('available-cash').textContent = fmtMoney(availableCash, { currency: true });
-		$('num-positions').textContent = numPositions;
-		$('num-accounts').textContent = state.accounts.length;
-
-		// XIRR card. Annualized return computed from external_deposit /
-		// external_withdrawal flows + today's portfolio value. May read
-		// "—" if there are no flows in the window (e.g. all deposits
-		// happened before the GBM_TRANSACTIONS_DAYS window).
-		const xirrEl = $('xirr-value');
-		const xirrDetailEl = $('xirr-detail');
-		if (xirrEl) {
-			const flows = buildXirrCashflows(totalValue);
-			if (!flows || flows.length < 2) {
-				xirrEl.textContent = '—';
-				if (xirrDetailEl) {
-					const nFlows = flows ? flows.length - 1 : 0;
-					xirrDetailEl.textContent = nFlows === 0
-						? 'sin flujos externos en la ventana'
-						: 'historial insuficiente (' + nFlows + ' flujo' + (nFlows === 1 ? '' : 's') + ')';
-				}
-			} else {
-				const r = xirr(flows);
-				if (r == null || !isFinite(r)) {
-					xirrEl.textContent = '—';
-					if (xirrDetailEl) xirrDetailEl.textContent = 'no converge';
-				} else {
-					xirrEl.textContent = fmtPct(r);
-					xirrEl.className = 'value ' + pnlClass(r);
-					if (xirrDetailEl) {
-						xirrDetailEl.textContent = (flows.length - 1) + ' flujos externos en ' + (state.transactions && state.transactions.from_date ? 'la ventana' : 'historial');
-					}
-				}
-			}
+		pctEl.textContent = fmtPct((Number(s.unrealized_pct) || 0) / 100);
+		pctEl.className = 'delta ' + pnlClass(s.unrealized_pl);
+		$('available-cash').textContent = fmtMoney(s.cash, { currency: true });
+		$('num-positions').textContent = s.positions_count;
+		$('num-accounts').textContent = (s.accounts || []).length;
+		// XIRR — money-weighted; honest fallback when it can't converge.
+		const xEl = $('xirr-value');
+		const xDetail = $('xirr-detail');
+		if (s.xirr_status === 'ok' && s.xirr != null) {
+			xEl.textContent = fmtPct(s.xirr);
+			xEl.className = 'value ' + pnlClass(s.xirr);
+			if (xDetail) xDetail.textContent = 'personal · money-weighted';
+		} else {
+			xEl.textContent = '—';
+			xEl.className = 'value muted';
+			if (xDetail) xDetail.textContent = 'faltan flujos externos';
 		}
 	}
 
 	function renderAccounts() {
+		const s = state.summary;
+		const list = (s && s.accounts) || [];
 		const grid = $('accounts-grid');
-		$('accounts-count').textContent = state.accounts.length;
-		grid.innerHTML = state.accounts.map(a => {
-			const type = ACCOUNT_TYPES[a.management_type_template] || { label: a.management_type_template, color: 'muted' };
-			const value = accountValue(a);
-			const { amount: pnl, percentage: pnlPct } = accountPnL(a);
-			const posCount = state.positionsFlat.filter(p => p._account_legacy_id === a.legacy_contract_id).length;
+		$('accounts-count').textContent = list.length;
+		grid.innerHTML = list.map(a => {
 			return '<div class="account-chip">' +
-				(posCount > 0 ? '<span class="acc-detail-flag">' + posCount + ' pos.</span>' : '') +
-				'<div class="acc-type ' + type.color + '">' + type.label + '</div>' +
 				'<div class="acc-name">' + (a.name || '—') + '</div>' +
-				'<div class="acc-id">' + a.legacy_contract_id + '</div>' +
-				'<div class="acc-value">' + fmtMoney(value, { currency: true }) + '</div>' +
-				'<div class="acc-pnl ' + pnlClass(pnl) + '">' +
-					(pnl != null ? fmtMoney(pnl, { sign: true, currency: true }) : '—') +
-					(pnlPct != null ? ' (' + fmtPct(pnlPct) + ')' : '') +
+				'<div class="acc-id">' + (a.key || '') + '</div>' +
+				'<div class="acc-value">' + fmtMoney(a.value, { currency: true }) + '</div>' +
+				'<div class="acc-pnl ' + pnlClass(a.unrealized_pl) + '">' +
+					fmtMoney(a.unrealized_pl, { sign: true, currency: true }) +
 				'</div>' +
 			'</div>';
 		}).join('');
@@ -776,6 +626,7 @@
 			data:       root.dataset.routeData,
 			config:     root.dataset.routeConfig,
 			update:     root.dataset.routeUpdate,
+			summary:    root.dataset.routeSummary,
 		};
 
 		// Defensive wiring: `$('settings-btn')` returns null in the
