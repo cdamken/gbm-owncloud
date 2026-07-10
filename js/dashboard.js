@@ -125,6 +125,16 @@
 				state.positionsFlat.push(...flattenPositions(positionsByAccount[a.legacy_contract_id], a));
 			}
 
+			// If the reconciling summary failed, the KPI cards stay at "—".
+			// Surface that as an error so a failed fetch is never mistaken for
+			// real zeros — the headline the owner checks first must not lie by
+			// omission while the positions table below renders normally.
+			if (!summaryRes.ok) {
+				$('error-box').innerHTML =
+					'<div class="warning"><b>No se pudieron cargar los indicadores del portafolio.</b> ' +
+					'Recarga la página o dale <code>🔄 Actualizar</code>.</div>';
+			}
+
 			renderAll();
 		} catch (err) {
 			$('error-box').innerHTML =
