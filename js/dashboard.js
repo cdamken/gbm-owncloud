@@ -25,6 +25,7 @@
 	const fmtMoney = window.fmtMoney;
 	const fmtPct   = window.fmtPct;
 	const pnlClass = window.pnlClass;
+	const esc      = window.esc;
 	// Server is UTC; user may be in another TZ. Attach 'Z' if no TZ marker
 	// then display in Mexico City time (where the market trades).
 	const formatTimestamp = (iso) => {
@@ -140,7 +141,7 @@
 			$('error-box').innerHTML =
 				'<div class="error"><b>No se pudieron cargar los datos.</b><br>' +
 				'Haz clic en <code>🔄 Actualizar</code> para descargar.<br>' +
-				'Detalle: ' + (err.message || err) + '</div>';
+				'Detalle: ' + esc(err.message || err) + '</div>';
 		}
 	}
 
@@ -233,7 +234,7 @@
 		const cls = c.level === 'severe' ? 'warning severe' : 'warning';
 		let headline;
 		if (c.topShare > 0.30) {
-			headline = '<b>Concentración alta:</b> ' + c.topTicker + ' es ' + pct(c.topShare) + ' del portafolio';
+			headline = '<b>Concentración alta:</b> ' + esc(c.topTicker) + ' es ' + pct(c.topShare) + ' del portafolio';
 			if (c.top5Share > 0.70) headline += '. Top 5 emisoras = ' + pct(c.top5Share);
 			headline += '.';
 		} else {
@@ -325,8 +326,8 @@
 		$('accounts-count').textContent = list.length;
 		grid.innerHTML = list.map(a => {
 			return '<div class="account-chip">' +
-				'<div class="acc-name">' + (a.name || '—') + '</div>' +
-				'<div class="acc-id">' + (a.key || '') + '</div>' +
+				'<div class="acc-name">' + esc(a.name || '—') + '</div>' +
+				'<div class="acc-id">' + esc(a.key || '') + '</div>' +
 				'<div class="acc-value">' + fmtMoney(a.value, { currency: true }) + '</div>' +
 				'<div class="acc-pnl ' + pnlClass(a.unrealized_pl) + '">' +
 					fmtMoney(a.unrealized_pl, { sign: true, currency: true }) +
@@ -392,11 +393,11 @@
 		// When a ticker is held in more than one account, show the list
 		// underneath so it's clear the row aggregates them.
 		const subtitle = (p.account_list && p.accounts && p.accounts.size > 1)
-			? '<div style="color: var(--muted); font-size: 10px; font-weight: 400;">' + p.account_list + '</div>'
+			? '<div style="color: var(--muted); font-size: 10px; font-weight: 400;">' + esc(p.account_list) + '</div>'
 			: '';
 		const qtyDecimals = (p.quantity % 1 === 0) ? 0 : 4;
 		return '<tr>' +
-			'<td class="ticker">' + p.issue_id + subtitle + '</td>' +
+			'<td class="ticker">' + esc(p.issue_id) + subtitle + '</td>' +
 			'<td class="num">' + fmtMoney(p.quantity, { decimals: qtyDecimals }) + '</td>' +
 			'<td class="num ' + pnlClass(pct) + '">' + fmtPct(pct) + '</td>' +
 			'<td class="num ' + pnlClass(p.yield_value) + '">' + fmtMoney(p.yield_value, { sign: true }) + '</td>' +
@@ -503,12 +504,12 @@
 			const qtyDecimals = (p.quantity % 1 === 0) ? 0 : 4;
 			// Account cell: name if one account, "N cuentas" + detail if more.
 			const accountCell = p._account_count > 1
-				? '<span title="' + p._account_list + '">' + p._account_count + ' cuentas</span>' +
-				  '<div style="color: var(--muted); font-size: 10px;">' + p._account_list + '</div>'
-				: (p._account_list || '—');
+				? '<span title="' + esc(p._account_list) + '">' + p._account_count + ' cuentas</span>' +
+				  '<div style="color: var(--muted); font-size: 10px;">' + esc(p._account_list) + '</div>'
+				: esc(p._account_list || '—');
 			return '<tr>' +
-				'<td class="ticker">' + p.issue_id +
-					'<div style="color: var(--muted); font-size: 11px; font-weight: 400;">' + (p.issue_name || '') + '</div>' +
+				'<td class="ticker">' + esc(p.issue_id) +
+					'<div style="color: var(--muted); font-size: 11px; font-weight: 400;">' + esc(p.issue_name || '') + '</div>' +
 				'</td>' +
 				'<td><span class="market-pill ' + m.cls + '">' + m.label + '</span></td>' +
 				'<td style="color: var(--muted); font-size: 12px;">' + accountCell + '</td>' +

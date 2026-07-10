@@ -15,6 +15,7 @@
 
 	// Shared formatter — single source of truth in js/_shared.js (v0.14.18).
 	const fmtMoney = window.fmtMoney;
+	const esc = window.esc;
 	const formatDate = (iso) => {
 		if (!iso) return '—';
 		const d = new Date(iso);
@@ -112,7 +113,7 @@
 			populateFilters();
 			renderAll();
 		} catch (err) {
-			$('error-box').innerHTML = '<div class="error"><b>Error cargando datos.</b><br>' + err.message + '</div>';
+			$('error-box').innerHTML = '<div class="error"><b>Error cargando datos.</b><br>' + esc(err.message) + '</div>';
 		}
 	}
 
@@ -240,7 +241,7 @@
 				: r.count;
 			const qtyDec = (r.qty % 1 === 0) ? 0 : 4;
 			return '<tr>' +
-				'<td class="ticker">' + r.issue_id + usaNote + '</td>' +
+				'<td class="ticker">' + esc(r.issue_id) + usaNote + '</td>' +
 				'<td class="num">' + countCell + '</td>' +
 				'<td class="num">' + fmtMoney(r.qty, { decimals: qtyDec }) + '</td>' +
 				'<td class="num">' + fmtMoney(r.amount, { currency: true }) + '</td>' +
@@ -287,16 +288,16 @@
 				'<td>' + formatDate(o.processed_at) +
 					'<div class="muted" style="font-size: 11px;">' + formatTime(o.processed_at) + '</div>' +
 				'</td>' +
-				'<td class="ticker">' + o.issue_id +
+				'<td class="ticker">' + esc(o.issue_id) +
 					(market ? ' <span class="market-pill ' + market.cls + '" style="margin-left: 8px;">' + market.label + '</span>' : '') +
 				'</td>' +
-				'<td style="color: var(--muted); font-size: 12px;">' + (o.account_name || '—') + '</td>' +
+				'<td style="color: var(--muted); font-size: 12px;">' + esc(o.account_name || '—') + '</td>' +
 				'<td><span class="side-pill ' + sideClass + '">' + sideLabel + '</span></td>' +
 				'<td class="num">' + fmtMoney(o.quantity, { decimals: o.quantity % 1 === 0 ? 0 : 4 }) + '</td>' +
 				'<td class="num">' + fmtMoney(o.average_price) + '</td>' +
 				'<td class="num">' + fmtMoney(o.amount, { currency: true }) + '</td>' +
 				'<td class="num">' + fmtMoney(o.commission) + '</td>' +
-				'<td class="sob-id">' + o.sob_id + '</td>' +
+				'<td class="sob-id">' + esc(o.sob_id) + '</td>' +
 			'</tr>';
 		}).join('') || '<tr><td colspan="9" class="empty">Sin transacciones que coincidan con los filtros</td></tr>';
 	}

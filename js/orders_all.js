@@ -18,6 +18,7 @@
 	// ----------------------------------------------------------------------
 	// Shared formatter — single source of truth in js/_shared.js (v0.14.18).
 	const fmtMoney = window.fmtMoney;
+	const esc = window.esc;
 	const formatDate = (iso) => {
 		if (!iso) return '—';
 		const d = new Date(iso);
@@ -106,7 +107,7 @@
 			renderTable();
 		} catch (err) {
 			$('error-box').innerHTML =
-				'<div class="error"><b>Error cargando datos.</b><br>' + err.message + '</div>';
+				'<div class="error"><b>Error cargando datos.</b><br>' + esc(err.message) + '</div>';
 		}
 	}
 
@@ -207,24 +208,24 @@
 			const pillCls = statusPillClass(o);
 			const statusText = o.is_filled ? 'Llena'
 				: o.is_cancelled ? 'Cancelada'
-				: (o.status_label || ('Estado ' + o.status));
+				: esc(o.status_label || ('Estado ' + o.status));
 			const cancelNote = (o.cancel_message && o.is_cancelled)
-				? '<div class="muted" style="font-size: 10px;">' + o.cancel_message + '</div>'
+				? '<div class="muted" style="font-size: 10px;">' + esc(o.cancel_message) + '</div>'
 				: '';
 			const qtyDec = (q) => (q % 1 === 0) ? 0 : 4;
 			return '<tr>' +
 				'<td>' + formatDate(o.processed_at) +
 					'<div class="muted" style="font-size: 11px;">' + formatTime(o.processed_at) + '</div>' +
 				'</td>' +
-				'<td class="ticker">' + o.issue_id + '</td>' +
-				'<td style="color: var(--muted); font-size: 12px;">' + (o.account_name || '—') + '</td>' +
+				'<td class="ticker">' + esc(o.issue_id) + '</td>' +
+				'<td style="color: var(--muted); font-size: 12px;">' + esc(o.account_name || '—') + '</td>' +
 				'<td><span class="side-pill ' + sideClass + '">' + sideLabel + '</span></td>' +
 				'<td><span class="status-pill ' + pillCls + '">' + statusText + '</span>' + cancelNote + '</td>' +
 				'<td class="num">' + fmtMoney(o.original_quantity, { decimals: qtyDec(o.original_quantity) }) + '</td>' +
 				'<td class="num">' + fmtMoney(o.assigned_quantity, { decimals: qtyDec(o.assigned_quantity) }) + '</td>' +
 				'<td class="num">' + (o.is_filled ? fmtMoney(o.average_price) : fmtMoney(o.limit_price)) + '</td>' +
 				'<td class="num">' + (o.is_filled ? fmtMoney(o.amount, { currency: true }) : '—') + '</td>' +
-				'<td class="sob-id">' + o.sob_id + '</td>' +
+				'<td class="sob-id">' + esc(o.sob_id) + '</td>' +
 			'</tr>';
 		}).join('') || '<tr><td colspan="10" class="empty">Sin órdenes que coincidan con los filtros</td></tr>';
 	}

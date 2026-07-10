@@ -54,9 +54,22 @@
 		return n > 0 ? 'pos' : n < 0 ? 'neg' : 'muted';
 	}
 
+	// HTML-escape untrusted strings before interpolating them into
+	// innerHTML. Mirrors the esc() helper added to gbm-dashboard for the
+	// self-XSS fix — wraps broker-supplied string fields (issue_id,
+	// account_name, security_name, descriptions, ids) so a crafted value
+	// can't inject markup. Numeric fields go through fmtMoney and don't
+	// need this.
+	function esc(s) {
+		return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+			return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+		});
+	}
+
 	window.fmtMoney = fmtMoney;
 	window.fmtPct   = fmtPct;
 	window.pnlClass = pnlClass;
+	window.esc      = esc;
 
 	// Single source of truth for the tabs — same 7 tabs as upstream
 	// (gbm-dashboard/app/_shared.js v0.13.0). "Histórico" (orders_all)
