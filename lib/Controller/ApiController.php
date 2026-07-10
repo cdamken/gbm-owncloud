@@ -16,6 +16,7 @@ use OCA\Gbm\Service\FiscalService;
 use OCA\Gbm\Service\GbmService;
 use OCA\Gbm\Service\IngestService;
 use OCA\Gbm\Service\LotsService;
+use OCA\Gbm\Service\SummaryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -30,8 +31,9 @@ class ApiController extends Controller {
 	private $lots;
 	private $fiscal;
 	private $fiscalFile;
+	private $summary;
 
-	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis, LotsService $lots, FiscalService $fiscal, FiscalFileService $fiscalFile) {
+	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis, LotsService $lots, FiscalService $fiscal, FiscalFileService $fiscalFile, SummaryService $summary) {
 		parent::__construct($appName, $request);
 		$this->gbm = $gbm;
 		$this->ingest = $ingest;
@@ -39,6 +41,7 @@ class ApiController extends Controller {
 		$this->lots = $lots;
 		$this->fiscal = $fiscal;
 		$this->fiscalFile = $fiscalFile;
+		$this->summary = $summary;
 	}
 
 	/**
@@ -51,6 +54,21 @@ class ApiController extends Controller {
 	public function analysisData(): JSONResponse {
 		try {
 			return new JSONResponse($this->analysis->perUser($this->gbm->currentUserId()));
+		} catch (\Throwable $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * DB-backed reconciling money model for the Portafolio landing: headline
+	 * totals + per-account breakdown from ONE source. Read-only, per-session user.
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 */
+	public function summary(): JSONResponse {
+		try {
+			return new JSONResponse($this->summary->perUser($this->gbm->currentUserId()));
 		} catch (\Throwable $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}

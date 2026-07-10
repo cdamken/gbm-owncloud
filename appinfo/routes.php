@@ -33,6 +33,7 @@ return [
 		['name' => 'api#exportPageCsv', 'url' => '/export/{kind}.csv', 'verb' => 'GET'],
 		['name' => 'api#benchmark',     'url' => '/benchmark/{symbol}', 'verb' => 'GET'],
 		['name' => 'api#analysisData',  'url' => '/api/analysis',  'verb' => 'GET'],
+		['name' => 'api#summary',       'url' => '/api/summary',   'verb' => 'GET'],
 		['name' => 'api#data',          'url' => '/data/{type}',   'verb' => 'GET'],
 		['name' => 'api#getConfig',     'url' => '/api/config',    'verb' => 'GET'],
 		['name' => 'api#setConfig',     'url' => '/api/config',    'verb' => 'POST'],

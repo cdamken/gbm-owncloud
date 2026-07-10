@@ -14,6 +14,7 @@ $routes = $_['routes'];
 	data-route-analysis="<?php p($routes['analysis']); ?>"
 	data-route-data="<?php p($routes['data']); ?>"
 	data-route-config="<?php p($routes['config']); ?>"
+	data-route-summary="<?php p($routes['summary']); ?>"
 	data-route-update="<?php p($routes['update']); ?>">
 
 	<div class="subtitle">
