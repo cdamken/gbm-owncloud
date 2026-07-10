@@ -96,7 +96,11 @@ class Xirr {
 				$fLo = $fMid;
 			}
 		}
-		return ($lo + $hi) / 2;
+		// Bisection budget exhausted without meeting tolerance = non-convergence.
+		// Honor the contract (null on non-convergence) instead of returning an
+		// imprecise midpoint. In practice unreachable (the sign-change guard
+		// above guarantees convergence in ~37 iters), but keeps the contract true.
+		return null;
 	}
 
 	private static function npv(float $rate, array $days, array $amounts): float {
