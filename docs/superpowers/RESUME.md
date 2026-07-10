@@ -1,6 +1,6 @@
 # RESUME HERE — GBM ownCloud session handoff
 
-**Last updated:** 2026-07-03 (F — fiscal report — shipped)
+**Last updated:** 2026-07-10 (P0 — reconciling Portafolio — shipped)
 **Read this first** to continue exactly where we left off. Conversation memory
 is lost on restart; this file + the committed spec/plan + git history are the
 source of truth. Companion memory files live in
@@ -10,31 +10,44 @@ source of truth. Companion memory files live in
 
 ## Where we are (one paragraph)
 
-The GBM ownCloud cutover is done and live; **M1, M2, M3, and F are all DONE,
-deployed, and merged to `main`** (app `gbm` **v0.20.0** on `cloud.damken.com`,
-PHP **7.4.3**, history intact). M1 = `winnersLosers()` total-return ranking. M2 =
-`allocation()` Mercado·Clase·Región donut toggle. M3 = JS `renderMarketCompare()`
-"¿Le gano al mercado?" numeric headline. **F = fiscal report**: a "Generar
-reporte fiscal" button (Settings→Datos) → `POST /api/fiscal/generate` classifies
-transactions on the fly (`FiscalClassifier`+`FiscalReport`, no schema change) and
-writes `GBM/reporte-fiscal-resumen.csv` + `…-detalle.csv` into the user's Files
-via `IRootFolder` (the repo's first `getUserFolder` writer). Income side only;
-disclaimer in each CSV. All built subagent-driven; server PHP tests **56/56** on
-7.4.3. Issues tracked on GitHub (epic #15; #12 closed by F).
+App `gbm` **v0.21.1** on `cloud.damken.com`, PHP **7.4.3**. Shipped & merged to
+`main`: **M1** (winnersLosers ranking), **M2** (allocation Mercado·Clase·Región
+donut), **M3-A** (¿le gano al mercado? headline), **F** (fiscal report button →
+CSV in `GBM/`), and **P0 — reconciling Portafolio**. P0 moved the landing's KPI +
+per-account P&L math server-side into `lib/Analytics/{PortfolioReconcile,Xirr}.php`
++ `SummaryService` + `GET /api/summary`; `dashboard.js` now renders from that ONE
+source, killing the 3 trust bugs by construction (**verified on real data:
+header unrealized_pl $35,992.37 = exact sum of the account cards; cost basis
+$860k < market $896k so value>cost>P&L+ is coherent**). XIRR is money-weighted
+with an honest "faltan flujos" fallback. Also integrated + deployed the `esc()`
+self-XSS fix (GitHub #16) that had been merged to main but never deployed. All
+subagent-driven; server PHP tests **81/81** on 7.4.3. Epic #15.
 
 ## Immediate next step
 
-1. **(Owner) — most important for F:** open Settings → Datos, click **📄 Generar
-   reporte fiscal**, confirm the success flash, then open the ownCloud **Files**
-   app and check `GBM/reporte-fiscal-resumen.csv` + `…-detalle.csv` exist with
-   correct per-year totals + itemized rows. Click twice → confirm it overwrites
-   (no duplicates). This is the one path no machine test covers (the IRootFolder
-   writer). If it errors, tell me the flash message — quick to fix.
-2. Also eyeball M1 table / M2 donut pills / M3 headline on the Análisis page.
-3. Remaining roadmap (both data-gated; GitHub #13): **M4 — Riesgo** + **deferred
-   M3 TWR/period-returns + `gbm_cash_flows`** — need accumulated daily-snapshot
-   history (grows per 🔄 Actualizar). Best revisited in a few months. Optional
-   polish in #14 (M2 negative-cash note, M1 USD hint).
+1. **(Owner) eyeball the live Portafolio** (`.../apps/gbm/`, hard-refresh):
+   confirm **P&L acumulado del header = suma de las tarjetas de cuenta** (the bug
+   you caught is gone), value/cost/cash read as distinct lines, and XIRR shows a
+   real % or "faltan flujos externos". (Numbers already proven to reconcile
+   server-side; this is just the visual.)
+2. Remaining roadmap (owner's call). **Data-gated (GitHub #13):** M4 riesgo +
+   deferred M3 TWR/period-returns + `gbm_cash_flows` — need accumulated daily
+   snapshots (grow per 🔄 Actualizar). **Not gated:** P1 (clarity/UX — declutter
+   landing, rename nav, consolidate top-movers) and P2 capabilities (per-holding
+   drill-down, three-way capital/dividend/FX return) — see the audit roadmap
+   `docs/superpowers/specs/2026-07-03-gbm-app-audit-and-redesign-roadmap.md`.
+   Optional polish in #14.
+
+## P0 follow-ups noted (from the final review, non-blocking)
+
+- `positions_count` is now holding-row count (per account×security), not distinct
+  tickers — matches the per-account "N pos." sense; note if the owner expected the
+  old number.
+- `total_value` is derived (market + cash), so the landing total may differ by a
+  little from GBM's own TPV. Inherent to the one-source mandate.
+- XIRR uses only external flows in the ingested window → biased if deposits
+  predate the window (P1). `ACCOUNT_TYPES` in dashboard.js is now dead code
+  (trivial cleanup).
 
 ## Deferred polish (optional, non-blocking)
 

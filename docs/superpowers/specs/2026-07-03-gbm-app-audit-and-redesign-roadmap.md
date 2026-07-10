@@ -82,7 +82,16 @@ High-impact findings (full per-page audit in the session record):
 
 Each item becomes its own brainstorm→spec→plan→build cycle (like M1–F).
 
-### P0 — Confianza (do first)
+### P0 — Confianza ✅ DONE (v0.21.1, 2026-07-10)
+
+Shipped: `lib/Analytics/{PortfolioReconcile,Xirr}.php` + `SummaryService` +
+`GET /api/summary`; `dashboard.js` renders from that one source. The 3 trust
+bugs are dead by construction — verified on real data (header unrealized_pl =
+exact sum of account cards; value>cost>P&L+ coherent). Spec/plan:
+`docs/superpowers/{specs,plans}/2026-07-09-gbm-p0-reconciling-portfolio*.md`.
+Original P0 scope below (for reference):
+
+
 Redesign the Portafolio KPIs around the reconciling money model: seven labeled money lines; separate cash; P&L% over current cost basis; **unify per-account P&L to one source**; fix the header/cards $664 split; fix the XIRR label. **Built HERE in PHP** — migrate the KPI math out of `js/dashboard.js` into pure, unit-tested `lib/Analytics/*` (M1–M3 pattern), served to the template. This is the single highest-impact change — if the landing number contradicts itself, nothing else matters.
 
 ### P1 — Claridad
