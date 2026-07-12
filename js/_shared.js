@@ -134,12 +134,37 @@
 		// and the per-page JS's existing addEventListener('click', ...)
 		// pick up THIS button transparently. The old button is removed
 		// from each template; only this one remains.
+		// Privacy toggle: blur all amounts/quantities so the dashboard can be
+		// shown to others without revealing how much you have. Pure-CSS blur
+		// via .balances-hidden on #gbm-app; persisted in localStorage.
+		const hideBtn = document.createElement('button');
+		hideBtn.className = 'update-btn ghost';
+		hideBtn.id = 'hide-btn';
+		hideBtn.type = 'button';
+		hideBtn.title = 'Oculta montos y cantidades para mostrar el panel a terceros sin revelar cuánto tienes. Se mantiene entre páginas.';
+		actions.appendChild(hideBtn);
+
 		const updateBtn = document.createElement('button');
 		updateBtn.className = 'update-btn';
 		updateBtn.id = 'update-btn';
 		updateBtn.type = 'button';
 		updateBtn.textContent = '🔄 Actualizar';
 		actions.appendChild(updateBtn);
+
+		// Apply persisted state + wire the toggle.
+		var hidden = false;
+		try { hidden = localStorage.getItem('gbm-hide-balances') === '1'; } catch (e) {}
+		var applyHide = function () {
+			app.classList.toggle('balances-hidden', hidden);
+			hideBtn.textContent = hidden ? '👁 Mostrar' : '🙈 Ocultar';
+			hideBtn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+		};
+		applyHide();
+		hideBtn.addEventListener('click', function () {
+			hidden = !hidden;
+			try { localStorage.setItem('gbm-hide-balances', hidden ? '1' : '0'); } catch (e) {}
+			applyHide();
+		});
 
 		bar.appendChild(brand);
 		bar.appendChild(nav);

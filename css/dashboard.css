@@ -798,3 +798,24 @@ body.gbm-app-active #content-wrapper {
 
 #gbm-app.analysis-page .wl-pos { color: var(--green); }
 #gbm-app.analysis-page .wl-neg { color: var(--red); }
+
+/* ============ Balances-hidden (privacy) mode ============
+   #hide-btn (top-bar, injected by js/_shared.js) toggles .balances-hidden on
+   #gbm-app. Blurs every monetary/quantity/% value so the dashboard can be
+   shown to third parties without revealing amounts. Names/tickers/dates stay. */
+#gbm-app.balances-hidden .value,
+#gbm-app.balances-hidden td.num,
+#gbm-app.balances-hidden canvas {
+	filter: blur(8px);
+	-webkit-filter: blur(8px);
+	user-select: none;
+	-webkit-user-select: none;
+	pointer-events: none;
+}
+/* Secondary (ghost) style for the Hide button, matching the top-bar. */
+#gbm-app .top-bar .actions button.ghost {
+	background: transparent;
+	color: var(--muted);
+	border: 1px solid var(--border);
+}
+#gbm-app #hide-btn { white-space: nowrap; }
