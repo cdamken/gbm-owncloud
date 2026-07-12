@@ -399,7 +399,7 @@
 		return '<tr>' +
 			'<td class="ticker">' + esc(p.issue_id) + subtitle + '</td>' +
 			'<td class="num">' + fmtMoney(p.quantity, { decimals: qtyDecimals }) + '</td>' +
-			'<td class="num ' + pnlClass(pct) + '">' + fmtPct(pct) + '</td>' +
+			'<td class="num pct ' + pnlClass(pct) + '">' + fmtPct(pct) + '</td>' +
 			'<td class="num ' + pnlClass(p.yield_value) + '">' + fmtMoney(p.yield_value, { sign: true }) + '</td>' +
 		'</tr>';
 	}
@@ -518,7 +518,7 @@
 				'<td class="num">' + fmtMoney(p.last_price) + '</td>' +
 				'<td class="num">' + fmtMoney(p.market_value) + usdHint(p) + '</td>' +
 				'<td class="num ' + pnlClass(p.yield_value) + '">' + fmtMoney(p.yield_value, { sign: true }) + '</td>' +
-				'<td class="num ' + pnlClass(p.historical_variation_percentage) + '">' + fmtPct(p.historical_variation_percentage) + '</td>' +
+				'<td class="num pct ' + pnlClass(p.historical_variation_percentage) + '">' + fmtPct(p.historical_variation_percentage) + '</td>' +
 			'</tr>';
 		}).join('');
 	}

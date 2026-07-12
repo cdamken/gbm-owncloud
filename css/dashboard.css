@@ -816,6 +816,19 @@ body.gbm-app-active #content-wrapper {
 	-webkit-user-select: none;
 	pointer-events: none;
 }
+/* Exemptions: only money & share quantities are sensitive. Percentages and
+   plain counts stay legible even in Hide mode. These win over the blur above
+   via !important (the P/L% cells share td.num with the money columns). */
+#gbm-app.balances-hidden .pct,
+#gbm-app.balances-hidden #xirr-value,
+#gbm-app.balances-hidden #num-positions,
+#gbm-app.balances-hidden #num-accounts {
+	filter: none !important;
+	-webkit-filter: none !important;
+	user-select: auto !important;
+	-webkit-user-select: auto !important;
+	pointer-events: auto !important;
+}
 /* Secondary (ghost) style for the Hide button, matching the top-bar. */
 #gbm-app .top-bar .actions button.ghost {
 	background: transparent;
