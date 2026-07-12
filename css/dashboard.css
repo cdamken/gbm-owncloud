@@ -804,6 +804,10 @@ body.gbm-app-active #content-wrapper {
    #gbm-app. Blurs every monetary/quantity/% value so the dashboard can be
    shown to third parties without revealing amounts. Names/tickers/dates stay. */
 #gbm-app.balances-hidden .value,
+#gbm-app.balances-hidden .acc-value,
+#gbm-app.balances-hidden .acc-pnl,
+#gbm-app.balances-hidden .stat-value,
+#gbm-app.balances-hidden #cap-pnl-detail,
 #gbm-app.balances-hidden td.num,
 #gbm-app.balances-hidden canvas {
 	filter: blur(8px);
