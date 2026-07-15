@@ -114,6 +114,7 @@
 			renderCapitalStats();
 			renderWinnersLosers();
 			renderAllocationChart();
+			updateRangePills();
 			renderNetWorthChart();
 		} catch (err) {
 			document.getElementById('error-box').innerHTML =
@@ -357,6 +358,7 @@
 	// ----------------------------------------------------------------------
 	let _histChart = null;
 	let _histRange = 'ALL';
+	let _histDayLevel = false;
 
 	function _replayBenchmark(bench, dailyMap) {
 		if (!bench || !bench.history || bench.history.length === 0) return null;
@@ -507,7 +509,9 @@
 							const label = this.getLabelForValue(value);
 							const d = new Date(label);
 							if (isNaN(d)) return label;
-							return d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+							return _histDayLevel
+								? d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+								: d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
 						},
 					},
 					grid: { display: false },
@@ -614,6 +618,43 @@
 		box.style.display = '';
 	}
 
+	// Enable a windowed range pill only when the history actually reaches
+	// further back than that window; otherwise 1M/3M/… would be identical to
+	// "All" (nothing older to trim), which reads as a broken toggle. Disabled
+	// pills are greyed with a tooltip stating how much history is needed. Runs
+	// once on load (span is fixed for the session).
+	function updateRangePills() {
+		const pills = document.getElementById('history-range-pills');
+		if (!pills) return;
+		const hist = state.history || [];
+		let spanDays = 0;
+		if (hist.length >= 1) {
+			const first = new Date(hist[0].date);
+			if (!isNaN(first)) spanDays = Math.floor((new Date() - first) / 86400000);
+		}
+		const WIN = { '1M': 30, '3M': 90, '6M': 180, '1Y': 365 };
+		let smallestEnabled = null;
+		pills.querySelectorAll('button[data-range]').forEach(b => {
+			const w = WIN[b.dataset.range]; // undefined for "ALL"
+			const enabled = !w || spanDays > w;
+			b.disabled = !enabled;
+			if (!enabled) {
+				b.title = 'Necesitas más de ' + w + ' días de historial (tienes ' + spanDays + ').';
+			} else {
+				b.removeAttribute('title');
+				if (w && smallestEnabled === null) smallestEnabled = b.dataset.range;
+			}
+		});
+		// If the current range became disabled, fall back to the smallest
+		// enabled window, else "All".
+		if (WIN[_histRange] && spanDays <= WIN[_histRange]) {
+			_histRange = smallestEnabled || 'ALL';
+		}
+		pills.querySelectorAll('button[data-range]').forEach(b =>
+			b.classList.toggle('active', b.dataset.range === _histRange)
+		);
+	}
+
 	function renderNetWorthChart() {
 		if (typeof window.Chart !== 'function') return;
 		const canvas = document.getElementById('history-chart');
@@ -637,6 +678,12 @@
 		if (dailyMap.size === 0) { showEmpty(); return; }
 
 		const filteredDates = _filterRangeDates(dailyMap, _histRange);
+		// Day-level x-axis labels when the visible span is short (≤ ~3 months),
+		// so a few weeks of data don't render as repeated "jun 26 / jul 26".
+		const _spanDays = filteredDates.length >= 2
+			? Math.floor((new Date(filteredDates[filteredDates.length - 1]) - new Date(filteredDates[0])) / 86400000)
+			: 0;
+		_histDayLevel = _spanDays <= 92;
 		const labels = filteredDates.map(d => d);
 		const values = filteredDates.map(d => dailyMap.get(d));
 
