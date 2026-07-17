@@ -313,9 +313,12 @@
 			xEl.className = 'value ' + pnlClass(s.xirr);
 			if (xDetail) xDetail.textContent = 'personal · money-weighted';
 		} else {
-			xEl.textContent = '—';
+			// Not enough (or implausible) external cash-flow data to compute a
+			// meaningful money-weighted return — show a clear n/a rather than a
+			// dash or a garbage number. See gbm-owncloud#18 (ledger gap).
+			xEl.textContent = 'n/a';
 			xEl.className = 'value muted';
-			if (xDetail) xDetail.textContent = 'faltan flujos externos';
+			if (xDetail) xDetail.textContent = 'datos insuficientes por ahora';
 		}
 	}
 
