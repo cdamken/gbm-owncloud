@@ -81,7 +81,20 @@ class SummaryService {
 			$flows[] = ['date' => date('Y-m-d'), 'amount' => (float) $model['total_value']];
 			$xirr = Xirr::compute($flows);
 			if ($xirr !== null) {
-				$status = 'ok';
+				// Plausibility guard. GBM's ledger only captures a fraction of
+				// real external movements (Trading USA / Smart Cash cash flows
+				// are a known gap), so the solver can converge on an absurd
+				// annualized rate — e.g. 8,001 MXN "invested" vs a six-figure
+				// terminal value 51 days later → +5e10%. A real portfolio XIRR
+				// is never below -100% or above +1000%/yr; anything outside that
+				// band means the flow data is incomplete, so surface the honest
+				// "faltan flujos externos" fallback instead of a garbage number.
+				if ($xirr > -0.9999 && $xirr <= 10.0) {
+					$status = 'ok';
+				} else {
+					$xirr = null;
+					$status = 'unreliable';
+				}
 			}
 		}
 		$model['xirr'] = $xirr;
