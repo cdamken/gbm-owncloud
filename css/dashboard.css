@@ -223,6 +223,8 @@ body.gbm-app-active #content-wrapper {
 #gbm-app th:hover { color: var(--text); }
 #gbm-app tr:hover { background: rgba(255,255,255,0.02); }
 #gbm-app .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* USD equivalent hint next to Trading USA (mercado_extranjero) MXN values. */
+#gbm-app .usd-eq { color: var(--muted); font-size: 11px; }
 #gbm-app .ticker { font-family: monospace; font-weight: 600; }
 #gbm-app .sob-id { font-family: monospace; color: var(--muted); font-size: 11px; }
 

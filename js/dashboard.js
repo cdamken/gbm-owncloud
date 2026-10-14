@@ -436,7 +436,10 @@
 	function usdHint(p) {
 		if (!p || p._market_key !== 'mercado_extranjero' || !usdMxnRate) return '';
 		const usd = (Number(p.market_value) || 0) / usdMxnRate;
-		return ' <span class="usd-eq" style="color: var(--muted); font-size: 11px;">(≈ $'
+		// en-US on purpose: this is a USD figure, so it reads with US grouping
+		// (1,234) even though the rest of the UI is es-MX. Styling lives in
+		// .usd-eq (css), not inline.
+		return ' <span class="usd-eq">(≈ $'
 			+ usd.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' USD)</span>';
 	}
 
