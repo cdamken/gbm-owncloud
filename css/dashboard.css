@@ -139,6 +139,14 @@ body.gbm-app-active #content-wrapper {
 	font-weight: 600; letter-spacing: 0.3px;
 }
 #gbm-app .account-chip .acc-detail-flag.no { background: rgba(122, 133, 153, 0.15); color: var(--muted); }
+/* Coverage note: data absence is not zero. Marks accounts whose movement
+   history GBM does not expose by API (Trading USA / offshore). */
+#gbm-app .account-chip .acc-coverage {
+	margin-top: 8px; padding-top: 8px;
+	border-top: 1px solid var(--border);
+	font-size: 11px; line-height: 1.35; color: var(--amber);
+	cursor: help;
+}
 
 #gbm-app .section {
 	margin: 40px 0 16px; font-size: 18px; font-weight: 700;

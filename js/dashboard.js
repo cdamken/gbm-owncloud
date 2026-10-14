@@ -328,6 +328,18 @@
 		const grid = $('accounts-grid');
 		$('accounts-count').textContent = list.length;
 		grid.innerHTML = list.map(a => {
+			// Coverage note (principle: ausencia de dato != cero). GBM's offshore
+			// account (Trading USA) returns ZERO movements on every API endpoint
+			// (verified 14.10.2026), so its orders/ledger look empty. Positions +
+			// valuation ARE real; only the trade history is unavailable. Label it
+			// so an empty movements view reads as "no podemos verlos", not "no hubo".
+			var raw = (state.accounts || []).find(function (r) {
+				return r.legacy_contract_id === a.key;
+			});
+			var offshore = raw && raw.management_type_template === 'trading_usa';
+			var coverage = offshore
+				? '<div class="acc-coverage" title="GBM no publica los movimientos de la cuenta offshore por API (host descontinuado). El historial de compras/ventas solo llega por el CSV del broker.">solo posiciones · movimientos no disponibles por API</div>'
+				: '';
 			return '<div class="account-chip">' +
 				'<div class="acc-name">' + esc(a.name || '—') + '</div>' +
 				'<div class="acc-id">' + esc(a.key || '') + '</div>' +
@@ -335,6 +347,7 @@
 				'<div class="acc-pnl ' + pnlClass(a.unrealized_pl) + '">' +
 					fmtMoney(a.unrealized_pl, { sign: true, currency: true }) +
 				'</div>' +
+				coverage +
 			'</div>';
 		}).join('');
 	}
