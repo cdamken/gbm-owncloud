@@ -70,6 +70,7 @@ $routes = $_['routes'];
 		<span class="badge" id="accounts-count">—</span>
 	</div>
 	<div class="accounts-grid" id="accounts-grid"></div>
+	<div class="acc-source-note">Valuación por posición (cierre BMV, <code>positions.json</code>). La cifra agregada que GBM muestra en su app usa otro FX y redondeo, por eso puede diferir un poco.</div>
 
 	<div class="section">
 		<span>Top movimientos</span>

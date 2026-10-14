@@ -225,6 +225,10 @@ body.gbm-app-active #content-wrapper {
 #gbm-app .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* USD equivalent hint next to Trading USA (mercado_extranjero) MXN values. */
 #gbm-app .usd-eq { color: var(--muted); font-size: 11px; }
+/* Source note under the accounts grid: valuation is per-position (positions.json),
+   so a known small divergence vs GBM's own aggregate (v3) is documented, not hidden. */
+#gbm-app .acc-source-note { margin: 8px 2px 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
+#gbm-app .acc-source-note code { font-size: 10px; background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 4px; }
 #gbm-app .ticker { font-family: monospace; font-weight: 600; }
 #gbm-app .sob-id { font-family: monospace; color: var(--muted); font-size: 11px; }
 
