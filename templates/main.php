@@ -48,10 +48,10 @@ $routes = $_['routes'];
 			<div class="value" id="xirr-value">—</div>
 			<div class="delta muted" id="xirr-detail">basado en flujos externos</div>
 		</div>
-		<div class="card" title="Cash sin invertir en cuentas Smart Cash. GBM hace barrido automático a money market funds, así que típicamente es $0 — solo crece si vendiste algo y aún no recompraste.">
+		<div class="card" title="Efectivo líquido sin invertir en tus cuentas. Típicamente es bajo porque GBM hace barrido automático a money market funds; solo crece si vendiste algo y aún no recompraste.">
 			<div class="label">Cash disponible</div>
 			<div class="value" id="available-cash">—</div>
-			<div class="delta muted">Smart Cash sin reinvertir</div>
+			<div class="delta muted">efectivo sin invertir</div>
 		</div>
 		<div class="card">
 			<div class="label">Posiciones</div>
