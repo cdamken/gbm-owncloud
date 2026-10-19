@@ -162,3 +162,35 @@ update run → then next app.
 - Whether `lib-src` is a vendored copy or a git submodule of the api repo —
   builder's call; vendored copy is simpler and matches current rsync.
 - `.gitignore` entries for `.venv/` and `.playwright/`.
+
+## Status (19.10.2026) — all three built + verified on s6
+
+Validated directly on s6 (Python 3.14.4, PHP 8.5.4 fork of OC 10.13.4
+"10.26.9"). Decided to validate on s6 only (non-prod target); s5 stays on
+the legacy /opt model until cutover.
+
+- **GBM** — DONE. app-folder venv, gbm.python_bin → app venv, www-data
+  imports gbm_mx_api 0.4.2 via override + relative fallback, bootstrap
+  reproducible. Committed+pushed (gbm-owncloud@analytics-fiscal).
+- **SC** — DONE. app-folder venv, config set, imports sc_api via both paths.
+  Fixed a real sc-api bug on the way: pycookiecheat pinned cryptography==43,
+  conflicting with the core cryptography>=44 floor (ResolutionImpossible);
+  moved it to an optional `[cookies]` extra (sc-api@main). Committed+pushed
+  (scalable-capital-owncloud@oc-migration + sc-api@main).
+- **TR** — app stack DONE. app-folder venv, both python_bin and
+  playwright_browsers_path → app folder, imports tr_api 0.1.0 + playwright
+  1.64.0 via override + fallback, Chromium v1248 (681M) in python/.playwright.
+  Committed+pushed (trade-republic-owncloud@main).
+  - **One host prerequisite, owned by host setup, not the app:** Chromium
+    needs ~25 system libraries (Mesa/Vulkan/ALSA/fonts/xcb). The binary
+    exits 127 without them. Install once per host:
+    `sudo <app>/python/.venv/bin/playwright install-deps chromium`. Handed to
+    the cutover/activation session; not run here to avoid a dpkg-lock clash
+    with concurrent host work.
+  - If Carlos adopts Yakko's tr-trade-api (no Playwright), this whole
+    Chromium piece — the 681M and the host libs — disappears. Pending his
+    decision; base case stays TR-with-Playwright.
+
+Builder-call resolutions made: `requirements.lock` = `pip freeze` of a clean
+build minus the vendored lib; `lib-src` = vendored copy (gitignored, deploy
+populates); gitignore covers `.venv/`, `.playwright/`, `lib-src/`.
