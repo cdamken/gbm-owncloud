@@ -31,3 +31,6 @@ build/
 # Local secrets — never. Belt-and-suspenders, the app doesn't write any.
 .env
 .env.local
+python/.venv/
+python/.playwright/
+python/lib-src/

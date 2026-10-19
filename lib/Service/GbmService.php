@@ -46,6 +46,35 @@ class GbmService extends BaseOwnCloudService {
 	}
 
 	// ------------------------------------------------------------------
+	// Python interpreter resolution
+	// ------------------------------------------------------------------
+	/**
+	 * Which python runs fetch_wrapper.py. Self-contained by default:
+	 * the venv lives inside the app folder (python/.venv/bin/python),
+	 * built by python/bootstrap.sh, so the app carries its own runtime
+	 * and migrates by copy-folder + bootstrap. Resolution order:
+	 *   1. config:system 'gbm.python_bin' if set (explicit override /
+	 *      rollback; e.g. a legacy /opt venv).
+	 *   2. the app-folder venv python/.venv/bin/python if present.
+	 *   3. bare 'python3' from PATH (last resort).
+	 */
+	private function pythonBin(): string {
+		$override = (string) $this->config->getSystemValue('gbm.python_bin', '');
+		if ($override !== '') {
+			return $override;
+		}
+		// Canonicalize the bin DIR, not the python entry: that entry is a
+		// symlink to the base interpreter, and realpath() on it would follow
+		// the link and drop the venv (running the base python directly does
+		// not pick up the venv's site-packages).
+		$venvBin = realpath(__DIR__ . '/../../python/.venv/bin');
+		if ($venvBin !== false && is_executable($venvBin . '/python')) {
+			return $venvBin . '/python';
+		}
+		return 'python3';
+	}
+
+	// ------------------------------------------------------------------
 	// Library version probe (for the Settings "About" list)
 	// ------------------------------------------------------------------
 	/**
@@ -55,7 +84,7 @@ class GbmService extends BaseOwnCloudService {
 	 * Returns '' if the venv/lib isn't reachable.
 	 */
 	public function libVersion(): string {
-		$python = $this->config->getSystemValue('gbm.python_bin', 'python3');
+		$python = $this->pythonBin();
 		$res = $this->runProcess(
 			[$python, '-c', 'import gbm_mx_api; print(gbm_mx_api.__version__)'],
 			['PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin', 'HOME' => sys_get_temp_dir(), 'LANG' => 'C.UTF-8'],
@@ -158,7 +187,7 @@ class GbmService extends BaseOwnCloudService {
 		// Try Cognito GlobalSignOut via the bridge script's --revoke flag.
 		// We invoke fetch_wrapper.py with --revoke so it imports gbm-mx-api
 		// 0.3.1's global_signout() in the venv that already has the lib.
-		$python = $this->config->getSystemValue('gbm.python_bin', 'python3');
+		$python = $this->pythonBin();
 		$script = realpath(__DIR__ . '/../../python/fetch_wrapper.py');
 		if ($script !== false && is_file($script)) {
 			$res = $this->runProcess(
@@ -215,7 +244,7 @@ class GbmService extends BaseOwnCloudService {
 			return ['exitCode' => self::EXIT_CONFIG_ERROR, 'stdout' => '', 'stderr' => 'credentials not configured'];
 		}
 
-		$python = $this->config->getSystemValue('gbm.python_bin', 'python3');
+		$python = $this->pythonBin();
 		$script = realpath(__DIR__ . '/../../python/fetch_wrapper.py');
 		if ($script === false || !is_file($script)) {
 			return ['exitCode' => self::EXIT_CONFIG_ERROR, 'stdout' => '', 'stderr' => 'fetch_wrapper.py not found'];
