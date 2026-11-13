@@ -24,13 +24,13 @@ class Analyze extends Command {
 		$this->analysis = $analysis;
 	}
 
-	protected function configure() {
+	protected function configure(): void {
 		$this->setName('gbm:analyze')
 			->setDescription('Per-stock analysis (unrealized P&L, yield-on-cost) from the DB')
 			->addArgument('user', InputArgument::REQUIRED, 'ownCloud user id');
 	}
 
-	protected function execute(InputInterface $input, OutputInterface $output) {
+	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$uid = (string) $input->getArgument('user');
 		try {
 			$a = $this->analysis->perUser($uid);

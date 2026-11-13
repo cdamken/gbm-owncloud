@@ -23,13 +23,13 @@ class Ingest extends Command {
 		$this->ingest = $ingest;
 	}
 
-	protected function configure() {
+	protected function configure(): void {
 		$this->setName('gbm:ingest')
 			->setDescription('Ingest GBM sync() JSON into the gbm_* DB tables')
 			->addArgument('user', InputArgument::REQUIRED, 'ownCloud user id to ingest');
 	}
 
-	protected function execute(InputInterface $input, OutputInterface $output) {
+	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$uid = (string) $input->getArgument('user');
 		try {
 			$counts = $this->ingest->ingestForUser($uid);

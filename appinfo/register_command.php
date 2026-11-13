@@ -9,6 +9,6 @@ $app = new \OCA\Gbm\Application();
 $container = $app->getContainer();
 
 /** @var \Symfony\Component\Console\Application $application */
-$application->add($container->query(\OCA\Gbm\Command\Ingest::class));
-$application->add($container->query(\OCA\Gbm\Command\Analyze::class));
-$application->add($container->query(\OCA\Gbm\Command\Lots::class));
+$application->addCommand($container->query(\OCA\Gbm\Command\Ingest::class));
+$application->addCommand($container->query(\OCA\Gbm\Command\Analyze::class));
+$application->addCommand($container->query(\OCA\Gbm\Command\Lots::class));

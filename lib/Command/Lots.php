@@ -25,13 +25,13 @@ class Lots extends Command {
 		$this->lots = $lots;
 	}
 
-	protected function configure() {
+	protected function configure(): void {
 		$this->setName('gbm:lots')
 			->setDescription('Recompute FIFO lots + realized P&L from orders')
 			->addArgument('user', InputArgument::REQUIRED, 'ownCloud user id');
 	}
 
-	protected function execute(InputInterface $input, OutputInterface $output) {
+	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$uid = (string) $input->getArgument('user');
 		try {
 			$r = $this->lots->recompute($uid);
