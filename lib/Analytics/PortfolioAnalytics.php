@@ -44,7 +44,7 @@ class PortfolioAnalytics {
 				'yield_on_cost_pct' => $cost > 0.0 ? $div / $cost * 100.0 : 0.0,
 			];
 		}
-		usort($rows, static function ($a, $b) {
+		usort($rows, static function (array $a, array $b): int {
 			return $b['market_value'] <=> $a['market_value'];
 		});
 		return $rows;
@@ -80,7 +80,7 @@ class PortfolioAnalytics {
 				'total_return_pct' => $cost > 0.0 ? $tr / $cost * 100.0 : 0.0,
 			];
 		}
-		usort($rows, static function ($a, $b) {
+		usort($rows, static function (array $a, array $b): int {
 			return $b['total_return_pct'] <=> $a['total_return_pct'];
 		});
 		return $rows;
@@ -156,7 +156,7 @@ class PortfolioAnalytics {
 		foreach ($buckets as $key => $value) {
 			$out[] = ['key' => (string) $key, 'value' => (float) $value];
 		}
-		usort($out, static function ($a, $b) {
+		usort($out, static function (array $a, array $b): int {
 			return $b['value'] <=> $a['value'];
 		});
 		return $out;

@@ -18,16 +18,11 @@ use OCA\Gbm\Db\PortfolioSnapshotMapper;
 use OCA\Gbm\Db\SecurityMapper;
 
 class AnalysisService {
-	/** @var HoldingMapper */
-	private $holdings;
-	/** @var SecurityMapper */
-	private $securities;
-	/** @var DividendMapper */
-	private $dividends;
-	/** @var AccountMapper */
-	private $accounts;
-	/** @var PortfolioSnapshotMapper */
-	private $snapshots;
+	private \OCA\Gbm\Db\HoldingMapper $holdings;
+	private \OCA\Gbm\Db\SecurityMapper $securities;
+	private \OCA\Gbm\Db\DividendMapper $dividends;
+	private \OCA\Gbm\Db\AccountMapper $accounts;
+	private \OCA\Gbm\Db\PortfolioSnapshotMapper $snapshots;
 
 	public function __construct(
 		HoldingMapper $holdings,

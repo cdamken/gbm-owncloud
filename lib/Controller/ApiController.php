@@ -25,13 +25,13 @@ use OCP\IRequest;
 
 class ApiController extends Controller {
 
-	private $gbm;
-	private $ingest;
-	private $analysis;
-	private $lots;
-	private $fiscal;
-	private $fiscalFile;
-	private $summary;
+	private \OCA\Gbm\Service\GbmService $gbm;
+	private \OCA\Gbm\Service\IngestService $ingest;
+	private \OCA\Gbm\Service\AnalysisService $analysis;
+	private \OCA\Gbm\Service\LotsService $lots;
+	private \OCA\Gbm\Service\FiscalService $fiscal;
+	private \OCA\Gbm\Service\FiscalFileService $fiscalFile;
+	private \OCA\Gbm\Service\SummaryService $summary;
 
 	public function __construct(string $appName, IRequest $request, GbmService $gbm, IngestService $ingest, AnalysisService $analysis, LotsService $lots, FiscalService $fiscal, FiscalFileService $fiscalFile, SummaryService $summary) {
 		parent::__construct($appName, $request);
@@ -359,7 +359,7 @@ class ApiController extends Controller {
 				'file' => 'orders.json',
 				'list_key' => 'orders',
 				'columns' => ['fecha', 'side', 'ticker', 'descripcion', 'mercado', 'cantidad', 'monto', 'estado'],
-				'row' => function ($o) {
+				'row' => function (array $o): array {
 					return [
 						substr((string) ($o['operation_date'] ?? ''), 0, 10),
 						!empty($o['is_buy']) ? 'Compra' : (!empty($o['is_sell']) ? 'Venta' : ''),
@@ -376,7 +376,7 @@ class ApiController extends Controller {
 				'file' => 'orders_all.json',
 				'list_key' => 'orders',
 				'columns' => ['fecha', 'ticker', 'side', 'cantidad', 'monto', 'estado'],
-				'row' => function ($o) {
+				'row' => function (array $o): array {
 					return [
 						substr((string) ($o['operation_date'] ?? ''), 0, 10),
 						$o['security_id'] ?? '',
@@ -391,7 +391,7 @@ class ApiController extends Controller {
 				'file' => 'dividends.json',
 				'list_key' => 'dividends',
 				'columns' => ['fecha', 'ticker', 'descripcion', 'monto_bruto', 'isr_retenido', 'monto_neto'],
-				'row' => function ($d) {
+				'row' => function (array $d): array {
 					return [
 						substr((string) ($d['payment_date'] ?? $d['ex_date'] ?? ''), 0, 10),
 						$d['security_id'] ?? '',
@@ -406,7 +406,7 @@ class ApiController extends Controller {
 				'file' => 'transactions.json',
 				'list_key' => 'transactions',
 				'columns' => ['fecha', 'ticker', 'descripcion', 'monto', 'categoria', 'cuenta'],
-				'row' => function ($t) {
+				'row' => function (array $t): array {
 					return [
 						substr((string) ($t['process_date'] ?? ''), 0, 10),
 						$t['security_id'] ?? '',
@@ -421,7 +421,7 @@ class ApiController extends Controller {
 				'file' => 'positions.json',
 				'list_key' => null,  // custom flatten — accounts dict
 				'columns' => ['ticker', 'cuenta', 'cantidad', 'precio_promedio', 'ultimo_precio', 'valor_mercado', 'pnl_mxn', 'pnl_pct'],
-				'row' => function ($p) {
+				'row' => function (array $p): array {
 					return [
 						$p['issue_id'] ?? $p['security_id'] ?? '',
 						$p['_account_name'] ?? '',

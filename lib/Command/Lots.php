@@ -17,8 +17,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Lots extends Command {
-	/** @var LotsService */
-	private $lots;
+	private \OCA\Gbm\Service\LotsService $lots;
 
 	public function __construct(LotsService $lots) {
 		parent::__construct();

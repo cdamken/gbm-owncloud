@@ -53,7 +53,7 @@ abstract class BaseOwnCloudService {
 
 	// Human-readable names for the exit codes above — used in fetch.log and
 	// owncloud.log so a glance tells you WHAT happened, not just a number.
-	private static $EXIT_NAMES = [
+	private static array $EXIT_NAMES = [
 		0  => 'OK',
 		10 => 'MFA_REQUIRED',
 		11 => 'MFA_INVALID',

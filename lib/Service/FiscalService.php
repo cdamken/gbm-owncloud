@@ -16,10 +16,8 @@ use OCA\Gbm\Db\SecurityMapper;
 use OCA\Gbm\Db\TransactionMapper;
 
 class FiscalService {
-	/** @var TransactionMapper */
-	private $transactions;
-	/** @var SecurityMapper */
-	private $securities;
+	private \OCA\Gbm\Db\TransactionMapper $transactions;
+	private \OCA\Gbm\Db\SecurityMapper $securities;
 
 	public function __construct(TransactionMapper $transactions, SecurityMapper $securities) {
 		$this->transactions = $transactions;
@@ -61,7 +59,7 @@ class FiscalService {
 				'amount'   => $class === 'withholding' ? abs($amount) : $amount,
 			];
 		}
-		usort($detail, function ($a, $b) {
+		usort($detail, function (array $a, array $b): int {
 			return strcmp((string) $a['date'], (string) $b['date']);
 		});
 		return [

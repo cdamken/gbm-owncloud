@@ -17,12 +17,9 @@ use OCA\Gbm\Db\HoldingMapper;
 use OCA\Gbm\Db\TransactionMapper;
 
 class SummaryService {
-	/** @var HoldingMapper */
-	private $holdings;
-	/** @var AccountMapper */
-	private $accounts;
-	/** @var TransactionMapper */
-	private $transactions;
+	private \OCA\Gbm\Db\HoldingMapper $holdings;
+	private \OCA\Gbm\Db\AccountMapper $accounts;
+	private \OCA\Gbm\Db\TransactionMapper $transactions;
 
 	public function __construct(HoldingMapper $holdings, AccountMapper $accounts, TransactionMapper $transactions) {
 		$this->holdings = $holdings;

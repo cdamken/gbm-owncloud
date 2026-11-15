@@ -16,7 +16,7 @@ class FiscalReport {
 	 * @return array list (newest year first) of
 	 *   ['year'=>int,'dividends'=>float,'interest'=>float,'withholding'=>float,'net'=>float]
 	 */
-	public static function build(array $rows) {
+	public static function build(array $rows): array {
 		$byYear = [];
 		foreach ($rows as $r) {
 			$year = isset($r['fiscal_year']) ? (int) $r['fiscal_year'] : 0;
@@ -44,7 +44,7 @@ class FiscalReport {
 			$row['net'] = $row['dividends'] + $row['interest'] - $row['withholding'];
 			$out[] = $row;
 		}
-		usort($out, function ($a, $b) {
+		usort($out, function (array $a, array $b): int|float {
 			return $b['year'] - $a['year'];
 		});
 		return $out;

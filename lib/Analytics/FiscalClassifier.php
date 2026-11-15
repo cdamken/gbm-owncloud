@@ -21,7 +21,7 @@ class FiscalClassifier {
 	 * @param array $tx one transaction dict with a 'category' key
 	 * @return string one of: dividend|interest|withholding|none
 	 */
-	public static function classify(array $tx) {
+	public static function classify(array $tx): string {
 		$cat = isset($tx['category']) ? strtolower(trim((string) $tx['category'])) : '';
 		if (isset(self::BY_CATEGORY[$cat])) {
 			return self::BY_CATEGORY[$cat];
@@ -43,7 +43,7 @@ class FiscalClassifier {
 	 * @param mixed $processDate
 	 * @return int|null null when unparseable
 	 */
-	public static function fiscalYear($processDate) {
+	public static function fiscalYear($processDate): ?int {
 		$s = trim((string) $processDate);
 		if (preg_match('/^(\d{4})-\d{2}-\d{2}/', $s, $m)) {
 			return (int) $m[1];

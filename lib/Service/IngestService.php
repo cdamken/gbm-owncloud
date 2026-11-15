@@ -48,23 +48,16 @@ class IngestService {
 
 	/** @var IConfig */
 	private $config;
-	/** @var SecurityMapper */
-	private $securities;
-	/** @var AccountMapper */
-	private $accounts;
-	/** @var HoldingMapper */
-	private $holdings;
-	/** @var OrderMapper */
-	private $orders;
-	/** @var TransactionMapper */
-	private $transactions;
-	/** @var DividendMapper */
-	private $dividends;
-	/** @var PortfolioSnapshotMapper */
-	private $snapshots;
+	private \OCA\Gbm\Db\SecurityMapper $securities;
+	private \OCA\Gbm\Db\AccountMapper $accounts;
+	private \OCA\Gbm\Db\HoldingMapper $holdings;
+	private \OCA\Gbm\Db\OrderMapper $orders;
+	private \OCA\Gbm\Db\TransactionMapper $transactions;
+	private \OCA\Gbm\Db\DividendMapper $dividends;
+	private \OCA\Gbm\Db\PortfolioSnapshotMapper $snapshots;
 
 	/** ext_id => security row id, cached per run to avoid re-querying. */
-	private $secCache = [];
+	private array $secCache = [];
 
 	public function __construct(
 		IConfig $config,
@@ -421,7 +414,7 @@ class IngestService {
 	}
 
 	/** @return array|null */
-	private function loadJson(string $dir, string $file) {
+	private function loadJson(string $dir, string $file): ?array {
 		$p = $dir . '/' . $file;
 		if (!is_file($p)) {
 			return null;

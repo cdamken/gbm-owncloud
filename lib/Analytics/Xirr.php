@@ -13,7 +13,7 @@ class Xirr {
 	 * @param array $flows list of ['date'=>string(ISO),'amount'=>float]
 	 * @return float|null null when <2 parseable flows, all same-sign, or no convergence
 	 */
-	public static function compute(array $flows, float $tol = 1e-7) {
+	public static function compute(array $flows, float $tol = 1e-7): ?float {
 		$parsed = [];
 		foreach ($flows as $f) {
 			$ts = strtotime((string) ($f['date'] ?? ''));
@@ -25,7 +25,7 @@ class Xirr {
 		if (count($parsed) < 2) {
 			return null;
 		}
-		usort($parsed, function ($x, $y) {
+		usort($parsed, function (array $x, array $y): int {
 			return $x['t'] <=> $y['t'];
 		});
 		$t0 = $parsed[0]['t'];

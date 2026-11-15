@@ -16,8 +16,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Analyze extends Command {
-	/** @var AnalysisService */
-	private $analysis;
+	private \OCA\Gbm\Service\AnalysisService $analysis;
 
 	public function __construct(AnalysisService $analysis) {
 		parent::__construct();
