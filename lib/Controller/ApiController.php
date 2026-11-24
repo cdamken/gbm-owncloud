@@ -142,7 +142,13 @@ class ApiController extends Controller {
 		if (!isset($allowed[$type])) {
 			return new JSONResponse(['error' => 'unknown type'], Http::STATUS_NOT_FOUND);
 		}
-		$path = $this->gbm->dataPath($allowed[$type]['file']);
+		try {
+			$path = $this->gbm->dataPath($allowed[$type]['file']);
+		} catch (\InvalidArgumentException $e) {
+			// Whitelist drift between this map and GbmService::dataPath():
+			// degrade to 404 rather than a 500 that spams owncloud.log.
+			return new JSONResponse(['error' => 'unknown type'], Http::STATUS_NOT_FOUND);
+		}
 		if (!is_file($path)) {
 			// First-time empty state — the JS treats this as "no data yet".
 			return new JSONResponse(['error' => 'not yet generated'], Http::STATUS_NOT_FOUND);

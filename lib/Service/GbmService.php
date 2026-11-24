@@ -106,7 +106,7 @@ class GbmService extends BaseOwnCloudService {
 			'accounts.json', 'positions.json',
 			'orders.json', 'orders_all.json',
 			'dividends.json', 'transactions.json',
-			'investments_groups.json',
+			'investments_groups.json', 'fx.json',
 			'last_update.date',
 		];
 		if (!in_array($name, $allowed, true)) {
