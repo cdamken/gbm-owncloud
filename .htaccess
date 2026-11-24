@@ -28,3 +28,18 @@
     Header always set Cache-Control "no-cache, must-revalidate, max-age=0"
   </FilesMatch>
 </IfModule>
+
+# --- Security: only js/css/img/svg are public ---------------------------
+# ownCloud's Apache serves /apps/<app>/* statically. Block app source,
+# deploy scripts, vendored Python, configs, data dumps and discovery files.
+# A login-capture .har with plaintext credentials was publicly downloadable
+# (24.11.2026) until this was added. Self-contained so the app does not
+# depend on a server-wide Apache conf. Apache 2.4 (<If>/Require).
+<IfModule mod_authz_core.c>
+  <If "%{REQUEST_URI} =~ m#/(python|scripts|tests|docs|\.github)/#">
+    Require all denied
+  </If>
+  <FilesMatch "\.(md|har|py|sh|json|lock|toml|cfg|ini|ya?ml|txt|log)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
