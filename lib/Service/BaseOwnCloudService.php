@@ -138,12 +138,12 @@ abstract class BaseOwnCloudService {
 	 * not inherited, so callers must explicitly pass PATH/HOME/LANG plus any
 	 * app-specific vars (credentials, etc).
 	 *
-	 * On timeout the child is SIGKILL'd and EXIT_CONFIG_ERROR is returned.
+	 * On timeout the child is SIGKILL'd and EXIT_TIMEOUT (21) is returned.
 	 *
 	 * Every invocation appends to {userDir}/fetch.log for debugging without
 	 * having to re-trigger an Update from the browser.
 	 */
-	protected function runProcess(array $cmd, array $env, int $timeoutSec): array {
+	protected function runProcess(array $cmd, array $env, int $timeoutSec, bool $logToFetchLog = true): array {
 		$descriptorSpec = [
 			0 => ['pipe', 'r'],
 			1 => ['pipe', 'w'],
@@ -184,7 +184,10 @@ abstract class BaseOwnCloudService {
 			if (microtime(true) > $deadline) {
 				proc_terminate($proc, 9);
 				$stderr .= "\n[timeout after {$timeoutSec}s]";
-				$exitCode = self::EXIT_CONFIG_ERROR;
+				// A wrapper timeout is upstream slowness, not a misconfiguration:
+				// report EXIT_TIMEOUT (21) so ApiController maps it to 504
+				// 'timeout', not a 500 'config_error'.
+				$exitCode = self::EXIT_TIMEOUT;
 				break;
 			}
 			usleep(100 * 1000);
@@ -205,14 +208,27 @@ abstract class BaseOwnCloudService {
 		// fetch.log is handy for debugging from the server side without
 		// having to re-trigger an Update. The header line is greppable and
 		// summarises the run before the raw stdout/stderr dumps.
-		@file_put_contents(
-			$this->userDir() . '/fetch.log',
-			'[' . date('c') . "] exit=$exitCode ($exitName) duration={$durationMs}ms\n"
-				. "cmd: $cmdline\n"
-				. ($lastErr !== '' ? "last stderr: $lastErr\n" : '')
-				. "--- stdout ---\n$stdout\n--- stderr ---\n$stderr\n",
-			LOCK_EX
-		);
+		//
+		// APPEND (FILE_APPEND), never truncate: without it every runProcess
+		// OVERWROTE the file, so a lightweight probe (e.g. libVersion()) run
+		// after a real fetch wiped that fetch's log. Lightweight probes now
+		// pass $logToFetchLog=false and skip this entirely; real fetches append.
+		// A size cap keeps the appended log from growing without bound.
+		if ($logToFetchLog) {
+			$logFile = $this->userDir() . '/fetch.log';
+			$maxBytes = 1024 * 1024; // 1 MiB; rotate by truncating when exceeded
+			if (@filesize($logFile) > $maxBytes) {
+				@file_put_contents($logFile, '', LOCK_EX);
+			}
+			@file_put_contents(
+				$logFile,
+				'[' . date('c') . "] exit=$exitCode ($exitName) duration={$durationMs}ms\n"
+					. "cmd: $cmdline\n"
+					. ($lastErr !== '' ? "last stderr: $lastErr\n" : '')
+					. "--- stdout ---\n$stdout\n--- stderr ---\n$stderr\n",
+				FILE_APPEND | LOCK_EX
+			);
+		}
 
 		// Mirror a one-line summary into owncloud.log so an admin can follow
 		// every Update via `occ log` / the log viewer without shell access to

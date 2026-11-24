@@ -219,6 +219,10 @@ class ApiController extends Controller {
 			GbmService::EXIT_MFA_INVALID   => [Http::STATUS_UNAUTHORIZED,            'mfa_invalid'],
 			GbmService::EXIT_AUTH_FAILED   => [Http::STATUS_UNAUTHORIZED,            'auth_failed'],
 			GbmService::EXIT_API_ERROR     => [Http::STATUS_BAD_GATEWAY,             'api_error'],
+			// 21 = wrapper timeout (shares its value with EXIT_RATE_LIMITED). A
+			// timeout is upstream slowness, not a server bug, so 504 + a distinct
+			// 'timeout' status the UI can show as "took too long, retry".
+			GbmService::EXIT_TIMEOUT       => [Http::STATUS_GATEWAY_TIMEOUT,        'timeout'],
 			GbmService::EXIT_CONFIG_ERROR  => [Http::STATUS_INTERNAL_SERVER_ERROR,   'config_error'],
 		];
 		$exit = $result['exitCode'];

@@ -50,18 +50,37 @@
 		await loadSessionInfo();
 	}
 
+	// Build a <li><span.label><span.value> row with textContent so values
+	// (notably the user's saved email) can never inject HTML.
+	function sessionRow(label, value, valueClass) {
+		const li = document.createElement('li');
+		const l = document.createElement('span');
+		l.className = 'label';
+		l.textContent = label;
+		const v = document.createElement('span');
+		v.className = 'value ' + (valueClass || '');
+		v.textContent = value;
+		li.appendChild(l);
+		li.appendChild(v);
+		return li;
+	}
+
 	async function loadSessionInfo() {
 		const ul = $('session-info');
+		ul.textContent = '';
 		try {
 			const r = await fetch(routes.config, { cache: 'no-store' });
 			const c = await r.json();
 			configured = !!c.configured;
-			ul.innerHTML = c.configured
-				? '<li><span class="label">Credenciales</span><span class="value green">guardadas (' + c.email + ')</span></li>'
-				+ '<li><span class="label">TOTP</span><span class="value muted">solo cuando expire el refresh token (~30 días)</span></li>'
-				: '<li><span class="label">Credenciales</span><span class="value red">sin configurar</span></li>';
+			if (c.configured) {
+				ul.appendChild(sessionRow('Credenciales', 'guardadas (' + c.email + ')', 'green'));
+				ul.appendChild(sessionRow('TOTP', 'solo cuando expire el refresh token (~30 días)', 'muted'));
+			} else {
+				ul.appendChild(sessionRow('Credenciales', 'sin configurar', 'red'));
+			}
 		} catch (_) {
-			ul.innerHTML = '<li><span class="label">Estado</span><span class="value red">no se pudo consultar</span></li>';
+			ul.textContent = '';
+			ul.appendChild(sessionRow('Estado', 'no se pudo consultar', 'red'));
 		}
 	}
 

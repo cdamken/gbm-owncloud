@@ -88,7 +88,8 @@ class GbmService extends BaseOwnCloudService {
 		$res = $this->runProcess(
 			[$python, '-c', 'import gbm_mx_api; print(gbm_mx_api.__version__)'],
 			['PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin', 'HOME' => sys_get_temp_dir(), 'LANG' => 'C.UTF-8'],
-			10
+			10,
+			false // lightweight probe: do NOT clobber the real fetch's fetch.log
 		);
 		return $res['exitCode'] === 0 ? trim($res['stdout']) : '';
 	}
@@ -256,10 +257,6 @@ class GbmService extends BaseOwnCloudService {
 			'--session-path', $this->sessionPath(),
 			'--data-dir',     $this->userDir(),
 		];
-		if ($totpCode !== null) {
-			$cmd[] = '--totp';
-			$cmd[] = $totpCode;
-		}
 		if ($full) {
 			$cmd[] = '--full';
 		}
@@ -267,6 +264,9 @@ class GbmService extends BaseOwnCloudService {
 		$env = [
 			'GBM_EMAIL'             => $this->getEmail(),
 			'GBM_PASSWORD'          => $this->getDecryptedPassword(),
+			// TOTP travels via env, never argv: argv is logged to fetch.log and
+			// is visible in `ps`. fetch_wrapper reads GBM_TOTP (or --totp).
+			'GBM_TOTP'              => $totpCode !== null ? $totpCode : '',
 			'GBM_ORDERS_DAYS'       => (string) $this->getOrdersDays(),
 			'GBM_DIVIDENDS_DAYS'    => (string) $this->getDividendsDays(),
 			'GBM_TRANSACTIONS_DAYS' => (string) $this->getTransactionsDays(),

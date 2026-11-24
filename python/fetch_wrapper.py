@@ -113,7 +113,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch GBM data into a per-user dir.")
     parser.add_argument("--session-path", required=True, help="Where to read/write session.json.")
     parser.add_argument("--data-dir", help="Where to write *.json output files (required unless --revoke).")
-    parser.add_argument("--totp", help="6-digit TOTP code; supplied by the browser modal.")
+    parser.add_argument("--totp", help="6-digit TOTP code; supplied by the browser modal. "
+                                        "Prefer the GBM_TOTP env var (argv is logged / visible in ps).")
     parser.add_argument("--revoke", action="store_true",
                         help="Call Cognito GlobalSignOut on the saved session and exit. "
                              "Best-effort: exits 0 if revoked, non-zero with stderr otherwise.")
@@ -122,6 +123,11 @@ def main() -> None:
                              "Used after /reset, on first run, or when a user "
                              "explicitly checks 'Recargar todo desde cero'.")
     args = parser.parse_args()
+
+    # TOTP comes from env (GBM_TOTP) by preference; --totp stays as a fallback
+    # for manual CLI runs. argv is logged to fetch.log and shows up in `ps`, so
+    # the ownCloud service passes it via env.
+    totp_code = (args.totp or os.environ.get("GBM_TOTP") or "").strip() or None
 
     session_path = Path(args.session_path).expanduser().resolve()
 
@@ -156,7 +162,7 @@ def main() -> None:
 
     print("Connecting to GBM+...")
     try:
-        with get_client(session_path, args.totp) as client:
+        with get_client(session_path, totp_code) as client:
             sync(
                 client,
                 data_dir,
