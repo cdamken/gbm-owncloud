@@ -176,22 +176,34 @@ if [[ $DO_APP -eq 1 ]]; then
         "$REPO_ROOT/" "$LOCAL_OC_APPS/"
   ok "Local copy in sync"
 
-  say "Syncing app → server (${SERVER_APP_DIR}) [sets owner+mode in-transfer; preserves venv/lib-src]"
-  # --chown/--chmod land each file as www-data:www-data with web-safe modes
-  # DURING the transfer, so there is no window where a freshly written file
-  # (notably appinfo/info.xml) is mode 0600/owned-by-carlos and a concurrent
-  # occ or web request hits "Permission denied / Invalid XML" (the 13.11 burst).
-  # python/.venv + python/lib-src are server-built — never clobber them here.
+  say "Syncing app → server (${SERVER_APP_DIR}) [preserves venv/lib-src]"
+  # --chown lands each file as www-data:www-data DURING the transfer, so there is
+  # no window where a freshly written file (notably appinfo/info.xml) is
+  # owned-by-root and a concurrent occ/web request hits "Permission denied /
+  # Invalid XML" (the 13.11 burst). macOS ships openrsync, which does NOT support
+  # --chown; detect it and fall back to --chmod + a server-side chown chained
+  # before occ upgrade. python/.venv + python/lib-src are server-built — never
+  # clobber them here.
+  # openrsync (macOS) supports neither --chown nor GNU-style --chmod (D/F
+  # prefixes), so on that sender we pass no perm flags and let sudo rsync write
+  # as root; the server-side chown -R below fixes ownership before occ upgrade.
+  CHOWN_FLAGS=()
+  if ! rsync --version 2>&1 | grep -qi 'openrsync'; then
+    CHOWN_FLAGS=(--chown=www-data:www-data --chmod=D750,F640)
+  fi
   rsync -a -e "$RSYNC_SSH" \
-        --chown=www-data:www-data --chmod=D750,F640 \
+        ${CHOWN_FLAGS[@]+"${CHOWN_FLAGS[@]}"} \
         --exclude='__pycache__/' --exclude='*.pyc' --exclude='.git/' \
         --exclude='python/.venv/' --exclude='python/lib-src/' \
         --rsync-path="sudo rsync" \
         "$REPO_ROOT/" "${SERVER_HOST}:${SERVER_APP_DIR}/"
-  ok "Server app in sync (owner+mode set in-transfer)"
+  ok "Server app in sync"
 
-  say "occ upgrade + maintenance:mode --off (run together; bumping <version> locks the server otherwise)"
+  say "Fix owner + occ upgrade + maintenance:mode --off (together; bumping <version> locks the server otherwise)"
+  # chown first (idempotent when --chown already ran; essential on the openrsync
+  # path where sudo rsync wrote files as root). Then upgrade.
   ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "
+    sudo chown -R www-data:www-data ${SERVER_APP_DIR}
     sudo -u www-data php ${SERVER_OCC} upgrade 2>&1 | tail -3
     sudo -u www-data php ${SERVER_OCC} maintenance:mode --off 2>&1 | tail -1
   "
@@ -202,8 +214,14 @@ fi
 if [[ $DO_LIB -eq 1 ]]; then
   say "Vendoring gbm-mx-api → server ${SERVER_LIB_SRC} (scoped --delete, secrets excluded)"
   ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "sudo mkdir -p ${SERVER_LIB_SRC}"
+  # CHOWN_FLAGS set in step 2 (openrsync-safe); the explicit chown -R below
+  # covers the openrsync fallback where sudo rsync writes as root.
+  LIB_CHOWN_FLAGS=()
+  if ! rsync --version 2>&1 | grep -qi 'openrsync'; then
+    LIB_CHOWN_FLAGS=(--chown=www-data:www-data --chmod=D750,F640)
+  fi
   rsync -a --delete -e "$RSYNC_SSH" --rsync-path="sudo rsync" \
-        --chown=www-data:www-data --chmod=D750,F640 \
+        ${LIB_CHOWN_FLAGS[@]+"${LIB_CHOWN_FLAGS[@]}"} \
         --exclude='.git/' --exclude='.gitignore' --exclude='.DS_Store' \
         --exclude='__pycache__/' --exclude='*.pyc' \
         --exclude='.venv/' --exclude='venv/' \
@@ -218,12 +236,15 @@ if [[ $DO_LIB -eq 1 ]]; then
   # in place when the venv exists; bootstrap only if it is missing. pipefail so
   # a pip failure is NOT masked by the trailing `tail` (the old /opt path did
   # exactly that and then aborted at the smoke test, skipping occ app:enable).
+  # Invoke pip as `python -m pip` (never .venv/bin/pip): the s6 oc_permits-script
+  # strips +x from the pip script, so calling it directly fails with "Permission
+  # denied (os error 13)"; python (a symlink) keeps its +x.
   say "Reinstalling gbm-mx-api into app venv (${SERVER_VENV})"
   ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "
     set -eo pipefail
     sudo chown -R www-data:www-data ${SERVER_PY_DIR}
-    if sudo test -x ${SERVER_VENV}/bin/python; then
-      sudo -u www-data ${SERVER_VENV}/bin/pip install --upgrade --force-reinstall --no-deps ${SERVER_LIB_SRC} 2>&1 | tail -3
+    if sudo test -x ${SERVER_VENV}/bin/python || sudo test -x ${SERVER_VENV}/bin/python3; then
+      sudo -u www-data ${SERVER_VENV}/bin/python -m pip install --upgrade --force-reinstall --no-deps ${SERVER_LIB_SRC} 2>&1 | tail -3
     else
       cd ${SERVER_PY_DIR} && sudo -u www-data env PYTHON=${SERVER_PYTHON_BOOT} ./bootstrap.sh 2>&1 | tail -5
     fi
