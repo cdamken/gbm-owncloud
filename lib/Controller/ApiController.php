@@ -361,20 +361,27 @@ class ApiController extends Controller {
 	 */
 	public function exportPageCsv(string $kind): Http\Response {
 		$SPECS = [
+			// Field names match the real JSON written by gbm-mx-api (verified
+			// against live data 2026-11-24): date is processed_at, side is a
+			// BUY/SELL string, the ticker is issue_id and the human status is
+			// status_label. The old code read operation_date/is_buy/security_id/
+			// status, none of which exist, so every order CSV row came out with
+			// an empty date, side, ticker and status. Orders carry no
+			// description or market field, so those columns are dropped rather
+			// than exported empty.
 			'ordenes' => [
 				'file' => 'orders.json',
 				'list_key' => 'orders',
-				'columns' => ['fecha', 'side', 'ticker', 'descripcion', 'mercado', 'cantidad', 'monto', 'estado'],
+				'columns' => ['fecha', 'side', 'ticker', 'cantidad', 'monto', 'estado'],
 				'row' => function (array $o): array {
+					$side = (string) ($o['side'] ?? '');
 					return [
-						substr((string) ($o['operation_date'] ?? ''), 0, 10),
-						!empty($o['is_buy']) ? 'Compra' : (!empty($o['is_sell']) ? 'Venta' : ''),
-						$o['security_id'] ?? '',
-						$o['description'] ?? '',
-						$o['market_label'] ?? $o['market'] ?? '',
+						substr((string) ($o['processed_at'] ?? ''), 0, 10),
+						$side === 'BUY' ? 'Compra' : ($side === 'SELL' ? 'Venta' : $side),
+						$o['issue_id'] ?? '',
 						number_format((float) ($o['quantity'] ?? 0), 4, '.', ''),
 						number_format((float) ($o['amount'] ?? 0), 4, '.', ''),
-						$o['status'] ?? 'filled',
+						$o['status_label'] ?? '',
 					];
 				},
 			],
@@ -383,28 +390,36 @@ class ApiController extends Controller {
 				'list_key' => 'orders',
 				'columns' => ['fecha', 'ticker', 'side', 'cantidad', 'monto', 'estado'],
 				'row' => function (array $o): array {
+					$side = (string) ($o['side'] ?? '');
 					return [
-						substr((string) ($o['operation_date'] ?? ''), 0, 10),
-						$o['security_id'] ?? '',
-						!empty($o['is_buy']) ? 'Compra' : (!empty($o['is_sell']) ? 'Venta' : ''),
+						substr((string) ($o['processed_at'] ?? ''), 0, 10),
+						$o['issue_id'] ?? '',
+						$side === 'BUY' ? 'Compra' : ($side === 'SELL' ? 'Venta' : $side),
 						number_format((float) ($o['quantity'] ?? 0), 4, '.', ''),
 						number_format((float) ($o['amount'] ?? 0), 4, '.', ''),
-						$o['status'] ?? '',
+						$o['status_label'] ?? '',
 					];
 				},
 			],
+			// Dividends: real fields are process_date, security_id, description,
+			// amount (gross), net_amount and the boolean is_withholding. There
+			// is no gross_amount/tax_withheld/tax/payment_date — the withheld
+			// ISR is gross minus net when a withholding applies.
 			'dividendos' => [
 				'file' => 'dividends.json',
 				'list_key' => 'dividends',
 				'columns' => ['fecha', 'ticker', 'descripcion', 'monto_bruto', 'isr_retenido', 'monto_neto'],
 				'row' => function (array $d): array {
+					$gross = (float) ($d['amount'] ?? 0);
+					$net = (float) ($d['net_amount'] ?? $gross);
+					$isr = !empty($d['is_withholding']) ? max(0.0, $gross - $net) : 0.0;
 					return [
-						substr((string) ($d['payment_date'] ?? $d['ex_date'] ?? ''), 0, 10),
+						substr((string) ($d['process_date'] ?? $d['settlement_date'] ?? ''), 0, 10),
 						$d['security_id'] ?? '',
 						$d['description'] ?? '',
-						number_format((float) ($d['gross_amount'] ?? $d['amount'] ?? 0), 4, '.', ''),
-						number_format((float) ($d['tax_withheld'] ?? $d['tax'] ?? 0), 4, '.', ''),
-						number_format((float) ($d['net_amount'] ?? 0), 4, '.', ''),
+						number_format($gross, 4, '.', ''),
+						number_format($isr, 4, '.', ''),
+						number_format($net, 4, '.', ''),
 					];
 				},
 			],
