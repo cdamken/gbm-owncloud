@@ -52,8 +52,14 @@ SERVER_PORT="2222"
 SERVER_KEY="${HOME}/.ssh/id_ed25519"
 
 SERVER_APP_DIR="/var/www/owncloud/apps/gbm"
-SERVER_GBM_API_SRC="/opt/gbm-mx-api-src"
-SERVER_VENV="/opt/gbm-venv"
+# Self-contained stack on s6 (confirmed 2026-11-24): NO /opt/gbm-venv. The
+# runtime venv lives inside the app and gbm.python_bin points at it. sc-api/
+# tr-api use the same model. gbm-mx-api is vendored into python/lib-src and
+# installed into that venv.
+SERVER_PY_DIR="${SERVER_APP_DIR}/python"
+SERVER_LIB_SRC="${SERVER_PY_DIR}/lib-src"
+SERVER_VENV="${SERVER_PY_DIR}/.venv"
+SERVER_PYTHON_BOOT="${SERVER_PYTHON_BOOT:-python3.14}"
 SERVER_OCC="/var/www/owncloud/occ"
 
 SSH_OPTS=(-A -i "${SERVER_KEY}" -p "${SERVER_PORT}")
@@ -170,16 +176,19 @@ if [[ $DO_APP -eq 1 ]]; then
         "$REPO_ROOT/" "$LOCAL_OC_APPS/"
   ok "Local copy in sync"
 
-  say "Syncing app → server (${SERVER_APP_DIR})"
+  say "Syncing app → server (${SERVER_APP_DIR}) [sets owner+mode in-transfer; preserves venv/lib-src]"
+  # --chown/--chmod land each file as www-data:www-data with web-safe modes
+  # DURING the transfer, so there is no window where a freshly written file
+  # (notably appinfo/info.xml) is mode 0600/owned-by-carlos and a concurrent
+  # occ or web request hits "Permission denied / Invalid XML" (the 13.11 burst).
+  # python/.venv + python/lib-src are server-built — never clobber them here.
   rsync -a -e "$RSYNC_SSH" \
+        --chown=www-data:www-data --chmod=D750,F640 \
         --exclude='__pycache__/' --exclude='*.pyc' --exclude='.git/' \
+        --exclude='python/.venv/' --exclude='python/lib-src/' \
         --rsync-path="sudo rsync" \
         "$REPO_ROOT/" "${SERVER_HOST}:${SERVER_APP_DIR}/"
-  ok "Server app in sync"
-
-  say "chown app dir → www-data"
-  ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "sudo chown -R www-data:www-data ${SERVER_APP_DIR}"
-  ok "Ownership set"
+  ok "Server app in sync (owner+mode set in-transfer)"
 
   say "occ upgrade + maintenance:mode --off (run together; bumping <version> locks the server otherwise)"
   ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "
@@ -191,25 +200,39 @@ fi
 
 # ---------- step 3: sync gbm-mx-api repo + reinstall in venv ----------
 if [[ $DO_LIB -eq 1 ]]; then
-  say "Syncing gbm-mx-api repo → server (${SERVER_GBM_API_SRC})"
-  rsync -a -e "$RSYNC_SSH" \
-        --exclude='.git/' --exclude='__pycache__/' --exclude='*.pyc' \
-        --exclude='.venv/' --exclude='dist/' --exclude='build/' \
-        --exclude='*.egg-info/' --exclude='.DS_Store' \
-        --rsync-path="sudo rsync" \
-        "${GBM_API_REPO}/" "${SERVER_HOST}:${SERVER_GBM_API_SRC}/"
-  ok "gbm-mx-api source in sync"
+  say "Vendoring gbm-mx-api → server ${SERVER_LIB_SRC} (scoped --delete, secrets excluded)"
+  ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "sudo mkdir -p ${SERVER_LIB_SRC}"
+  rsync -a --delete -e "$RSYNC_SSH" --rsync-path="sudo rsync" \
+        --chown=www-data:www-data --chmod=D750,F640 \
+        --exclude='.git/' --exclude='.gitignore' --exclude='.DS_Store' \
+        --exclude='__pycache__/' --exclude='*.pyc' \
+        --exclude='.venv/' --exclude='venv/' \
+        --exclude='build/' --exclude='dist/' --exclude='*.egg-info/' \
+        --exclude='discovery/' --exclude='.github/' \
+        --exclude='tests/' --exclude='docs/' --exclude='examples/' \
+        --exclude='*.har' --exclude='*.md' \
+        "${GBM_API_REPO}/" "${SERVER_HOST}:${SERVER_LIB_SRC}/"
+  ok "gbm-mx-api source vendored"
 
-  say "Reinstalling gbm-mx-api in ${SERVER_VENV}"
+  # Install into the app-internal venv (gbm.python_bin points here). Reinstall
+  # in place when the venv exists; bootstrap only if it is missing. pipefail so
+  # a pip failure is NOT masked by the trailing `tail` (the old /opt path did
+  # exactly that and then aborted at the smoke test, skipping occ app:enable).
+  say "Reinstalling gbm-mx-api into app venv (${SERVER_VENV})"
   ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "
-    sudo chown -R root:root ${SERVER_GBM_API_SRC}
-    sudo ${SERVER_VENV}/bin/pip install --upgrade --force-reinstall --no-deps ${SERVER_GBM_API_SRC}/ 2>&1 | tail -3
+    set -eo pipefail
+    sudo chown -R www-data:www-data ${SERVER_PY_DIR}
+    if sudo test -x ${SERVER_VENV}/bin/python; then
+      sudo -u www-data ${SERVER_VENV}/bin/pip install --upgrade --force-reinstall --no-deps ${SERVER_LIB_SRC} 2>&1 | tail -3
+    else
+      cd ${SERVER_PY_DIR} && sudo -u www-data env PYTHON=${SERVER_PYTHON_BOOT} ./bootstrap.sh 2>&1 | tail -5
+    fi
   "
-  ok "gbm-mx-api reinstalled"
+  ok "gbm-mx-api reinstalled in app venv"
 
-  say "Smoke-test: import gbm_mx_api on server"
+  say "Smoke-test: import gbm_mx_api on server (app venv)"
   ssh "${SSH_OPTS[@]}" "$SERVER_HOST" "
-    ${SERVER_VENV}/bin/python -c 'import gbm_mx_api; print(\"OK\", gbm_mx_api.__version__ if hasattr(gbm_mx_api, \"__version__\") else \"(no version attr)\")'
+    sudo -u www-data ${SERVER_VENV}/bin/python -c 'import gbm_mx_api; print(\"OK\", getattr(gbm_mx_api, \"__version__\", \"(no version attr)\"))'
   "
   ok "gbm-mx-api importable on server"
 fi
